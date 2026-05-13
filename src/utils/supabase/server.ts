@@ -19,7 +19,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Server Component에서 호출될 수 있어 무시
+            // Server Component에서 호출되면 무시 가능
           }
         },
       },
