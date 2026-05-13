@@ -101,7 +101,7 @@ function GoogleLoginContent() {
 
           {/* 안내 문구 */}
           <div className="text-center text-sm text-zinc-500 leading-relaxed space-y-1">
-            <p>선생님: 기관 이메일(@nowondaycare.org)로 로그인해주세요</p>
+            <p>선생님: 기관 이메일(sower031@gmail.com)로 로그인해주세요</p>
             <p>이용자: 담당 선생님께 문의해주세요</p>
           </div>
 
