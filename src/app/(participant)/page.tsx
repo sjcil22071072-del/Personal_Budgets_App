@@ -215,7 +215,9 @@ export default async function Home() {
       .single();
     latestEvaluation = evalData;
   }
-
+  console.log("HOME USER:", user.id);
+  console.log("HOME PROFILE:", profile);
+  console.log("HOME ROLE:", role);
   return (
     <HomeDashboard
       participant={participant}
