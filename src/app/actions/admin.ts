@@ -13,19 +13,36 @@ async function verifyAdmin() {
   
   if (!user) throw new Error('로그인이 필요합니다.')
 
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+
+  const profileResult = await adminClient
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (profile?.role !== 'admin') {
+  const profile = (profileResult.data as any)?.data ?? profileResult.data
+
+  const role = String(profile?.role ?? '').trim().toLowerCase()
+
+  const isAdmin =
+    role === 'admin' ||
+    role === 'superadmin' ||
+    role === 'super_admin'
+
+  if (!isAdmin) {
+    console.error('verifyAdmin failed:', {
+      userId: user.id,
+      profileResult,
+      profile,
+      role,
+    })
+
     throw new Error('관리자 권한이 필요합니다.')
   }
 
-  return { user, supabase }
+  return { user, supabase: adminClient }
 }
-
 /**
  * 사용자 역할 변경
  */
