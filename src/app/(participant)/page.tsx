@@ -36,6 +36,10 @@ export default async function Home() {
     redirect("/supporter");
   }
 
+  console.log("HOME USER:", user.id);
+  console.log("HOME PROFILE:", profile);
+  console.log("HOME ROLE:", role);
+
   // 당사자 예산 정보 조회
   const participantData = await supabase
     .from("participants")
@@ -215,9 +219,7 @@ export default async function Home() {
       .single();
     latestEvaluation = evalData;
   }
-  console.log("HOME USER:", user.id);
-  console.log("HOME PROFILE:", profile);
-  console.log("HOME ROLE:", role);
+
   return (
     <HomeDashboard
       participant={participant}
