@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
@@ -127,6 +128,8 @@ export async function assignRoleForFirstUser() {
  * 새 당사자 등록 (participants 테이블에 직접 생성)
  * participants는 profiles와 독립 — 자체 name, email 컬럼 보유
  */
+
+
 export async function createParticipant(formData: {
   name: string
   email: string
@@ -142,9 +145,9 @@ export async function createParticipant(formData: {
     yearlyBudget: number
   }>
 }) {
-  const { supabase } = await verifyAdmin()
-
   try {
+    const { supabase } = await verifyAdmin()
+
     // 1. 당사자 등록 (profiles 불필요 — participants 자체 인적사항 보유)
     const { data: participant, error: participantError } = await supabase
       .from('participants')
@@ -191,7 +194,11 @@ export async function createParticipant(formData: {
     revalidatePath('/admin/participants')
     return { success: true, participantId: newParticipantId }
   } catch (e: any) {
-    return { error: `오류: ${e.message}` }
+    const message =
+      typeof e?.message === 'string' && e.message.trim()
+        ? e.message
+        : '당사자 등록 중 오류가 발생했습니다.'
+    return { error: `오류: ${message}` }
   }
 }
 

@@ -114,8 +114,16 @@ export default function NewParticipantPage() {
         router.push('/admin/participants')
         router.refresh()
       }
-    } catch (e: any) {
-      setError(e.message || '저장에 실패했습니다.')
+    } catch (e: unknown) {
+      const message =
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        typeof (e as { message?: string }).message === 'string' &&
+        (e as { message?: string }).message
+          ? (e as { message: string }).message
+          : '저장에 실패했습니다.'
+      setError(message)
     } finally {
       setSaving(false)
     }
