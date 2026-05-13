@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -18,19 +18,17 @@ export default async function AdminDashboardPage({
 
   if (!user) redirect("/login");
 
-  const adminClient = createAdminClient();
-
-  const profileData = await adminClient
+  const profileData = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
 
-  const profile = profileData.data;
-
-  console.log("PROFILE DATA:", profileData);
+  console.log("HOME USER:", user.id);
+  console.log("PROFILE DATA:", profileData.data);
   console.log("PROFILE ERROR:", profileData.error);
-  console.log("USER ID:", user.id);
+
+  const profile = profileData.data;
 
   if (!profile || profile.role !== "admin") {
     redirect("/");
