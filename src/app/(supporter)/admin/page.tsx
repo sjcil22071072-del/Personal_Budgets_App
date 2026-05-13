@@ -28,6 +28,10 @@ export default async function AdminDashboardPage({
 
   const profile = profileData.data;
 
+  console.log("PROFILE DATA:", profileData);
+  console.log("PROFILE ERROR:", profileData.error);
+  console.log("USER ID:", user.id);
+
   if (!profile || profile.role !== "admin") {
     redirect("/");
   }
