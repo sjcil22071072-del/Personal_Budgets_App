@@ -37,15 +37,14 @@ export default async function AdminDashboardPage({
   console.log("HOME PROFILE:", profile);
   console.log("HOME ROLE:", role);
 
-  if (role === "admin" || role === "superadmin" || role === "super_admin") {
-    redirect("/admin");
-  }
+  const isAdmin =
+    role === "admin" || role === "superadmin" || role === "super_admin";
 
-  if (role === "supporter") {
-    redirect("/supporter");
-  }
+  if (!profile || !isAdmin) {
+    if (role === "supporter") {
+      redirect("/supporter");
+    }
 
-  if (!profile || profile.role !== "admin") {
     redirect("/");
   }
 
