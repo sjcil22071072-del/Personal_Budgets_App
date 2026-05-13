@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   const allowedDomains = (
     process.env.ALLOWED_EMAIL_DOMAINS ??
     process.env.ALLOWED_EMAIL_DOMAIN ??
-    'nowondaycare.org'
+    'gmail.com'
   )
     .split(',')
     .map((d) => d.trim())
