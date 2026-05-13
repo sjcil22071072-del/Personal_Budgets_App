@@ -46,13 +46,16 @@ export default function NewParticipantPage() {
       // 서버 액션으로 조회 (클라이언트 Supabase 401 방지)
       const result = await getSupporters()
       if (result.error) {
+        console.error('[NewParticipantPage] getSupporters error:', result.error)
         setError(result.error)
         setSupporters([])
         return
       }
 
+      console.log('[NewParticipantPage] supporters loaded:', result.supporters?.length ?? 0)
       setSupporters((result.supporters as Profile[]) || [])
     } catch (e) {
+      console.error('[NewParticipantPage] loadData exception:', e)
       const message =
         typeof e === 'object' &&
         e !== null &&
@@ -87,6 +90,7 @@ export default function NewParticipantPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    console.log('[NewParticipantPage] submit clicked')
     if (!name.trim()) {
       setError('이름을 입력해주세요.')
       return
@@ -100,7 +104,7 @@ export default function NewParticipantPage() {
     setError('')
 
     try {
-      const result = await createParticipant({
+      const payload = {
         name: name.trim(),
         email: email.trim(),
         monthlyBudget: Number(monthlyBudget),
@@ -109,6 +113,19 @@ export default function NewParticipantPage() {
         endDate,
         alertThreshold: Number(alertThreshold),
         supporterId: supporterId || null,
+        fundingSourceCount: fundingSources.length,
+      }
+      console.log('[NewParticipantPage] createParticipant payload:', payload)
+
+      const result = await createParticipant({
+        name: payload.name,
+        email: payload.email,
+        monthlyBudget: payload.monthlyBudget,
+        yearlyBudget: payload.yearlyBudget,
+        startDate,
+        endDate,
+        alertThreshold: payload.alertThreshold,
+        supporterId: payload.supporterId,
         fundingSources: fundingSources.map(fs => ({
           name: fs.name,
           monthlyBudget: Number(fs.monthly_budget),
@@ -116,16 +133,20 @@ export default function NewParticipantPage() {
         })),
       })
 
+      console.log('[NewParticipantPage] createParticipant result:', result)
       if (result.error) {
+        console.error('[NewParticipantPage] createParticipant failed:', result.error)
         setError(result.error)
         if (typeof window !== 'undefined') {
           window.alert(result.error)
         }
       } else {
+        console.log('[NewParticipantPage] createParticipant success, redirecting')
         router.push('/admin/participants')
         router.refresh()
       }
     } catch (e: unknown) {
+      console.error('[NewParticipantPage] handleSubmit exception:', e)
       const message =
         typeof e === 'object' &&
         e !== null &&

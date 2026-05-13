@@ -101,11 +101,13 @@ export async function getSupporters() {
       .order('created_at', { ascending: false })
 
     if (error) {
+      console.error('[admin.getSupporters] query error:', error)
       return { supporters: [], error: error.message }
     }
 
     return { supporters: data || [] }
   } catch (e: any) {
+    console.error('[admin.getSupporters] exception:', e)
     return { supporters: [], error: e?.message || '지원자 목록을 불러오지 못했습니다.' }
   }
 }
@@ -169,6 +171,17 @@ export async function createParticipant(formData: {
   }>
 }) {
   try {
+    console.log('[admin.createParticipant] called with:', {
+      name: formData.name,
+      email: formData.email,
+      monthlyBudget: formData.monthlyBudget,
+      yearlyBudget: formData.yearlyBudget,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      alertThreshold: formData.alertThreshold,
+      supporterId: formData.supporterId,
+      fundingSourceCount: formData.fundingSources?.length ?? 0,
+    })
     const { supabase } = await verifyAdmin()
 
     // 1. 당사자 등록 (profiles 불필요 — participants 자체 인적사항 보유)
@@ -189,6 +202,7 @@ export async function createParticipant(formData: {
       .single()
 
     if (participantError || !participant) {
+      console.error('[admin.createParticipant] participant insert error:', participantError)
       const detailParts = [
         participantError?.message,
         participantError?.details,
@@ -216,6 +230,7 @@ export async function createParticipant(formData: {
         )
 
       if (fsError) {
+        console.error('[admin.createParticipant] funding source insert error:', fsError)
         const detailParts = [
           fsError.message,
           fsError.details,
@@ -227,8 +242,10 @@ export async function createParticipant(formData: {
     }
 
     revalidatePath('/admin/participants')
+    console.log('[admin.createParticipant] success participantId:', newParticipantId)
     return { success: true, participantId: newParticipantId }
   } catch (e: any) {
+    console.error('[admin.createParticipant] exception:', e)
     const message =
       typeof e?.message === 'string' && e.message.trim()
         ? e.message
