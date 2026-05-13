@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -18,17 +18,31 @@ export default async function AdminDashboardPage({
 
   if (!user) redirect("/login");
 
-  const profileData = await supabase
+  const adminClient = createAdminClient();
+
+  const profileData = await adminClient
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
 
-  console.log("HOME USER:", user.id);
-  console.log("PROFILE DATA:", profileData.data);
-  console.log("PROFILE ERROR:", profileData.error);
+  const profile = profileData.data?.data ?? profileData.data;
 
-  const profile = profileData.data;
+  const role = String(profile?.role ?? "")
+    .trim()
+    .toLowerCase();
+
+  console.log("HOME USER:", user.id);
+  console.log("HOME PROFILE:", profile);
+  console.log("HOME ROLE:", role);
+
+  if (role === "admin" || role === "superadmin" || role === "super_admin") {
+    redirect("/admin");
+  }
+
+  if (role === "supporter") {
+    redirect("/supporter");
+  }
 
   if (!profile || profile.role !== "admin") {
     redirect("/");
