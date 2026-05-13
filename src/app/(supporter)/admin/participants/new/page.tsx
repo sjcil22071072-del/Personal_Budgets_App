@@ -1,10 +1,9 @@
 'use client'
 
-import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createParticipant } from '@/app/actions/admin'
+import { createParticipant, getSupporters } from '@/app/actions/admin'
 import type { Profile } from '@/types/database'
 
 interface FundingSourceInput {
@@ -14,7 +13,6 @@ interface FundingSourceInput {
 }
 
 export default function NewParticipantPage() {
-  const supabase = createClient()
   const router = useRouter()
 
   const [loading, setLoading] = useState(false)
@@ -45,15 +43,25 @@ export default function NewParticipantPage() {
   async function loadData() {
     setLoading(true)
     try {
-      // 지원자 목록만 로드
-      const { data: supporterProfiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'supporter')
+      // 서버 액션으로 조회 (클라이언트 Supabase 401 방지)
+      const result = await getSupporters()
+      if (result.error) {
+        setError(result.error)
+        setSupporters([])
+        return
+      }
 
-      setSupporters(supporterProfiles || [])
+      setSupporters((result.supporters as Profile[]) || [])
     } catch (e) {
-      console.error(e)
+      const message =
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        typeof (e as { message?: string }).message === 'string' &&
+        (e as { message?: string }).message
+          ? (e as { message: string }).message
+          : '지원자 목록을 불러오지 못했습니다.'
+      setError(message)
     } finally {
       setLoading(false)
     }
