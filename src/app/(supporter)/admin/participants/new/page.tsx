@@ -118,6 +118,9 @@ export default function NewParticipantPage() {
 
       if (result.error) {
         setError(result.error)
+        if (typeof window !== 'undefined') {
+          window.alert(result.error)
+        }
       } else {
         router.push('/admin/participants')
         router.refresh()
@@ -132,6 +135,9 @@ export default function NewParticipantPage() {
           ? (e as { message: string }).message
           : '저장에 실패했습니다.'
       setError(message)
+      if (typeof window !== 'undefined') {
+        window.alert(message)
+      }
     } finally {
       setSaving(false)
     }

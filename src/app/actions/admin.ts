@@ -189,7 +189,13 @@ export async function createParticipant(formData: {
       .single()
 
     if (participantError || !participant) {
-      return { error: `당사자 등록 실패: ${participantError?.message}` }
+      const detailParts = [
+        participantError?.message,
+        participantError?.details,
+        participantError?.hint,
+        participantError?.code ? `(code: ${participantError.code})` : '',
+      ].filter(Boolean)
+      return { error: `당사자 등록 실패: ${detailParts.join(' / ') || '알 수 없는 오류'}` }
     }
 
     const newParticipantId = participant.id
@@ -210,7 +216,13 @@ export async function createParticipant(formData: {
         )
 
       if (fsError) {
-        return { error: `재원 등록 실패: ${fsError.message}` }
+        const detailParts = [
+          fsError.message,
+          fsError.details,
+          fsError.hint,
+          fsError.code ? `(code: ${fsError.code})` : '',
+        ].filter(Boolean)
+        return { error: `재원 등록 실패: ${detailParts.join(' / ')}` }
       }
     }
 
