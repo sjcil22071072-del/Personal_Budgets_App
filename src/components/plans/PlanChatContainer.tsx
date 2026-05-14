@@ -6,8 +6,6 @@ import { suggestActivityOptions, suggestMethodOptions, savePlan } from '@/app/ac
 import { formatCurrency } from '@/utils/budget-visuals'
 import { speak } from '@/utils/tts'
 import WaterCupPlanPreview from '@/components/home/WaterCupPlanPreview'
-import PlaceSearch from '@/components/map/PlaceSearch'
-import type { PlaceResult } from '@/app/actions/geocode'
 import { getActivityEmoji } from '@/utils/activityEmoji'
 
 type WizardStage = 'loading' | 'activity' | 'method' | 'when' | 'where' | 'confirm' | 'feedback' | 'done'
@@ -50,7 +48,6 @@ export default function PlanChatContainer({
   // 방법 선택 단계에서 물컵 미리보기 hover 인덱스
   const [hoveredMethodIndex, setHoveredMethodIndex] = useState<number | null>(null)
   // 장소 선택
-  const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null)
   // 로딩·저장
   const [saving, setSaving] = useState(false)
 
@@ -134,10 +131,6 @@ export default function PlanChatContainer({
           { name: selectedMethod, cost: selectedCost, time: selectedWhen, icon: getActivityEmoji(selectedActivity) },
         ],
         selectedOptionIndex: 0,
-        details: { activity: selectedActivity, when: selectedWhen, where: selectedPlace?.place_name ?? undefined },
-        place_name: selectedPlace?.place_name ?? null,
-        place_lat: selectedPlace?.lat ?? null,
-        place_lng: selectedPlace?.lng ?? null,
       })
       router.refresh()
       setStage('feedback')
@@ -154,7 +147,6 @@ export default function PlanChatContainer({
     setSelectedMethod('')
     setSelectedCost(0)
     setSelectedWhen('')
-    setSelectedPlace(null)
     setCustomActivity('')
     setCustomMethod('')
     setCustomCost('')
@@ -351,32 +343,6 @@ export default function PlanChatContainer({
         </div>
       )}
 
-      {/* 단계 3.5 — 어디서 */}
-      {stage === 'where' && (
-        <div className="flex flex-col gap-4 p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-3xl">📍</span>
-            <div>
-              <p className="text-xs font-bold text-zinc-400">{selectedActivity} · {selectedWhen}</p>
-              <h2 className="text-lg font-black text-zinc-900">어디서 할 거예요?</h2>
-            </div>
-          </div>
-
-          <PlaceSearch
-            onSelect={(place) => { setSelectedPlace(place); setStage('confirm') }}
-            onClear={() => setSelectedPlace(null)}
-            selectedPlace={selectedPlace}
-            defaultQuery={selectedActivity}
-          />
-
-          <button
-            onClick={() => { setSelectedPlace(null); setStage('confirm') }}
-            className="w-full py-4 rounded-2xl bg-zinc-50 text-zinc-400 font-black text-sm ring-1 ring-zinc-100 active:scale-[0.97] transition-transform"
-          >
-            건너뛰기 →
-          </button>
-        </div>
-      )}
 
       {/* 단계 4 — 확인 */}
       {stage === 'confirm' && (
@@ -390,9 +356,6 @@ export default function PlanChatContainer({
             <SummaryRow icon="🎯" label={selectedActivity} />
             <SummaryRow icon="📌" label={selectedMethod} />
             <SummaryRow icon="📅" label={selectedWhen} />
-            {selectedPlace && (
-              <SummaryRow icon="📍" label={selectedPlace.place_name} sub={selectedPlace.road_address_name || selectedPlace.address_name} />
-            )}
             <SummaryRow
               icon="💰"
               label={`${formatCurrency(selectedCost)}원 예상`}

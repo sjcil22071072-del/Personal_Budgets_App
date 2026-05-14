@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -18,7 +19,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/calendar', icon: '📅', label: '달력' },
   { href: '/plan',     icon: '🤔', label: '나의 계획' },
   { href: '/gallery',  icon: '📸', label: '사진 모아보기' },
-  { href: '/map',      icon: '🗺️', label: '사용 장소 지도' },
   {
     href: '/more',
     icon: '⚙️',

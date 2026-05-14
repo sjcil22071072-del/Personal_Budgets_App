@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -84,6 +85,7 @@ export default function HomeDashboard({
 
   // 미리보기 등 외부에서 uiPreferences prop이 바뀌면 즉시 동기화
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalPreferences(uiPreferences ?? DEFAULT_PREFERENCES)
   }, [uiPreferences])
 
@@ -285,23 +287,6 @@ export default function HomeDashboard({
               ))
             )}
           </section>
-        )
-
-      case 'map_widget':
-        return (
-          <Link
-            href="/map"
-            className="group flex items-center gap-4 p-5 rounded-2xl bg-white ring-1 ring-zinc-200 hover:ring-zinc-900 hover:bg-zinc-50 transition-all shadow-sm active:scale-[0.98]"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-              <span className="text-3xl">🗺️</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-black text-zinc-800 text-base">활동 지도</p>
-              <p className="text-xs text-zinc-400 font-bold mt-0.5">돈을 쓴 곳을 지도에서 봐요</p>
-            </div>
-            <span className="text-zinc-300 group-hover:text-zinc-600 transition-colors text-lg">▸</span>
-          </Link>
         )
 
       case 'activity_gallery':

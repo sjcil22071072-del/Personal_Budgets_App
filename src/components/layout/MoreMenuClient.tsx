@@ -146,6 +146,7 @@ export default function MoreMenuClient({
                 ].map((s) => (
                   <button
                     key={s.id}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     onClick={() => setFontSize(s.id as any)}
                     className={`flex-1 flex flex-col items-center justify-center py-4 rounded-2xl transition-all border-2
                       ${fontSize === s.id

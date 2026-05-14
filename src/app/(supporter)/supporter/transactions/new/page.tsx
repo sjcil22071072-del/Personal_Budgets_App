@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useRouter } from 'next/navigation'
@@ -5,8 +6,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createTransaction, getParticipantsWithFundingSources, getMonthlyPlansForDate } from '@/app/actions/transaction'
 import type { ParticipantWithFundingSources } from '@/app/actions/transaction'
-import PlaceSearch from '@/components/map/PlaceSearch'
-import type { PlaceResult } from '@/app/actions/geocode'
 
 export default function NewTransactionPage() {
   const router = useRouter()
@@ -28,7 +27,6 @@ export default function NewTransactionPage() {
   const [isExpense, setIsExpense] = useState(true) // 지출/수입 토글
   const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
-  const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null)
   const [monthlyPlans, setMonthlyPlans] = useState<{ id: string; order_index: number; title: string }[]>([])
   const [selectedMonthlyPlan, setSelectedMonthlyPlan] = useState('')
 
@@ -53,7 +51,7 @@ export default function NewTransactionPage() {
       }
     })
     return () => { cancelled = true }
-  }, [selectedParticipant, date])
+  }, [selectedParticipant, date, selectedMonthlyPlan])
 
   async function loadParticipants() {
     setLoading(true)
@@ -109,12 +107,6 @@ export default function NewTransactionPage() {
       formData.append('status', status)
       formData.append('is_expense', String(isExpense))
       formData.append('payment_method', paymentMethod)
-
-      if (selectedPlace) {
-        formData.append('place_name', selectedPlace.place_name)
-        formData.append('place_lat', String(selectedPlace.lat))
-        formData.append('place_lng', String(selectedPlace.lng))
-      }
 
       if (selectedMonthlyPlan) {
         formData.append('monthly_plan_id', selectedMonthlyPlan)
@@ -289,18 +281,6 @@ export default function NewTransactionPage() {
               />
             </fieldset>
 
-            {/* 결제 장소 / 세부 내용 */}
-            <fieldset className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">
-                {isExpense ? '결제 장소' : '세부 내용'} <span className="normal-case font-medium text-zinc-300">(선택)</span>
-              </label>
-              <PlaceSearch
-                onSelect={setSelectedPlace}
-                onClear={() => setSelectedPlace(null)}
-                selectedPlace={selectedPlace}
-                defaultQuery={activityName}
-              />
-            </fieldset>
 
             {/* 분류 */}
             <fieldset className="flex flex-col gap-3">
