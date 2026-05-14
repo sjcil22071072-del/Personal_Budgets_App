@@ -35,14 +35,13 @@ type ThemeKey = keyof typeof THEME
 const SIM_PRESETS = [10000, 30000, 50000]
 
 function SimulationSection({
-  simAmount, setSimAmount, simValue, simBalance, isSimOver, displayBalance,
+  simAmount, setSimAmount, simValue, simBalance, isSimOver
 }: {
   simAmount: string
   setSimAmount: (v: string) => void
   simValue: number
   simBalance: number
   isSimOver: boolean
-  displayBalance: number
 }) {
   const [open, setOpen] = useState(false)
 
@@ -352,6 +351,7 @@ function EmojiViz({
   // 피커가 열릴 때 카탈로그 로드
   useEffect(() => {
     if (!showPicker || catalog.length > 0 || catalogLoading) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCatalogLoading(true)
     loadEmojiCatalog().then(data => {
       setCatalog(data)
@@ -954,7 +954,6 @@ export default function BalanceVisualWidget({
         simValue={simValue}
         simBalance={simBalance}
         isSimOver={isSimOver}
-        displayBalance={displayBalance}
       />
 
       {/* 상태 메시지 */}
@@ -1104,12 +1103,7 @@ export default function BalanceVisualWidget({
                         />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-zinc-400">원</span>
                       </div>
-                      <input
-                        type="date"
-                        value={uploadDate}
-                        onChange={(e) => setUploadDate(e.target.value)}
-                        className="w-full p-4 rounded-2xl bg-zinc-50 ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-base font-bold transition-all"
-                      />
+                     
                     </div>
 
                     {uploadToast && (

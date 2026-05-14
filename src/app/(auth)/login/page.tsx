@@ -140,7 +140,6 @@ function GoogleLoginContent() {
                     <span>• 이용계획서 자동 생성</span>
                     <span>• SIS-A 지원필요도 사정</span>
                     <span>• CSV 거래내역 가져오기</span>
-                    <span>• 활동 지도 (카카오맵)</span>
                     <span>• TTS 음성 읽기</span>
                     <span>• AI 쉬운 요약</span>
                   </div>
@@ -171,48 +170,6 @@ function GoogleLoginContent() {
           </div>
         </div>
       </div>
-
-      {/* 이스터에그 */}
-      {easterEggOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
-          onClick={() => setEasterEggOpen(false)}
-        >
-          <div
-            className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-2xl mb-4 text-center">💬</p>
-            <p className="text-sm text-slate-700 leading-relaxed mb-1">
-              "훌륭한 삶이란 사랑으로 힘을 얻고 지식으로 길잡이를 삼는 삶이다."
-            </p>
-            <p className="text-xs text-slate-400 text-right mb-4">— 버트런드 러셀</p>
-            <p className="text-xs text-slate-500 italic leading-relaxed mb-1">
-              "The good life is one inspired by love and guided by knowledge."
-            </p>
-            <p className="text-xs text-slate-400 text-right mb-5">— Bertrand Russell</p>
-            <div className="h-px bg-slate-100 mb-4" />
-            <p className="text-xs text-slate-500 leading-relaxed mb-1">
-              "행복의 비결은 이것이다: 당신의 관심사를 가능한 한 넓게 키우고,
-              당신의 관심사에 반응하는 것들에 대해 가능한 한 우호적으로 반응하라."
-            </p>
-            <p className="text-xs text-slate-400 text-right mb-5">— 버트런드 러셀, 《행복의 정복》</p>
-            <div className="w-full rounded-xl overflow-hidden mb-5">
-              <img
-                src="/images/26oJy.jpg"
-                alt="이스터에그 이미지"
-                className="w-full object-contain max-h-48"
-              />
-            </div>
-            <button
-              onClick={() => setEasterEggOpen(false)}
-              className="w-full py-2 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-700 transition-colors"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }
@@ -225,7 +182,6 @@ function DemoRoleSelectionContent() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<"admin" | "participant" | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [easterEggOpen, setEasterEggOpen] = useState(false);
 
   const handleRoleSelect = (role: "admin" | "participant") => {
     if (typeof window !== "undefined") {
@@ -249,13 +205,6 @@ function DemoRoleSelectionContent() {
 
         <div className="flex w-full max-w-2xl flex-col gap-8 rounded-3xl bg-white p-8 md:p-12 shadow-xl ring-1 ring-zinc-200">
           <div className="flex flex-col items-center gap-4 text-center">
-            <button
-              onClick={() => setEasterEggOpen(true)}
-              className="w-24 h-24 rounded-3xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-5xl shadow-lg hover:scale-105 transition-transform focus:outline-none"
-              aria-label="로고"
-            >
-              💰
-            </button>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
               중랑구청
             </h1>
@@ -364,7 +313,6 @@ function DemoRoleSelectionContent() {
                     <span>• 이용계획서 자동 생성</span>
                     <span>• SIS-A 지원필요도 사정</span>
                     <span>• CSV 거래내역 가져오기</span>
-                    <span>• 활동 지도 (카카오맵)</span>
                     <span>• TTS 음성 읽기</span>
                     <span>• AI 쉬운 요약</span>
                   </div>
@@ -393,28 +341,6 @@ function DemoRoleSelectionContent() {
           </div>
         </div>
       </div>
-
-      {easterEggOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
-          onClick={() => setEasterEggOpen(false)}
-        >
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-2xl mb-4 text-center">💬</p>
-            <p className="text-sm text-slate-700 leading-relaxed mb-1">"훌륭한 삶이란 사랑으로 힘을 얻고 지식으로 길잡이를 삼는 삶이다."</p>
-            <p className="text-xs text-slate-400 text-right mb-4">— 버트런드 러셀</p>
-            <p className="text-xs text-slate-500 italic leading-relaxed mb-1">"The good life is one inspired by love and guided by knowledge."</p>
-            <p className="text-xs text-slate-400 text-right mb-5">— Bertrand Russell</p>
-            <div className="h-px bg-slate-100 mb-4" />
-            <p className="text-xs text-slate-500 leading-relaxed mb-1">"행복의 비결은 이것이다: 당신의 관심사를 가능한 한 넓게 키우고, 당신의 관심사에 반응하는 것들에 대해 가능한 한 우호적으로 반응하라."</p>
-            <p className="text-xs text-slate-400 text-right mb-5">— 버트런드 러셀, 《행복의 정복》</p>
-            <div className="w-full rounded-xl overflow-hidden mb-5">
-              <img src="/images/26oJy.jpg" alt="이스터에그 이미지" className="w-full object-contain max-h-48" />
-            </div>
-            <button onClick={() => setEasterEggOpen(false)} className="w-full py-2 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-700 transition-colors">닫기</button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

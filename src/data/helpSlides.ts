@@ -115,11 +115,6 @@ export const HELP_SECTIONS: Record<string, HelpSection> = {
     title: '더보기 안내',
     slides: [
       {
-        icon: '🗺️',
-        title: '활동 지도',
-        body: '내가 돈을 쓴 장소를 지도에서 한눈에 볼 수 있어요. 어디서 활동했는지 한눈에 확인해 보세요.',
-      },
-      {
         icon: '🖼️',
         title: '사진 모아보기',
         body: '활동하면서 찍은 사진들을 달별로 모아서 볼 수 있어요. 즐거웠던 순간들을 다시 볼 수 있어요!',
