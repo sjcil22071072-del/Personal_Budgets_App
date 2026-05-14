@@ -708,18 +708,22 @@ export default function BalanceVisualWidget({
 
     const reader = new FileReader()
     reader.onloadend = async () => {
-      const base64 = (reader.result as string).split(',')[1]
-      setUploadPreview(reader.result as string)
+      const dataUrl = reader.result as string
+      setUploadPreview(dataUrl)
 
       // 영수증 모드일 때만 OCR 분석
       if (mode === 'receipt') {
         setUploadAnalyzing(true)
         try {
-          const result = await analyzeReceipt(base64)
+          const result = await analyzeReceipt(dataUrl)
           if (result.success && result.data) {
             setUploadDescription(result.data.store || '')
-            setUploadAmount(String(result.data.amount || ''))
+            if (result.data.amount != null) {
+              setUploadAmount(String(result.data.amount))
+            }
             if (result.data.date) setUploadDate(result.data.date)
+          } else if (!result.success) {
+            setUploadToast(result.error ?? '영수증 자동 읽기에 실패했어요.')
           }
         } catch (err) {
           console.error('OCR 분석 실패:', err)
@@ -754,14 +758,16 @@ export default function BalanceVisualWidget({
       setSecondPreview(reader.result as string)
       // 활동사진이 첫 번째 파일일 때 두 번째 파일(영수증)에 OCR 실행
       if (uploadMode === 'activity') {
-        const base64 = (reader.result as string).split(',')[1]
+        const dataUrl = reader.result as string
         setUploadAnalyzing(true)
         try {
-          const result = await analyzeReceipt(base64)
+          const result = await analyzeReceipt(dataUrl)
           if (result.success && result.data) {
             if (result.data.store) setUploadDescription(result.data.store)
-            if (result.data.amount) setUploadAmount(String(result.data.amount))
+            if (result.data.amount != null) setUploadAmount(String(result.data.amount))
             if (result.data.date) setUploadDate(result.data.date)
+          } else if (!result.success) {
+            setUploadToast(result.error ?? '영수증 자동 읽기에 실패했어요.')
           }
         } catch (err) {
           console.error('OCR 분석 실패:', err)

@@ -50,16 +50,18 @@ export default function ReceiptUploadForm({
     setReceiptFile(file)
     const reader = new FileReader()
     reader.onloadend = async () => {
-      const base64 = (reader.result as string).split(',')[1]
-      setReceiptPreview(reader.result as string)
+      const dataUrl = reader.result as string
+      setReceiptPreview(dataUrl)
 
       setAnalyzing(true)
       try {
-        const result = await analyzeReceipt(base64)
+        const result = await analyzeReceipt(dataUrl)
         if (result.success && result.data) {
           const storeName = result.data.store || ''
           setDescription(storeName)
-          setAmount(String(result.data.amount || ''))
+          if (result.data.amount != null) {
+            setAmount(String(result.data.amount))
+          }
           if (result.data.date) setDate(result.data.date)
 
           // 주소(우선) 또는 상호명으로 카카오 장소 자동 검색
@@ -69,9 +71,19 @@ export default function ReceiptUploadForm({
               if (places.length > 0) setAutoPlace(places[0])
             }).catch(() => {})
           }
+
+          if (!storeName && result.data.amount == null) {
+            setToast({
+              type: 'error',
+              message: '영수증에서 글자를 잘 못 읽었어요. 사진을 더 가깝게 찍거나 직접 입력해 주세요.',
+            })
+          }
+        } else if (!result.success) {
+          setToast({ type: 'error', message: `영수증 자동 읽기: ${result.error}` })
         }
       } catch (error) {
         console.error('분석 실패:', error)
+        setToast({ type: 'error', message: '영수증 자동 읽기에 실패했어요. 다시 시도해 주세요.' })
       } finally {
         setAnalyzing(false)
       }
