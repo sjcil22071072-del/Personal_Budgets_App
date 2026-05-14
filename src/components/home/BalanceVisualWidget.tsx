@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/utils/budget-visuals'
 import { createTransaction } from '@/app/actions/transaction'
-import { analyzeReceipt } from '@/app/actions/ocr'
 import { EasyTerm } from '@/components/ui/EasyTerm'
 import { speak } from '@/utils/tts'
 import {
@@ -660,7 +659,6 @@ export default function BalanceVisualWidget({
   const [uploadMode, setUploadMode] = useState<'receipt' | 'activity' | null>(null)
   const [uploadPreview, setUploadPreview] = useState<string | null>(null)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
-  const [uploadAnalyzing, setUploadAnalyzing] = useState(false)
   const [uploadDescription, setUploadDescription] = useState('')
   const [uploadAmount, setUploadAmount] = useState('')
   const [uploadDate, setUploadDate] = useState(new Date().toISOString().split('T')[0])
@@ -707,30 +705,8 @@ export default function BalanceVisualWidget({
     setUploadToast(null)
 
     const reader = new FileReader()
-    reader.onloadend = async () => {
-      const dataUrl = reader.result as string
-      setUploadPreview(dataUrl)
-
-      // 영수증 모드일 때만 OCR 분석
-      if (mode === 'receipt') {
-        setUploadAnalyzing(true)
-        try {
-          const result = await analyzeReceipt(dataUrl)
-          if (result.success && result.data) {
-            setUploadDescription(result.data.store || '')
-            if (result.data.amount != null) {
-              setUploadAmount(String(result.data.amount))
-            }
-            if (result.data.date) setUploadDate(result.data.date)
-          } else if (!result.success) {
-            setUploadToast(result.error ?? '영수증 자동 읽기에 실패했어요.')
-          }
-        } catch (err) {
-          console.error('OCR 분석 실패:', err)
-        } finally {
-          setUploadAnalyzing(false)
-        }
-      }
+    reader.onloadend = () => {
+      setUploadPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
     // input 리셋 (같은 파일 재선택 가능)
@@ -743,7 +719,6 @@ export default function BalanceVisualWidget({
     setUploadFile(null)
     setUploadDescription('')
     setUploadAmount('')
-    setUploadAnalyzing(false)
     setUploadToast(null)
     setSecondFile(null)
     setSecondPreview(null)
@@ -754,27 +729,8 @@ export default function BalanceVisualWidget({
     if (!file) return
     setSecondFile(file)
     const reader = new FileReader()
-    reader.onloadend = async () => {
+    reader.onloadend = () => {
       setSecondPreview(reader.result as string)
-      // 활동사진이 첫 번째 파일일 때 두 번째 파일(영수증)에 OCR 실행
-      if (uploadMode === 'activity') {
-        const dataUrl = reader.result as string
-        setUploadAnalyzing(true)
-        try {
-          const result = await analyzeReceipt(dataUrl)
-          if (result.success && result.data) {
-            if (result.data.store) setUploadDescription(result.data.store)
-            if (result.data.amount != null) setUploadAmount(String(result.data.amount))
-            if (result.data.date) setUploadDate(result.data.date)
-          } else if (!result.success) {
-            setUploadToast(result.error ?? '영수증 자동 읽기에 실패했어요.')
-          }
-        } catch (err) {
-          console.error('OCR 분석 실패:', err)
-        } finally {
-          setUploadAnalyzing(false)
-        }
-      }
     }
     reader.readAsDataURL(file)
     e.target.value = ''
@@ -1096,12 +1052,6 @@ export default function BalanceVisualWidget({
                     {uploadPreview && (
                       <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 ring-1 ring-zinc-200">
                         <img src={uploadPreview} alt="미리보기" className="w-full h-full object-cover" />
-                        {uploadAnalyzing && (
-                          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white backdrop-blur-sm">
-                            <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin mb-2" />
-                            <p className="font-black text-sm animate-pulse-gentle">영수증 읽는 중...</p>
-                          </div>
-                        )}
                       </div>
                     )}
 
@@ -1137,7 +1087,7 @@ export default function BalanceVisualWidget({
                         type="text"
                         value={uploadDescription}
                         onChange={(e) => setUploadDescription(e.target.value)}
-                        placeholder={uploadAnalyzing ? '사진 읽는 중...' : '무엇을 했나요? 편의점 간식처럼 적어 주세요'}
+                        placeholder="무엇을 했나요? 편의점 간식처럼 적어 주세요"
                         className="w-full p-4 rounded-2xl bg-zinc-50 ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-base font-bold transition-all"
                         required
                       />
@@ -1170,11 +1120,11 @@ export default function BalanceVisualWidget({
 
                     <button
                       type="button"
-                      disabled={uploadSubmitting || uploadAnalyzing || !uploadDescription || !uploadAmount}
+                      disabled={uploadSubmitting || !uploadDescription || !uploadAmount}
                       onClick={handleInlineSubmit}
                       className="w-full mt-4 py-4 rounded-2xl bg-green-600 text-white font-black text-base active:scale-[0.98] transition-all disabled:bg-zinc-300"
                     >
-                      {uploadSubmitting ? '기록하는 중...' : uploadAnalyzing ? '사진 읽는 중...' : '활동 기록하기'}
+                      {uploadSubmitting ? '기록하는 중...' : '활동 기록하기'}
                     </button>
 
                     <p className="text-center text-zinc-400 text-xs font-medium mt-2">

@@ -4,12 +4,8 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { createTransaction } from '@/app/actions/transaction'
-import { analyzeReceipt } from '@/app/actions/ocr'
-import { searchPlaces } from '@/app/actions/geocode'
-import type { PlaceResult } from '@/app/actions/geocode'
 import { EasyTerm } from '@/components/ui/EasyTerm'
 import SelfCheckFeedback from '@/components/ui/SelfCheckFeedback'
-import { speak } from '@/utils/tts'
 
 interface FundingSource {
   id: string
@@ -25,7 +21,6 @@ export default function ReceiptUploadForm({
 }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [analyzing, setAnalyzing] = useState(false)
   const [toast, setToast] = useState<{type: 'success' | 'error', message: string} | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
 
@@ -41,52 +36,14 @@ export default function ReceiptUploadForm({
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  // 자동 감지된 장소
-  const [autoPlace, setAutoPlace] = useState<PlaceResult | null>(null)
 
-  const handleReceiptChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setReceiptFile(file)
     const reader = new FileReader()
-    reader.onloadend = async () => {
-      const dataUrl = reader.result as string
-      setReceiptPreview(dataUrl)
-
-      setAnalyzing(true)
-      try {
-        const result = await analyzeReceipt(dataUrl)
-        if (result.success && result.data) {
-          const storeName = result.data.store || ''
-          setDescription(storeName)
-          if (result.data.amount != null) {
-            setAmount(String(result.data.amount))
-          }
-          if (result.data.date) setDate(result.data.date)
-
-          // 주소(우선) 또는 상호명으로 카카오 장소 자동 검색
-          const searchQuery = result.data.address || storeName
-          if (searchQuery) {
-            searchPlaces(searchQuery).then(places => {
-              if (places.length > 0) setAutoPlace(places[0])
-            }).catch(() => {})
-          }
-
-          if (!storeName && result.data.amount == null) {
-            setToast({
-              type: 'error',
-              message: '영수증에서 글자를 잘 못 읽었어요. 사진을 더 가깝게 찍거나 직접 입력해 주세요.',
-            })
-          }
-        } else if (!result.success) {
-          setToast({ type: 'error', message: `영수증 자동 읽기: ${result.error}` })
-        }
-      } catch (error) {
-        console.error('분석 실패:', error)
-        setToast({ type: 'error', message: '영수증 자동 읽기에 실패했어요. 다시 시도해 주세요.' })
-      } finally {
-        setAnalyzing(false)
-      }
+    reader.onloadend = () => {
+      setReceiptPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
   }
@@ -120,11 +77,6 @@ export default function ReceiptUploadForm({
       formData.set('amount', amount)
       if (receiptFile) formData.set('receipt', receiptFile)
       if (activityFile) formData.set('activity_image', activityFile)
-      if (autoPlace) {
-        formData.set('place_name', autoPlace.place_name)
-        formData.set('place_lat', String(autoPlace.lat))
-        formData.set('place_lng', String(autoPlace.lng))
-      }
 
       const result = await createTransaction(formData)
       if (result.success) {
@@ -163,20 +115,12 @@ export default function ReceiptUploadForm({
           onClick={() => document.getElementById('receipt-input')?.click()}
         >
           {receiptPreview ? (
-            <>
-              <img src={receiptPreview} alt="영수증 미리보기" className="w-full h-full object-cover" />
-              {analyzing && (
-                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white backdrop-blur-sm">
-                  <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin mb-3" />
-                  <p className="font-black animate-pulse">영수증 읽는 중...</p>
-                </div>
-              )}
-            </>
+            <img src={receiptPreview} alt="영수증 미리보기" className="w-full h-full object-cover" />
           ) : (
             <div className="flex flex-col items-center gap-2 text-zinc-400">
               <span className="text-5xl">🧾</span>
               <p className="font-bold"><EasyTerm formal="영수증 사진 선택" easy="물건 산 종이 사진 찍기" /> (선택)</p>
-              <p className="text-xs">사진을 찍으면 AI가 자동으로 내용을 읽어줘요</p>
+              <p className="text-xs">사진은 지원자 선생님이 확인할 때 참고해요</p>
             </div>
           )}
         </div>
@@ -218,30 +162,11 @@ export default function ReceiptUploadForm({
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={analyzing ? "AI가 분석하고 있어요..." : "예: 편의점 간식, 영화 티켓"}
+          placeholder="예: 편의점 간식, 영화 티켓"
           className="w-full p-4 rounded-2xl bg-white ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-lg font-bold transition-all"
           required
         />
       </div>
-
-      {/* 자동 감지된 장소 (OCR 결과) */}
-      {autoPlace && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-blue-50 ring-1 ring-blue-200">
-          <span className="text-base shrink-0">📍</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-black text-blue-700">장소 자동 감지</p>
-            <p className="text-sm font-bold text-blue-900 truncate">{autoPlace.place_name}</p>
-            <p className="text-xs text-blue-400 truncate">{autoPlace.road_address_name || autoPlace.address_name}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setAutoPlace(null)}
-            className="text-xs text-blue-400 hover:text-blue-600 font-bold shrink-0 px-2 py-1 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            지우기
-          </button>
-        </div>
-      )}
 
       {/* 금액 */}
       <div className="flex flex-col gap-2">
@@ -292,10 +217,10 @@ export default function ReceiptUploadForm({
       {/* 제출 버튼 */}
       <button
         type="submit"
-        disabled={loading || analyzing}
+        disabled={loading}
         className="w-full py-5 rounded-3xl bg-green-600 text-white text-xl font-black shadow-xl active:scale-95 disabled:bg-zinc-300 transition-all mt-4"
       >
-        {loading ? '등록 중...' : analyzing ? 'AI 분석 중...' : '활동 기록하기'}
+        {loading ? '등록 중...' : '활동 기록하기'}
       </button>
 
       <p className="text-center text-zinc-400 text-sm font-medium">

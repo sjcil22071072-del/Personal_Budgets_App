@@ -21,7 +21,7 @@
 | Tailwind CSS | 4 (PostCSS) |
 | Supabase | PostgreSQL + Auth + Storage |
 | 폰트 | Pretendard (CDN) |
-| AI | OpenAI GPT-4o (영수증 OCR, 평가 요약) |
+| AI | OpenAI GPT-4o (계획·평가 요약 등) |
 | 지도 | Kakao Maps JavaScript SDK + REST API |
 
 ---
@@ -171,7 +171,7 @@ export async function myAction(formData: FormData) {
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 클라이언트용 anon 키 |
 | `SUPABASE_SERVICE_ROLE_KEY` | 서버 전용 서비스 롤 키 (절대 노출 금지) |
 | `NEXT_PUBLIC_DEMO_MODE` | `"true"` = 데모 모드 활성화 |
-| `OPENAI_API_KEY` | GPT-4o (OCR, AI 요약) |
+| `OPENAI_API_KEY` | GPT-4o (AI 요약·계획 등) |
 | `NEXT_PUBLIC_KAKAO_MAP_API_KEY` | 카카오 지도 JS SDK |
 | `KAKAO_REST_API_KEY` | 카카오 장소 검색 REST API |
 
