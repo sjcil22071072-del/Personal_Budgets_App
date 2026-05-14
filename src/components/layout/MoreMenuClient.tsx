@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useState } from 'react'
-import { useAccessibility } from '@/hooks/useAccessibility'
-import { createClient } from '@/utils/supabase/client'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useState } from "react";
+import { useAccessibility } from "@/hooks/useAccessibility";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface FileLink {
-  id: string
-  title: string
-  url: string
-  file_type: string
+  id: string;
+  title: string;
+  url: string;
+  file_type: string;
 }
 
 function SectionToggle({
@@ -18,9 +18,9 @@ function SectionToggle({
   open,
   onToggle,
 }: {
-  title: string
-  open: boolean
-  onToggle: () => void
+  title: string;
+  open: boolean;
+  onToggle: () => void;
 }) {
   return (
     <button
@@ -28,39 +28,60 @@ function SectionToggle({
       onClick={onToggle}
       className="w-full flex items-center justify-between py-1 mb-2"
     >
-      <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest ml-2">{title}</h3>
-      <span className="text-zinc-400 text-xs font-bold mr-1">{open ? '▲ 접기' : '▼ 펼치기'}</span>
+      <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest ml-2">
+        {title}
+      </h3>
+      <span className="text-zinc-400 text-xs font-bold mr-1">
+        {open ? "▲ 접기" : "▼ 펼치기"}
+      </span>
     </button>
-  )
+  );
 }
 
 export default function MoreMenuClient({
   fileLinks,
   initialOpenSection,
 }: {
-  fileLinks: FileLink[]
-  initialOpenSection?: string
+  fileLinks: FileLink[];
+  initialOpenSection?: string;
 }) {
-  const { fontSize, setFontSize, highContrast, setHighContrast, easyTerms, setEasyTerms, yellowBg, setYellowBg, darkMode, setDarkMode } = useAccessibility()
-  const supabase = createClient()
-  const router = useRouter()
+  const {
+    fontSize,
+    setFontSize,
+    highContrast,
+    setHighContrast,
+    easyTerms,
+    setEasyTerms,
+    yellowBg,
+    setYellowBg,
+    darkMode,
+    setDarkMode,
+  } = useAccessibility();
+  const supabase = createClient();
+  const router = useRouter();
 
-  const [openMyRecord, setOpenMyRecord] = useState(true)
-  const [openQuickNav, setOpenQuickNav] = useState(true)
-  const [openDisplay, setOpenDisplay] = useState(initialOpenSection === 'display')
-  const [openFiles, setOpenFiles] = useState(initialOpenSection === 'files')
+  const [openMyRecord, setOpenMyRecord] = useState(true);
+  const [openQuickNav, setOpenQuickNav] = useState(true);
+  const [openDisplay, setOpenDisplay] = useState(
+    initialOpenSection === "display",
+  );
+  const [openFiles, setOpenFiles] = useState(initialOpenSection === "files");
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <div className="flex flex-col gap-6">
       {/* 나의 기록 */}
       <section className="flex flex-col">
-        <SectionToggle title="나의 기록" open={openMyRecord} onToggle={() => setOpenMyRecord(v => !v)} />
+        <SectionToggle
+          title="나의 기록"
+          open={openMyRecord}
+          onToggle={() => setOpenMyRecord((v) => !v)}
+        />
         {openMyRecord && (
           <div className="flex flex-col gap-3">
             <Link
@@ -68,10 +89,14 @@ export default function MoreMenuClient({
               className="flex items-center justify-between p-5 rounded-[2rem] bg-violet-600 text-white shadow-xl hover:bg-violet-700 transition-all active:scale-[0.98] group"
             >
               <div className="flex items-center gap-4">
-                <span className="text-3xl group-hover:scale-110 transition-transform">🎯</span>
+                <span className="text-3xl group-hover:scale-110 transition-transform">
+                  🎯
+                </span>
                 <div className="flex flex-col">
                   <span className="text-lg font-black">내 목표 보기</span>
-                  <span className="text-xs font-bold text-violet-200">올해 나의 지원 목표 확인하기</span>
+                  <span className="text-xs font-bold text-violet-200">
+                    올해 나의 지원 목표 확인하기
+                  </span>
                 </div>
               </div>
               <span className="text-2xl">▸</span>
@@ -81,10 +106,16 @@ export default function MoreMenuClient({
               className="flex items-center justify-between p-5 rounded-[2rem] bg-zinc-900 text-white shadow-xl hover:bg-zinc-800 transition-all active:scale-[0.98] group"
             >
               <div className="flex items-center gap-4">
-                <span className="text-3xl group-hover:scale-110 transition-transform">💌</span>
+                <span className="text-3xl group-hover:scale-110 transition-transform">
+                  💌
+                </span>
                 <div className="flex flex-col">
-                  <span className="text-lg font-black">지원자 선생님의 편지</span>
-                  <span className="text-xs font-bold text-zinc-400">나의 한 달 활동 이야기 보기</span>
+                  <span className="text-lg font-black">
+                    지원자 선생님의 편지
+                  </span>
+                  <span className="text-xs font-bold text-zinc-400">
+                    나의 한 달 활동 이야기 보기
+                  </span>
                 </div>
               </div>
               <span className="text-2xl">▸</span>
@@ -95,35 +126,32 @@ export default function MoreMenuClient({
 
       {/* 빠른 이동 */}
       <section className="flex flex-col">
-        <SectionToggle title="빠른 이동" open={openQuickNav} onToggle={() => setOpenQuickNav(v => !v)} />
+        <SectionToggle
+          title="빠른 이동"
+          open={openQuickNav}
+          onToggle={() => setOpenQuickNav((v) => !v)}
+        />
         {openQuickNav && (
           <div className="grid grid-cols-2 gap-3">
-            <Link
-              href="/plan"
-              className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.98] group"
-            >
-              <span className="text-3xl group-hover:scale-110 transition-transform">🤔</span>
-              <span className="text-sm font-black text-zinc-800">오늘 계획</span>
-            </Link>
             <Link
               href="/calendar"
               className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.98] group"
             >
-              <span className="text-3xl group-hover:scale-110 transition-transform">📅</span>
+              <span className="text-3xl group-hover:scale-110 transition-transform">
+                📅
+              </span>
               <span className="text-sm font-black text-zinc-800">달력</span>
-            </Link>
-            <Link
-              href="/map"
-              className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.98] group"
-            >
-              <span className="text-3xl group-hover:scale-110 transition-transform">🗺️</span>
             </Link>
             <Link
               href="/gallery"
               className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.98] group"
             >
-              <span className="text-3xl group-hover:scale-110 transition-transform">📸</span>
-              <span className="text-sm font-black text-zinc-800">사진 모아보기</span>
+              <span className="text-3xl group-hover:scale-110 transition-transform">
+                📸
+              </span>
+              <span className="text-sm font-black text-zinc-800">
+                사진 모아보기
+              </span>
             </Link>
           </div>
         )}
@@ -131,29 +159,39 @@ export default function MoreMenuClient({
 
       {/* 화면 설정 */}
       <section className="flex flex-col">
-        <SectionToggle title="화면 설정" open={openDisplay} onToggle={() => setOpenDisplay(v => !v)} />
+        <SectionToggle
+          title="화면 설정"
+          open={openDisplay}
+          onToggle={() => setOpenDisplay((v) => !v)}
+        />
         {openDisplay && (
           <div className="bg-white rounded-[2rem] p-6 ring-1 ring-zinc-200 shadow-sm flex flex-col gap-6">
             {/* 글자 크기 */}
             <div className="flex flex-col gap-3">
-              <p className="text-sm font-bold text-zinc-600">🔤 글자 크기를 조절할 수 있어요.</p>
+              <p className="text-sm font-bold text-zinc-600">
+                🔤 글자 크기를 조절할 수 있어요.
+              </p>
               <div className="flex gap-2">
                 {[
-                  { id: 'normal', label: '가', size: '기본' },
-                  { id: 'large', label: '가', size: '크게' },
-                  { id: 'huge', label: '가', size: '매우 크게' },
+                  { id: "normal", label: "가", size: "기본" },
+                  { id: "large", label: "가", size: "크게" },
+                  { id: "huge", label: "가", size: "매우 크게" },
                 ].map((s) => (
                   <button
                     key={s.id}
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     onClick={() => setFontSize(s.id as any)}
                     className={`flex-1 flex flex-col items-center justify-center py-4 rounded-2xl transition-all border-2
-                      ${fontSize === s.id
-                        ? 'bg-zinc-900 border-zinc-900 text-white shadow-lg scale-105'
-                        : 'bg-zinc-50 border-transparent text-zinc-400 hover:bg-zinc-100'}
+                      ${
+                        fontSize === s.id
+                          ? "bg-zinc-900 border-zinc-900 text-white shadow-lg scale-105"
+                          : "bg-zinc-50 border-transparent text-zinc-400 hover:bg-zinc-100"
+                      }
                     `}
                   >
-                    <span className={`font-black ${s.id === 'normal' ? 'text-sm' : s.id === 'large' ? 'text-xl' : 'text-3xl'}`}>
+                    <span
+                      className={`font-black ${s.id === "normal" ? "text-sm" : s.id === "large" ? "text-xl" : "text-3xl"}`}
+                    >
                       {s.label}
                     </span>
                     <span className="text-[10px] font-bold mt-1">{s.size}</span>
@@ -165,68 +203,92 @@ export default function MoreMenuClient({
             {/* 고대비 모드 */}
             <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-700">🌗 글씨가 더 잘 보여요</span>
-                <span className="text-xs text-zinc-400 font-medium">글씨와 배경의 대비를 높여요</span>
+                <span className="text-sm font-bold text-zinc-700">
+                  🌗 글씨가 더 잘 보여요
+                </span>
+                <span className="text-xs text-zinc-400 font-medium">
+                  글씨와 배경의 대비를 높여요
+                </span>
               </div>
               <button
                 onClick={() => setHighContrast(!highContrast)}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${highContrast ? 'bg-zinc-900' : 'bg-zinc-200'}`}
+                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${highContrast ? "bg-zinc-900" : "bg-zinc-200"}`}
                 role="switch"
                 aria-checked={highContrast}
                 aria-label="글씨 더 잘 보이기 전환"
               >
-                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${highContrast ? 'left-7' : 'left-1'}`} />
+                <div
+                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${highContrast ? "left-7" : "left-1"}`}
+                />
               </button>
             </div>
 
             {/* 다크 모드 */}
             <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-700">🌙 다크 모드</span>
-                <span className="text-xs text-zinc-400 font-medium">눈부심을 줄이기 위해 어두운 배경을 사용해요</span>
+                <span className="text-sm font-bold text-zinc-700">
+                  🌙 다크 모드
+                </span>
+                <span className="text-xs text-zinc-400 font-medium">
+                  눈부심을 줄이기 위해 어두운 배경을 사용해요
+                </span>
               </div>
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${darkMode ? 'bg-indigo-600' : 'bg-zinc-200'}`}
+                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${darkMode ? "bg-indigo-600" : "bg-zinc-200"}`}
                 role="switch"
                 aria-checked={darkMode}
                 aria-label="다크 모드 전환"
               >
-                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${darkMode ? 'left-7' : 'left-1'}`} />
+                <div
+                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${darkMode ? "left-7" : "left-1"}`}
+                />
               </button>
             </div>
 
             {/* 쉬운 말 모드 */}
             <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-700">💬 쉬운 말 모드</span>
-                <span className="text-xs text-zinc-400 font-medium">쉬운 말로 바꿔요</span>
+                <span className="text-sm font-bold text-zinc-700">
+                  💬 쉬운 말 모드
+                </span>
+                <span className="text-xs text-zinc-400 font-medium">
+                  쉬운 말로 바꿔요
+                </span>
               </div>
               <button
                 onClick={() => setEasyTerms(!easyTerms)}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${easyTerms ? 'bg-blue-600' : 'bg-zinc-200'}`}
+                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${easyTerms ? "bg-blue-600" : "bg-zinc-200"}`}
                 role="switch"
                 aria-checked={easyTerms}
                 aria-label="쉬운 용어 모드 전환"
               >
-                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${easyTerms ? 'left-7' : 'left-1'}`} />
+                <div
+                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${easyTerms ? "left-7" : "left-1"}`}
+                />
               </button>
             </div>
 
             {/* 노란 배경 모드 */}
             <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-700">🟡 노란 배경 모드</span>
-                <span className="text-xs text-zinc-400 font-medium">글 읽기 어려운 분을 위해 배경을 노란색으로 바꿔요</span>
+                <span className="text-sm font-bold text-zinc-700">
+                  🟡 노란 배경 모드
+                </span>
+                <span className="text-xs text-zinc-400 font-medium">
+                  글 읽기 어려운 분을 위해 배경을 노란색으로 바꿔요
+                </span>
               </div>
               <button
                 onClick={() => setYellowBg(!yellowBg)}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${yellowBg ? 'bg-yellow-400' : 'bg-zinc-200'}`}
+                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${yellowBg ? "bg-yellow-400" : "bg-zinc-200"}`}
                 role="switch"
                 aria-checked={yellowBg}
                 aria-label="노란 배경 모드 전환"
               >
-                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${yellowBg ? 'left-7' : 'left-1'}`} />
+                <div
+                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${yellowBg ? "left-7" : "left-1"}`}
+                />
               </button>
             </div>
           </div>
@@ -235,7 +297,11 @@ export default function MoreMenuClient({
 
       {/* 내 서류함 */}
       <section className="flex flex-col">
-        <SectionToggle title="내 서류함" open={openFiles} onToggle={() => setOpenFiles(v => !v)} />
+        <SectionToggle
+          title="내 서류함"
+          open={openFiles}
+          onToggle={() => setOpenFiles((v) => !v)}
+        />
         {openFiles && (
           <div className="bg-white rounded-[2rem] p-6 ring-1 ring-zinc-200 shadow-sm flex flex-col gap-3">
             {fileLinks.length === 0 ? (
@@ -256,11 +322,17 @@ export default function MoreMenuClient({
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">📄</span>
                       <div className="flex flex-col">
-                        <span className="text-sm font-black text-zinc-800">{file.title}</span>
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase">{file.file_type}</span>
+                        <span className="text-sm font-black text-zinc-800">
+                          {file.title}
+                        </span>
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                          {file.file_type}
+                        </span>
                       </div>
                     </div>
-                    <span className="text-zinc-300 group-hover:text-zinc-900 transition-colors">→</span>
+                    <span className="text-zinc-300 group-hover:text-zinc-900 transition-colors">
+                      →
+                    </span>
                   </a>
                 ))}
               </div>
@@ -279,5 +351,5 @@ export default function MoreMenuClient({
         </button>
       </section>
     </div>
-  )
+  );
 }

@@ -31,6 +31,7 @@ export default function ProfileEditClient({ profile, userEmail, isAdminEmail }: 
       await updateProfile(formData)
       setToast({ type: 'success', message: '프로필이 저장되었습니다.' })
       router.refresh()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setToast({ type: 'error', message: err.message || '저장 실패' })
     } finally {

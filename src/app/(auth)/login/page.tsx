@@ -16,7 +16,6 @@ function GoogleLoginContent() {
   const error = searchParams.get("error");
   const [loading, setLoading] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [easterEggOpen, setEasterEggOpen] = useState(false);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -42,13 +41,6 @@ function GoogleLoginContent() {
         <div className="flex w-full max-w-md flex-col gap-8 rounded-3xl bg-white p-8 md:p-12 shadow-xl ring-1 ring-zinc-200">
           {/* 로고 */}
           <div className="flex flex-col items-center gap-4 text-center">
-            <button
-              onClick={() => setEasterEggOpen(true)}
-              className="w-24 h-24 rounded-3xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-5xl shadow-lg hover:scale-105 transition-transform focus:outline-none"
-              aria-label="로고"
-            >
-              💰
-            </button>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
               중랑구청
             </h1>
