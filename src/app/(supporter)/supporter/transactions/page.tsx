@@ -5,7 +5,8 @@ import Link from "next/link";
 import { formatCurrency } from "@/utils/budget-visuals";
 import TransactionTableClient from "@/components/transactions/TransactionTableClient";
 import AdminHelpButton from "@/components/help/AdminHelpButton";
-import { isStaffRole } from "@/utils/user-role";
+import { isStaffRole, isSupporterRole } from "@/utils/user-role";
+import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
 
 export default async function TransactionsPage({
   searchParams,
@@ -30,13 +31,8 @@ export default async function TransactionsPage({
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole();
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect("/");
   }
 
@@ -45,7 +41,7 @@ export default async function TransactionsPage({
     .from("participants")
     .select("id, name, funding_sources ( id, name )");
 
-  if (profile.role === "supporter") {
+  if (isSupporterRole(authProfile.role)) {
     participantsQuery = participantsQuery.eq("assigned_supporter_id", user.id);
   }
 
@@ -129,7 +125,7 @@ export default async function TransactionsPage({
 
   txQuery = txQuery.limit(100);
 
-  if (profile.role === "supporter") {
+  if (isSupporterRole(authProfile.role)) {
     const myParticipantIds = (participants || []).map((p: any) => p.id);
     if (myParticipantIds.length > 0) {
       txQuery = txQuery.in("participant_id", myParticipantIds);

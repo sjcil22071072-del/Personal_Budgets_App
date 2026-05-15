@@ -6,6 +6,7 @@ import { getMonthlyPlans } from '@/app/actions/monthlyPlan'
 import { getSupportGoals } from '@/app/actions/supportGoal'
 import { parseMonth } from '@/utils/date'
 import { isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface Props {
   params: Promise<{ participantId: string; month: string }>
@@ -17,12 +18,8 @@ export default async function MonthlyPlansEditPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, role')
-    .eq('id', user.id)
-    .single()
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 

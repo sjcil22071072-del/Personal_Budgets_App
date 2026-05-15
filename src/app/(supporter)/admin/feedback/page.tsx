@@ -3,14 +3,15 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function FeedbackPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!profile || !isStaffRole(profile.role)) redirect('/')
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) redirect('/')
 
   const admin = createAdminClient()
 

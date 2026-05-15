@@ -352,6 +352,7 @@ function EmojiViz({
   // 피커가 열릴 때 카탈로그 로드
   useEffect(() => {
     if (!showPicker || catalog.length > 0 || catalogLoading) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCatalogLoading(true)
     loadEmojiCatalog().then(data => {
       setCatalog(data)

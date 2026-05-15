@@ -3,6 +3,8 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { Database } from '@/types/database'
 import { SupporterLayoutClient } from './SupporterLayoutClient'
+import { normalizeRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,13 +33,11 @@ export default async function SupporterLayout({
       redirect('/login')
     }
 
-    const { data: userData } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if ((userData as any)?.role === 'participant') {
+    const authProfile = await getAuthenticatedUserProfileRole()
+    if (!authProfile) {
+      redirect('/login')
+    }
+    if (normalizeRole(authProfile.role) === 'participant') {
       redirect('/')
     }
   }

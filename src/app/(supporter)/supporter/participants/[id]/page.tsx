@@ -6,6 +6,7 @@ import { getMonthlyPlanProgress } from '@/app/actions/monthlyPlan'
 import { getSupportGoals } from '@/app/actions/supportGoal'
 import { getRecentMonths } from '@/utils/date'
 import { isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -18,13 +19,8 @@ export default async function ParticipantDashboardPage({ params }: Props) {
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 

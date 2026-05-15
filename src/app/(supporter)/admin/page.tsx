@@ -6,6 +6,8 @@ import { Suspense } from "react";
 import AlertPanel from "@/components/admin/AlertPanel";
 import AdminHelpButton from "@/components/help/AdminHelpButton";
 import AdminParticipantBoard from "@/components/admin/AdminParticipantBoard";
+import { isAdminRole, isSupporterRole } from "@/utils/user-role";
+import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -19,44 +21,27 @@ export default async function AdminDashboardPage({
 
   if (!user) redirect("/login");
 
-  const adminClient = createAdminClient();
+  const authProfile = await getAuthenticatedUserProfileRole();
+  if (!authProfile) redirect("/login");
 
-  const profileData = await adminClient
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const profile = profileData.data?.data ?? profileData.data;
-
-  const role = String(profile?.role ?? "")
-    .trim()
-    .toLowerCase();
-
-  console.log("HOME USER:", user.id);
-  console.log("HOME PROFILE:", profile);
-  console.log("HOME ROLE:", role);
-
-  const isAdmin =
-    role === "admin" || role === "superadmin" || role === "super_admin";
-
-  if (!profile || !isAdmin) {
-    if (role === "supporter") {
+  if (!isAdminRole(authProfile.role)) {
+    if (isSupporterRole(authProfile.role)) {
       redirect("/supporter");
     }
 
     redirect("/");
   }
 
-  const isSuppoterView = params.view === "supporter";
-  const selectedSupporterId = params.supporter_id || "";
+  const adminClient = createAdminClient();
 
-  // 실무자 목록 조회 (뷰 토글용)
-  const { data: supporters } = await supabase
+  const { data: supporters } = await adminClient
     .from("profiles")
     .select("id, name, email")
     .eq("role", "supporter")
     .order("name", { ascending: true });
+
+  const isSuppoterView = params.view === "supporter";
+  const selectedSupporterId = params.supporter_id || "";
 
   const selectedSupporterName =
     (supporters || []).find((s: any) => s.id === selectedSupporterId)?.name ||
@@ -141,7 +126,7 @@ export default async function AdminDashboardPage({
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">👋</span>
             <h2 className="text-xl font-black">
-              안녕하세요, {profile.name || "관리자"}님
+              안녕하세요, {authProfile.name || "관리자"}님
             </h2>
           </div>
           <p className="text-sm text-zinc-300 font-medium">

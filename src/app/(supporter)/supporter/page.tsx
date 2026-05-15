@@ -2,7 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
-import { isStaffRole } from '@/utils/user-role'
+import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function SupporterPage() {
   const supabase = await createClient()
@@ -10,14 +11,8 @@ export default async function SupporterPage() {
 
   if (!user) redirect('/login')
 
-  // 지원자 또는 관리자 권한 확인
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
@@ -29,7 +24,7 @@ export default async function SupporterPage() {
       funding_sources ( id, name, monthly_budget, current_month_balance, current_year_balance )
     `)
 
-  if (profile.role === 'supporter') {
+  if (isSupporterRole(authProfile.role)) {
     query = query.eq('assigned_supporter_id', user.id)
   }
 
@@ -52,7 +47,7 @@ export default async function SupporterPage() {
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">통합 대시보드</h1>
         <div className="px-4 py-2 bg-zinc-200 rounded-lg text-sm font-bold text-zinc-700">
-          {profile.name || '지원자'} 담당
+          {authProfile.name || '지원자'} 담당
         </div>
       </header>
 

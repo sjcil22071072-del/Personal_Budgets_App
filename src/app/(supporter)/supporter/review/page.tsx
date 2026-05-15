@@ -5,7 +5,8 @@ import Link from 'next/link'
 import ReviewQueueClient from '@/components/transactions/ReviewQueueClient'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { getSignedImageUrls } from '@/app/actions/storage'
-import { isStaffRole } from '@/utils/user-role'
+import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function ReviewQueuePage() {
   const supabase = await createClient()
@@ -13,13 +14,8 @@ export default async function ReviewQueuePage() {
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
@@ -28,7 +24,7 @@ export default async function ReviewQueuePage() {
     .from('participants')
     .select('id, name, funding_sources(id, name)')
 
-  if (profile.role === 'supporter') {
+  if (isSupporterRole(authProfile.role)) {
     participantsQuery = participantsQuery.eq('assigned_supporter_id', user.id)
   }
 
@@ -66,7 +62,7 @@ export default async function ReviewQueuePage() {
     .eq('status', 'pending')
     .order('date', { ascending: false })
 
-  if (profile.role === 'supporter' && participantIds.length > 0) {
+  if (isSupporterRole(authProfile.role) && participantIds.length > 0) {
     txQuery = txQuery.in('participant_id', participantIds)
   }
 

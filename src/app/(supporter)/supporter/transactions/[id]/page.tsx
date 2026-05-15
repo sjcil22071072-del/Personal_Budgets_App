@@ -4,6 +4,7 @@ import Link from 'next/link'
 import TransactionDetailClient from './TransactionDetailClient'
 import { getSignedImageUrl } from '@/app/actions/storage'
 import { isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -16,13 +17,8 @@ export default async function TransactionDetailPage({ params }: PageProps) {
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 

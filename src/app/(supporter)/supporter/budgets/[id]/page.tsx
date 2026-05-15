@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import BudgetDetailsView from '@/components/budgets/BudgetDetailsView'
 import { isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function BudgetDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -12,13 +13,8 @@ export default async function BudgetDetailsPage({ params }: { params: Promise<{ 
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
@@ -72,7 +68,7 @@ export default async function BudgetDetailsPage({ params }: { params: Promise<{ 
       recentTransactions={recentTransactions || []}
       thisMonthSpent={thisMonthSpent}
       totalMonthlyBudget={totalMonthlyBudget}
-      userRole={profile.role}
+      userRole={authProfile.role}
     />
   )
 }

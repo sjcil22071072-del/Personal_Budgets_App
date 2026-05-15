@@ -9,7 +9,8 @@ import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { getMonthlyPlanProgress } from '@/app/actions/monthlyPlan'
 import { parseMonth, getRecentMonths } from '@/utils/date'
 import { formatCurrency } from '@/utils/budget-visuals'
-import { isStaffRole } from '@/utils/user-role'
+import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 // ── 통일된 섹션 카드 래퍼 ────────────────────────────────────────────────────
 function SectionCard({
@@ -72,18 +73,13 @@ export default async function EvaluationsPage({
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
   let query = supabase.from('participants').select('id, name')
-  if (profile.role === 'supporter') {
+  if (isSupporterRole(authProfile.role)) {
     query = query.eq('assigned_supporter_id', user.id)
   }
   const { data: participants } = await query

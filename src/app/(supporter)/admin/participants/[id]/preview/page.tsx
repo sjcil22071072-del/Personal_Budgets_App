@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import PreviewClient from './PreviewClient'
 import { getSignedImageUrls } from '@/app/actions/storage'
 import { isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -27,22 +28,21 @@ export default async function ParticipantPreviewPage({ params }: PageProps) {
   const lastDayOfMonth = `${year}-${String(month + 1).padStart(2, '0')}-${String(totalDaysInMonth).padStart(2, '0')}`
   const sixMonthsAgo = new Date(year, month - 5, 1).toISOString().split('T')[0]
 
-  // 독립적인 4개 쿼리 병렬 실행 (순차 대기 → 동시 대기)
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
+    redirect('/')
+  }
+
+  // 독립적인 3개 쿼리 병렬 실행 (순차 대기 → 동시 대기)
   const [
-    { data: adminProfile },
     { data: participant },
     { data: allParticipants },
     { data: recentTransactions },
   ] = await Promise.all([
-    supabase.from('profiles').select('id, role, name').eq('id', user.id).single(),
     supabase.from('participants').select('*, funding_sources(*)').eq('id', id).single(),
     supabase.from('participants').select('id, name').order('name', { ascending: true }),
     supabase.from('transactions').select('*').eq('participant_id', id).order('date', { ascending: false }).limit(3),
   ])
-
-  if (!adminProfile || !isStaffRole(adminProfile.role)) {
-    redirect('/')
-  }
   if (!participant) redirect('/admin/participants')
 
   // 이번 달 일별 거래 + 6개월 범위 거래 병렬 실행 (순차 대기 → 동시 대기)

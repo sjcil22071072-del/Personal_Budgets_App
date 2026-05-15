@@ -6,6 +6,7 @@ import { getCarePlan } from '@/app/actions/carePlan'
 import { CARE_PLAN_LABELS } from '@/types/care-plans'
 import type { CarePlanType } from '@/types/care-plans'
 import { isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface Props {
   params: Promise<{ participantId: string; planType: string }>
@@ -25,13 +26,8 @@ export default async function CarePlanEditPage({ params, searchParams }: Props) 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 

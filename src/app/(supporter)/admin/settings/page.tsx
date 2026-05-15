@@ -1,8 +1,9 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { getEvalTemplateSetting } from '@/app/actions/evalTemplates'
 import AdminSettingsClient from './AdminSettingsClient'
 import { isAdminRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function AdminSettingsPage() {
   const supabase = await createClient()
@@ -10,19 +11,15 @@ export default async function AdminSettingsPage() {
 
   if (!user) redirect('/login')
 
-  // 관리자 권한 확인
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const authProfile = await getAuthenticatedUserProfileRole()
 
-  if (!profile || !isAdminRole(profile.role)) {
+  if (!authProfile || !isAdminRole(authProfile.role)) {
     redirect('/')
   }
 
-  // 전체 사용자 목록 조회
-  const { data: allProfiles } = await supabase
+  const admin = createAdminClient()
+  // 전체 사용자 목록 조회 (관리자 전용 — RLS 회피)
+  const { data: allProfiles } = await admin
     .from('profiles')
     .select('*')
     .order('created_at', { ascending: false })

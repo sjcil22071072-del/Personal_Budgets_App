@@ -2,7 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
-import { isStaffRole } from '@/utils/user-role'
+import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function ParticipantsOverviewPage() {
   const supabase = await createClient()
@@ -10,13 +11,8 @@ export default async function ParticipantsOverviewPage() {
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, role, name')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
@@ -24,7 +20,7 @@ export default async function ParticipantsOverviewPage() {
     .from('participants')
     .select('id, name, funding_sources ( id, name, monthly_budget, current_month_balance )')
 
-  if (profile.role === 'supporter') {
+  if (isSupporterRole(authProfile.role)) {
     query = query.eq('assigned_supporter_id', user.id)
   }
 

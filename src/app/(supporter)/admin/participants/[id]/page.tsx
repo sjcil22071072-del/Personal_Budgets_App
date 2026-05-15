@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantDetailClient from './ParticipantDetailClient'
 import { isAdminRole, isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -15,14 +16,9 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
 
   if (!user) redirect('/login')
 
-  // 관리자 또는 지원자 권한 확인
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const authProfile = await getAuthenticatedUserProfileRole()
 
-  if (!profile || !isStaffRole(profile.role)) {
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
@@ -65,8 +61,8 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
   const totalYearBalance = fundingSources.reduce((acc: number, fs: any) => acc + Number(fs.current_year_balance), 0)
   const monthPercentage = totalMonthlyBudget > 0 ? Math.round((totalMonthBalance / totalMonthlyBudget) * 100) : 0
 
-  const backUrl = isAdminRole(profile.role) ? '/admin/participants' : '/supporter'
-  const isAdmin = isAdminRole(profile.role)
+  const backUrl = isAdminRole(authProfile.role) ? '/admin/participants' : '/supporter'
+  const isAdmin = isAdminRole(authProfile.role)
 
   return (
     <ParticipantDetailClient

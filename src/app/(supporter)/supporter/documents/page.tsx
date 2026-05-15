@@ -4,7 +4,8 @@ import { redirect } from 'next/navigation'
 import DocumentManagerClient from '@/components/documents/DocumentManagerClient'
 import { getAllSisAssessments } from '@/app/actions/sisAssessment'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
-import { isStaffRole } from '@/utils/user-role'
+import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function SupporterDocumentsPage({
   searchParams,
@@ -16,14 +17,8 @@ export default async function SupporterDocumentsPage({
 
   if (!user) redirect('/login')
 
-  // 지원자 정보 조회
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || !isStaffRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
@@ -32,7 +27,7 @@ export default async function SupporterDocumentsPage({
     .from('participants')
     .select('id, name')
 
-  if (profile.role === 'supporter') {
+  if (isSupporterRole(authProfile.role)) {
     participantsQuery = participantsQuery.eq('assigned_supporter_id', user.id)
   }
 

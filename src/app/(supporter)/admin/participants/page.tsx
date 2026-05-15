@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ParticipantsList from '@/components/participants/ParticipantsList'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { isAdminRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function AdminParticipantsPage() {
   const supabase = await createClient()
@@ -13,15 +14,8 @@ export default async function AdminParticipantsPage() {
 
   if (!user) redirect('/login')
 
-  // 관리자 권한 확인
-  const profileResult = await adminClient
-    .from('profiles')
-    .select('id, role')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  const profile = (profileResult.data as any)?.data ?? profileResult.data
-  if (!profile || !isAdminRole(profile.role)) {
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isAdminRole(authProfile.role)) {
     redirect('/')
   }
 

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
 import PrintButton from './PrintButton'
 import { isStaffRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -24,8 +25,8 @@ export default async function ParticipantReportPage({ params, searchParams }: Pa
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!profile || !isStaffRole(profile.role)) redirect('/')
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) redirect('/')
 
   const { data: participant } = await supabase
     .from('participants')
