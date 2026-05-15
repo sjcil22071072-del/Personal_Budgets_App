@@ -9,6 +9,7 @@ import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { getMonthlyPlanProgress } from '@/app/actions/monthlyPlan'
 import { parseMonth, getRecentMonths } from '@/utils/date'
 import { formatCurrency } from '@/utils/budget-visuals'
+import { isStaffRole } from '@/utils/user-role'
 
 // ── 통일된 섹션 카드 래퍼 ────────────────────────────────────────────────────
 function SectionCard({
@@ -77,7 +78,7 @@ export default async function EvaluationsPage({
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'supporter' && profile.role !== 'admin')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 

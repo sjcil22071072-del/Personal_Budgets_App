@@ -2,6 +2,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { isStaffRole } from '@/utils/user-role'
 
 export default async function FeedbackPage() {
   const supabase = await createClient()
@@ -9,7 +10,7 @@ export default async function FeedbackPage() {
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!profile || !['admin', 'supporter'].includes(profile.role)) redirect('/')
+  if (!profile || !isStaffRole(profile.role)) redirect('/')
 
   const admin = createAdminClient()
 

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import DocumentManagerClient from '@/components/documents/DocumentManagerClient'
 import { getAllSisAssessments } from '@/app/actions/sisAssessment'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
+import { isStaffRole } from '@/utils/user-role'
 
 export default async function SupporterDocumentsPage({
   searchParams,
@@ -22,7 +23,7 @@ export default async function SupporterDocumentsPage({
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'supporter' && profile.role !== 'admin')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 

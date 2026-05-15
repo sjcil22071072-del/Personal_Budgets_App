@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantDetailClient from './ParticipantDetailClient'
+import { isAdminRole, isStaffRole } from '@/utils/user-role'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -21,7 +22,7 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 
@@ -64,8 +65,8 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
   const totalYearBalance = fundingSources.reduce((acc: number, fs: any) => acc + Number(fs.current_year_balance), 0)
   const monthPercentage = totalMonthlyBudget > 0 ? Math.round((totalMonthBalance / totalMonthlyBudget) * 100) : 0
 
-  const backUrl = profile.role === 'admin' ? '/admin/participants' : '/supporter'
-  const isAdmin = profile.role === 'admin'
+  const backUrl = isAdminRole(profile.role) ? '/admin/participants' : '/supporter'
+  const isAdmin = isAdminRole(profile.role)
 
   return (
     <ParticipantDetailClient

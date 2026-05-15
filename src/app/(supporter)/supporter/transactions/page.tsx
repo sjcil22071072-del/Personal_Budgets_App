@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/utils/budget-visuals";
 import TransactionTableClient from "@/components/transactions/TransactionTableClient";
 import AdminHelpButton from "@/components/help/AdminHelpButton";
+import { isStaffRole } from "@/utils/user-role";
 
 export default async function TransactionsPage({
   searchParams,
@@ -35,7 +36,7 @@ export default async function TransactionsPage({
     .eq("id", user.id)
     .single();
 
-  if (!profile || (profile.role !== "supporter" && profile.role !== "admin")) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect("/");
   }
 

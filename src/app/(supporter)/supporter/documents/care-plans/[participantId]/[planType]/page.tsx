@@ -5,6 +5,7 @@ import CarePlanForm from '@/components/documents/CarePlanForm'
 import { getCarePlan } from '@/app/actions/carePlan'
 import { CARE_PLAN_LABELS } from '@/types/care-plans'
 import type { CarePlanType } from '@/types/care-plans'
+import { isStaffRole } from '@/utils/user-role'
 
 interface Props {
   params: Promise<{ participantId: string; planType: string }>
@@ -30,7 +31,7 @@ export default async function CarePlanEditPage({ params, searchParams }: Props) 
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 

@@ -5,6 +5,7 @@ import MonthlyPlansClient from './MonthlyPlansClient'
 import { getMonthlyPlans } from '@/app/actions/monthlyPlan'
 import { getSupportGoals } from '@/app/actions/supportGoal'
 import { parseMonth } from '@/utils/date'
+import { isStaffRole } from '@/utils/user-role'
 
 interface Props {
   params: Promise<{ participantId: string; month: string }>
@@ -21,7 +22,7 @@ export default async function MonthlyPlansEditPage({ params }: Props) {
     .select('id, role')
     .eq('id', user.id)
     .single()
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
 import PrintButton from './PrintButton'
+import { isStaffRole } from '@/utils/user-role'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -24,7 +25,7 @@ export default async function ParticipantReportPage({ params, searchParams }: Pa
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) redirect('/')
+  if (!profile || !isStaffRole(profile.role)) redirect('/')
 
   const { data: participant } = await supabase
     .from('participants')

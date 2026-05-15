@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantsList from '@/components/participants/ParticipantsList'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
+import { isAdminRole } from '@/utils/user-role'
 
 export default async function AdminParticipantsPage() {
   const supabase = await createClient()
@@ -20,13 +21,7 @@ export default async function AdminParticipantsPage() {
     .maybeSingle()
 
   const profile = (profileResult.data as any)?.data ?? profileResult.data
-  const role = String(profile?.role ?? '').trim().toLowerCase()
-  const isAdmin =
-    role === 'admin' ||
-    role === 'superadmin' ||
-    role === 'super_admin'
-
-  if (!profile || !isAdmin) {
+  if (!profile || !isAdminRole(profile.role)) {
     redirect('/')
   }
 

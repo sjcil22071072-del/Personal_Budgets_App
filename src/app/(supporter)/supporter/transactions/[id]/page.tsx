@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import TransactionDetailClient from './TransactionDetailClient'
 import { getSignedImageUrl } from '@/app/actions/storage'
+import { isStaffRole } from '@/utils/user-role'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -21,7 +22,7 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 

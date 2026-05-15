@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ReviewQueueClient from '@/components/transactions/ReviewQueueClient'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { getSignedImageUrls } from '@/app/actions/storage'
+import { isStaffRole } from '@/utils/user-role'
 
 export default async function ReviewQueuePage() {
   const supabase = await createClient()
@@ -18,7 +19,7 @@ export default async function ReviewQueuePage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'supporter' && profile.role !== 'admin')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 

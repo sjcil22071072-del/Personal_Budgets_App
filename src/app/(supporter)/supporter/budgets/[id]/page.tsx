@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import BudgetDetailsView from '@/components/budgets/BudgetDetailsView'
+import { isStaffRole } from '@/utils/user-role'
 
 export default async function BudgetDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -17,7 +18,7 @@ export default async function BudgetDetailsPage({ params }: { params: Promise<{ 
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 

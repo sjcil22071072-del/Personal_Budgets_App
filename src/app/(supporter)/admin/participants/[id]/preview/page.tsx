@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import PreviewClient from './PreviewClient'
 import { getSignedImageUrls } from '@/app/actions/storage'
+import { isStaffRole } from '@/utils/user-role'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -38,7 +40,7 @@ export default async function ParticipantPreviewPage({ params }: PageProps) {
     supabase.from('transactions').select('*').eq('participant_id', id).order('date', { ascending: false }).limit(3),
   ])
 
-  if (!adminProfile || (adminProfile.role !== 'admin' && adminProfile.role !== 'supporter')) {
+  if (!adminProfile || !isStaffRole(adminProfile.role)) {
     redirect('/')
   }
   if (!participant) redirect('/admin/participants')

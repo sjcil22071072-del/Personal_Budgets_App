@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { getEvalTemplateSetting } from '@/app/actions/evalTemplates'
 import AdminSettingsClient from './AdminSettingsClient'
+import { isAdminRole } from '@/utils/user-role'
 
 export default async function AdminSettingsPage() {
   const supabase = await createClient()
@@ -16,7 +17,7 @@ export default async function AdminSettingsPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || !isAdminRole(profile.role)) {
     redirect('/')
   }
 

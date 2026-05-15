@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
+import { isStaffRole } from '@/utils/user-role'
 
 export default async function ParticipantsOverviewPage() {
   const supabase = await createClient()
@@ -15,7 +16,7 @@ export default async function ParticipantsOverviewPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'supporter' && profile.role !== 'admin')) {
+  if (!profile || !isStaffRole(profile.role)) {
     redirect('/')
   }
 

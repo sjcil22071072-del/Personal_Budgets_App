@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { getInvitations } from '@/app/actions/admin'
+import { isAdminRole } from '@/utils/user-role'
 import InvitationsClient from './InvitationsClient'
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +18,7 @@ export default async function InvitationsPage() {
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'admin') redirect('/supporter')
+  if (!isAdminRole(profile?.role)) redirect('/supporter')
 
   const { invitations, error } = await getInvitations()
 
