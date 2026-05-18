@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
 // GET: 지원자 목록 조회
@@ -11,8 +11,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 관리자 또는 지원자 권한 확인
-    const { data: profile } = await supabase
+    // adminClient로 RLS 우회해서 본인 role 조회
+    const adminClient = createAdminClient()
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -22,8 +23,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // 지원자 및 관리자 목록 조회
-    const { data: supporters, error } = await supabase
+    // 지원자 목록 조회
+    const { data: supporters, error } = await adminClient
       .from('profiles')
       .select('id, name, email, role')
       .in('role', ['admin', 'supporter'])
