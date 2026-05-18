@@ -89,7 +89,12 @@ export default async function EvaluationsPage({
   if (isSupporterRole(authProfile.role)) {
     query = query.eq("assigned_supporter_id", user.id);
   }
-  const { data: participants } = await query;
+
+  const { data: participants, error: participantsError } = await query;
+
+  console.log("authProfile:", authProfile);
+  console.log("participants:", participants);
+  console.log("participantsError:", participantsError);
 
   const carePlans = await getAllCarePlans().catch(() => []);
 
@@ -159,11 +164,6 @@ export default async function EvaluationsPage({
         transactions: transactions || [],
       };
     }
-    const { data: participants, error: participantsError } = await query;
-
-    console.log("authProfile:", authProfile);
-    console.log("participants:", participants);
-    console.log("participantsError:", participantsError);
   }
 
   return (
