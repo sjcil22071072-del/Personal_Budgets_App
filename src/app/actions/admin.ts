@@ -111,7 +111,6 @@ export async function getSupporters() {
     return { supporters: [], error: e?.message || '지원자 목록을 불러오지 못했습니다.' }
   }
 }
-
 /**
  * 최초 로그인 시 admin이 없으면 자동 admin 부여 (§2)
  * PostgreSQL RPC를 사용한 원자적(atomic) 처리로 Race Condition 방지
