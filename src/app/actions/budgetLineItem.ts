@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export interface BudgetLineItemInput {
@@ -40,14 +40,14 @@ export interface BudgetLineItem {
 async function assertStaff() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: '인증 필요', supabase, user: null }
+  if (!user) return { ok: false, error: '?�증 ?�요', supabase, user: null }
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role')
     .eq('id', user.id)
     .single()
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    return { ok: false, error: '권한이 없습니다.', supabase, user }
+    return { ok: false, error: '권한???�습?�다.', supabase, user }
   }
   return { ok: true, error: null, supabase, user }
 }
@@ -73,12 +73,12 @@ export async function getBudgetLineItems(carePlanId: string): Promise<BudgetLine
 
 export async function upsertBudgetLineItem(input: BudgetLineItemInput, participantId: string) {
   const { ok, error, supabase, user } = await assertStaff()
-  if (!ok || !user) return { error: error || '권한이 없습니다.' }
+  if (!ok || !user) return { error: error || '권한???�습?�다.' }
 
-  if (!input.category?.trim()) return { error: '항목 분류를 입력해주세요.' }
-  if (!input.item_name?.trim()) return { error: '항목 이름을 입력해주세요.' }
-  if (input.unit_cost < 0) return { error: '단가는 0 이상이어야 합니다.' }
-  if (input.quantity <= 0) return { error: '수량은 0보다 커야 합니다.' }
+  if (!input.category?.trim()) return { error: '??�� 분류�??�력?�주?�요.' }
+  if (!input.item_name?.trim()) return { error: '??�� ?�름???�력?�주?�요.' }
+  if (input.unit_cost < 0) return { error: '?��???0 ?�상?�어???�니??' }
+  if (input.quantity <= 0) return { error: '?�량?� 0보다 커야 ?�니??' }
 
   const payload = {
     care_plan_id: input.care_plan_id,
@@ -113,10 +113,10 @@ export async function upsertBudgetLineItem(input: BudgetLineItemInput, participa
 }
 
 export async function deleteBudgetLineItem(id: string, participantId: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '데모 모드에서는 삭제할 수 없습니다.' }
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '?�모 모드?�서????��?????�습?�다.' }
 
   const { ok, error, supabase } = await assertStaff()
-  if (!ok) return { error: error || '권한이 없습니다.' }
+  if (!ok) return { error: error || '권한???�습?�다.' }
 
   const { error: delErr } = await supabase
     .from('budget_line_items')

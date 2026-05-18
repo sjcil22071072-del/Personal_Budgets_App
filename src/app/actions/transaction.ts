@@ -42,7 +42,7 @@ export async function createTransaction(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  // 당사자는 profiles 테이블에 행이 없으므로 creator_id FK 위반 방지
+  // ?�사?�는 profiles ?�이블에 ?�이 ?�으므�?creator_id FK ?�반 방�?
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
@@ -55,7 +55,7 @@ export async function createTransaction(formData: FormData) {
   const rawAmount = Number(formData.get('amount'))
   const date = (formData.get('date') as string) || new Date().toISOString().split('T')[0]
   const description = formData.get('description') as string
-  const category = (formData.get('category') as string) || '기타'
+  const category = (formData.get('category') as string) || '기�?'
   const memo = formData.get('memo') as string
   const status = (formData.get('status') as 'pending' | 'confirmed') || 'pending'
   const is_expense = formData.get('is_expense') !== 'false'
@@ -72,7 +72,7 @@ export async function createTransaction(formData: FormData) {
   let receipt_image_url = null
   let activity_image_url = null
 
-  // 영수증 사진 업로드 (실패해도 거래 저장은 진행)
+  // ?�수�??�진 ?�로??(?�패?�도 거래 ?�?��? 진행)
   if (receiptFile && receiptFile.size > 0) {
     const fileExt = (receiptFile.name.split('.').pop() || 'jpg').toLowerCase()
     const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`
@@ -87,7 +87,7 @@ export async function createTransaction(formData: FormData) {
     }
   }
 
-  // 활동 사진 업로드
+  // ?�동 ?�진 ?�로??
   if (activityFile && activityFile.size > 0) {
     const fileExt = activityFile.name.split('.').pop()
     const fileName = `${participant_id}/${Date.now()}-activity.${fileExt}`
@@ -103,7 +103,7 @@ export async function createTransaction(formData: FormData) {
       activity_image_url = publicUrl
     } else {
       console.error('Activity photo upload error:', uploadError)
-      // 활동사진 실패해도 거래 자체는 저장 진행
+      // ?�동?�진 ?�패?�도 거래 ?�체???�??진행
     }
   }
 
@@ -159,7 +159,7 @@ export async function updateTransactionStatus(transactionId: string, newStatus: 
 }
 
 export async function deleteTransaction(transactionId: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('데모 모드에서는 삭제할 수 없습니다.')
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('?�모 모드?�서????��?????�습?�다.')
 
   const supabase = await createClient()
 
@@ -248,7 +248,7 @@ export async function updateTransactionDetail(
 }
 
 export async function deleteTransactionWithBalance(transactionId: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('데모 모드에서는 삭제할 수 없습니다.')
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('?�모 모드?�서????��?????�습?�다.')
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -322,19 +322,19 @@ export async function updateTransaction(
 }
 
 /**
- * 거래에 영수증/활동사진 업로드 및 URL 저장
+ * 거래???�수�??�동?�진 ?�로??�?URL ?�??
  */
 export async function updateTransactionImages(
   transactionId: string,
   participantId: string,
   formData: FormData
 ): Promise<{ success?: boolean; error?: string; receipt_image_url?: string; activity_image_url?: string }> {
-  // 인증 확인
+  // ?�증 ?�인
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  if (!user) return { error: '로그?�이 ?�요?�니??' }
 
-  // Storage·DB 조작은 서비스 롤 클라이언트 사용 (RLS 우회)
+  // Storage·DB 조작?� ?�비??�??�라?�언???�용 (RLS ?�회)
   const admin = createAdminClient()
 
   const receiptFile = formData.get('receipt') as File | null
@@ -349,9 +349,9 @@ export async function updateTransactionImages(
       .from('receipts')
       .upload(fileName, receiptFile, { upsert: true })
     if (uploadError) {
-      return { error: `영수증 업로드 실패: ${uploadError.message}` }
+      return { error: `?�수�??�로???�패: ${uploadError.message}` }
     }
-    // DB에는 공개 URL 형식으로 저장 (나중에 signed URL 생성 시 경로 추출에 사용)
+    // DB?�는 공개 URL ?�식?�로 ?�??(?�중??signed URL ?�성 ??경로 추출???�용)
     const { data: { publicUrl } } = admin.storage.from('receipts').getPublicUrl(fileName)
     imageUpdates.receipt_image_url = publicUrl
   }
@@ -363,9 +363,9 @@ export async function updateTransactionImages(
       .from('activity-photos')
       .upload(fileName, activityFile, { upsert: true })
     if (uploadError) {
-      return { error: `활동사진 업로드 실패: ${uploadError.message}` }
+      return { error: `?�동?�진 ?�로???�패: ${uploadError.message}` }
     }
-    // DB에는 공개 URL 형식으로 저장 (나중에 signed URL 생성 시 경로 추출에 사용)
+    // DB?�는 공개 URL ?�식?�로 ?�??(?�중??signed URL ?�성 ??경로 추출???�용)
     const { data: { publicUrl } } = admin.storage
       .from('activity-photos')
       .getPublicUrl(fileName)
@@ -373,7 +373,7 @@ export async function updateTransactionImages(
   }
 
   if (Object.keys(imageUpdates).length === 0) {
-    return { error: '업로드할 파일이 없습니다.' }
+    return { error: '?�로?�할 ?�일???�습?�다.' }
   }
 
   const { error } = await admin
@@ -381,12 +381,12 @@ export async function updateTransactionImages(
     .update(imageUpdates)
     .eq('id', transactionId)
 
-  if (error) return { error: `저장 실패: ${error.message}` }
+  if (error) return { error: `?�???�패: ${error.message}` }
 
   revalidatePath(`/supporter/transactions/${transactionId}`)
   revalidatePath('/supporter/transactions')
 
-  // 버킷이 private이므로 클라이언트에는 signed URL 반환
+  // 버킷??private?��?�??�라?�언?�에??signed URL 반환
   const SIGNED_URL_EXPIRES = 3600
   const signedResult: { receipt_image_url?: string; activity_image_url?: string } = {}
   if (imageUpdates.receipt_image_url) {
@@ -412,8 +412,8 @@ export async function updateTransactionImages(
 }
 
 /**
- * 특정 당사자의 특정 월(거래 날짜 기준) 월별 계획 목록을 반환.
- * 거래 등록/편집의 계획 드롭다운에서 사용.
+ * ?�정 ?�사?�의 ?�정 ??거래 ?�짜 기�?) ?�별 계획 목록??반환.
+ * 거래 ?�록/?�집??계획 ?�롭?�운?�서 ?�용.
  */
 export async function getMonthlyPlansForDate(
   participantId: string,

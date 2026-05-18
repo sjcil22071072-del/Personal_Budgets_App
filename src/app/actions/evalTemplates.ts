@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { OrgEvalSetting } from '@/types/eval-templates'
 import { DEFAULT_ORG_EVAL_SETTING } from '@/types/eval-templates'
@@ -31,7 +31,7 @@ export async function saveEvalTemplateSetting(
     .single()
 
   if (!profile || profile.role !== 'admin') {
-    return { success: false, error: '관리자만 설정을 변경할 수 있습니다.' }
+    return { success: false, error: '관리자�??�정??변경할 ???�습?�다.' }
   }
 
   const { error } = await supabase

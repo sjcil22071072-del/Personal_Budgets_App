@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { UIPreferences, OPTIONAL_BLOCKS } from '@/types/ui-preferences'
 
@@ -10,7 +10,7 @@ export async function saveUIPreferences(participantId: string, preferences: UIPr
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  // 권한 확인: 본인이거나 admin/supporter
+  // 권한 ?�인: 본인?�거??admin/supporter
   const isSelf = user.id === participantId
   if (!isSelf) {
     const { data: profile } = await supabase
@@ -23,7 +23,7 @@ export async function saveUIPreferences(participantId: string, preferences: UIPr
     }
   }
 
-  // enabled_blocks 유효성 검증 (OPTIONAL_BLOCKS 외 값 제거)
+  // enabled_blocks ?�효??검�?(OPTIONAL_BLOCKS ??�??�거)
   const validBlocks = preferences.enabled_blocks.filter(b =>
     (OPTIONAL_BLOCKS as string[]).includes(b)
   )

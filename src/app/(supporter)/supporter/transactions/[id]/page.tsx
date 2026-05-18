@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import TransactionDetailClient from './TransactionDetailClient'
@@ -13,8 +13,9 @@ interface PageProps {
 export default async function TransactionDetailPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const adminClient = createAdminClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const authProfile = await getAuthenticatedUserProfileRole()
@@ -22,7 +23,7 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     redirect('/')
   }
 
-  const { data: tx } = await supabase
+  const { data: tx } = await adminClient
     .from('transactions')
     .select(`
       *,
@@ -33,7 +34,6 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     .eq('id', id)
     .single()
 
-  // 영수증·활동사진 signed URL 변환 (private 버킷)
   const [signedReceipt, signedActivity] = await Promise.all([
     getSignedImageUrl(tx?.receipt_image_url ?? null, 'receipts'),
     getSignedImageUrl(tx?.activity_image_url ?? null, 'activity-photos'),

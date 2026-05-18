@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 
 export async function saveFeedback(
   context: string,
@@ -9,7 +9,7 @@ export async function saveFeedback(
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { success: false, error: '인증 필요' }
+    if (!user) return { success: false, error: '?�증 ?�요' }
 
     const { error } = await supabase
       .from('participant_feedback')
