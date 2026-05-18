@@ -87,18 +87,20 @@ export async function getAllUsers() {
   return { profiles: profiles || [] }
 }
 
-/**
- * 지원자 목록 조회 (관리자 전용)
- */
 export async function getSupporters() {
   try {
-    const { supabase } = await verifyAdmin()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { supporters: [], error: '로그인이 필요합니다.' }
 
-    const { data, error } = await supabase
+    // verifyAdmin() 대신 adminClient로 직접 조회
+    const adminClient = createAdminClient()
+
+    const { data, error } = await adminClient
       .from('profiles')
       .select('id, name, role')
       .eq('role', 'supporter')
-      .order('created_at', { ascending: false })
+      .order('name', { ascending: true })
 
     if (error) {
       console.error('[admin.getSupporters] query error:', error)
