@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -44,7 +44,7 @@ export interface MonthlyPlanProgress extends MonthlyPlan {
 }
 
 function normalizeMonth(month: string): string {
-  // 'YYYY-MM' ?�는 'YYYY-MM-DD' ??'YYYY-MM-01'
+  // 'YYYY-MM' ?�는 'YYYY-MM-DD' ??'YYYY-MM-01'
   const m = month.length === 7 ? `${month}-01` : month
   return m.slice(0, 8) + '01'
 }
@@ -52,14 +52,14 @@ function normalizeMonth(month: string): string {
 async function assertStaff() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: '?�증 ?�요', supabase, user: null }
+  if (!user) return { ok: false, error: '?�증 ?�요', supabase, user: null }
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role')
     .eq('id', user.id)
     .single()
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    return { ok: false, error: '권한???�습?�다.', supabase, user }
+    return { ok: false, error: '권한???�습?�다.', supabase, user }
   }
   return { ok: true, error: null, supabase, user }
 }
@@ -134,7 +134,7 @@ export async function getMonthlyPlanProgress(
 
 export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
   const { ok, error, supabase, user } = await assertStaff()
-  if (!ok || !user) return { error: error || '권한???�습?�다.' }
+  if (!ok || !user) return { error: error || '권한???�습?�다.' }
 
   const m = normalizeMonth(input.month)
 
@@ -155,9 +155,9 @@ export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
     updated_at: new Date().toISOString(),
   }
 
-  if (!payload.title) return { error: '?�목???�력?�주?�요.' }
+  if (!payload.title) return { error: '?�목???�력?�주?�요.' }
   if (payload.order_index < 1 || payload.order_index > 6) {
-    return { error: '계획 ?�서??1-6 ?�이?�야 ?�니??' }
+    return { error: '계획 ?�서??1-6 ?�이?�야 ?�니??' }
   }
 
   if (input.id) {
@@ -181,10 +181,10 @@ export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
 }
 
 export async function deleteMonthlyPlan(id: string, participantId: string, month: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '?�모 모드?�서????��?????�습?�다.' }
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '?�모 모드?�서????��?????�습?�다.' }
 
   const { ok, error, supabase } = await assertStaff()
-  if (!ok) return { error: error || '권한???�습?�다.' }
+  if (!ok) return { error: error || '권한???�습?�다.' }
 
   const { error: delErr } = await supabase
     .from('monthly_plans')
