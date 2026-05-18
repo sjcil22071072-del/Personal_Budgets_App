@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { calculateSisA } from '@/utils/sis-a'
 import type { SisSubScale } from '@/utils/sis-a'
@@ -27,11 +27,12 @@ export async function saveSisAssessment(
   assessedAt?: string
 ): Promise<{ success: boolean; data?: SisAssessmentRow; error?: string }> {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -43,7 +44,7 @@ export async function saveSisAssessment(
 
   const { std, totalStd, indexScore, percentile } = calculateSisA(rawScores)
 
-  const { data, error } = await supabase
+  const { data, error } = await adminClient
     .from('sis_assessments')
     .insert({
       participant_id: participantId,
@@ -71,9 +72,9 @@ export async function saveSisAssessment(
 
 /** 당사자별 SIS-A 평가 목록 */
 export async function getSisAssessments(participantId: string): Promise<SisAssessmentRow[]> {
-  const supabase = await createClient()
+  const adminClient = createAdminClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await adminClient
     .from('sis_assessments')
     .select('*')
     .eq('participant_id', participantId)
@@ -88,9 +89,9 @@ export async function getSisAssessments(participantId: string): Promise<SisAsses
 
 /** 전체 당사자 SIS-A 평가 목록 (서류 보관함 목록용) */
 export async function getAllSisAssessments(): Promise<SisAssessmentRow[]> {
-  const supabase = await createClient()
+  const adminClient = createAdminClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await adminClient
     .from('sis_assessments')
     .select('*')
     .order('assessed_at', { ascending: false })
@@ -107,11 +108,12 @@ export async function deleteSisAssessment(id: string): Promise<{ success: boolea
   if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { success: false, error: '데모 모드에서는 삭제할 수 없습니다.' }
 
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -121,7 +123,7 @@ export async function deleteSisAssessment(id: string): Promise<{ success: boolea
     return { success: false, error: '권한이 없습니다.' }
   }
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('sis_assessments')
     .delete()
     .eq('id', id)
