@@ -1,9 +1,11 @@
-import { createClient } from '@/utils/supabase/server'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantDetailClient from './ParticipantDetailClient'
 import { isAdminRole, isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
+import { getSupporters } from '@/app/actions/admin'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -12,26 +14,40 @@ interface PageProps {
 export default async function ParticipantDetailPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const adminClient = createAdminClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const authProfile = await getAuthenticatedUserProfileRole()
-
   if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
-  // 당사자 상세 정보
-  const { data: participant } = await supabase
-    .from('participants')
-    .select(`
-      *,
-      supporter:profiles!participants_assigned_supporter_id_fkey ( id, name ),
-      funding_sources ( * )
-    `)
-    .eq('id', id)
-    .single()
+  const isAdmin = isAdminRole(authProfile.role)
+
+  const [
+    { data: participant },
+    { data: recentTransactions },
+    supportersResult,
+  ] = await Promise.all([
+    adminClient
+      .from('participants')
+      .select(`
+        *,
+        supporter:profiles!participants_assigned_supporter_id_fkey ( id, name ),
+        funding_sources ( * )
+      `)
+      .eq('id', id)
+      .single(),
+    adminClient
+      .from('transactions')
+      .select('*')
+      .eq('participant_id', id)
+      .order('date', { ascending: false })
+      .limit(5),
+    isAdmin ? getSupporters() : Promise.resolve({ supporters: [], error: null }),
+  ])
 
   if (!participant) {
     return (
@@ -47,22 +63,13 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
     )
   }
 
-  // 최근 사용 내역
-  const { data: recentTransactions } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('participant_id', id)
-    .order('date', { ascending: false })
-    .limit(5)
-
   const fundingSources = participant.funding_sources || []
   const totalMonthlyBudget = fundingSources.reduce((acc: number, fs: any) => acc + Number(fs.monthly_budget), 0)
   const totalMonthBalance = fundingSources.reduce((acc: number, fs: any) => acc + Number(fs.current_month_balance), 0)
   const totalYearBalance = fundingSources.reduce((acc: number, fs: any) => acc + Number(fs.current_year_balance), 0)
   const monthPercentage = totalMonthlyBudget > 0 ? Math.round((totalMonthBalance / totalMonthlyBudget) * 100) : 0
 
-  const backUrl = isAdminRole(authProfile.role) ? '/admin/participants' : '/supporter'
-  const isAdmin = isAdminRole(authProfile.role)
+  const backUrl = isAdmin ? '/admin/participants' : '/supporter'
 
   return (
     <ParticipantDetailClient
@@ -75,6 +82,7 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
       totalMonthlyBudget={totalMonthlyBudget}
       backUrl={backUrl}
       isAdmin={isAdmin}
+      supporters={(supportersResult.supporters || []) as { id: string; name: string | null; role: string }[]}
     />
   )
 }
