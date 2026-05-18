@@ -11,39 +11,32 @@ import type { UserRole } from '@/types/database'
 async function verifyAdmin() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  
+ 
   if (!user) throw new Error('로그인이 필요합니다.')
-
+ 
   const adminClient = createAdminClient()
-
-  const profileResult = await adminClient
+ 
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .maybeSingle()
-
-  const profile = (profileResult.data as any)?.data ?? profileResult.data
-
+ 
   const role = String(profile?.role ?? '').trim().toLowerCase()
-
+ 
   const isAdmin =
     role === 'admin' ||
     role === 'superadmin' ||
     role === 'super_admin'
-
+ 
   if (!isAdmin) {
-    console.error('verifyAdmin failed:', {
-      userId: user.id,
-      profileResult,
-      profile,
-      role,
-    })
-
+    console.error('verifyAdmin failed:', { userId: user.id, role })
     throw new Error('관리자 권한이 필요합니다.')
   }
-
+ 
   return { user, supabase: adminClient }
 }
+ 
 /**
  * 사용자 역할 변경
  */
@@ -92,21 +85,20 @@ export async function getSupporters() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { supporters: [], error: '로그인이 필요합니다.' }
-
-    // verifyAdmin() 대신 adminClient로 직접 조회
+ 
     const adminClient = createAdminClient()
-
+ 
     const { data, error } = await adminClient
       .from('profiles')
       .select('id, name, role')
       .eq('role', 'supporter')
       .order('name', { ascending: true })
-
+ 
     if (error) {
       console.error('[admin.getSupporters] query error:', error)
       return { supporters: [], error: error.message }
     }
-
+ 
     return { supporters: data || [] }
   } catch (e: any) {
     console.error('[admin.getSupporters] exception:', e)
