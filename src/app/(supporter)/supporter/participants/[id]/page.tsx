@@ -62,7 +62,6 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
   console.log("participant:", JSON.stringify(participant));
   console.log("participantError:", JSON.stringify(participantError));
   console.log("id:", id);
-
   if (!participant) {
     return (
       <div className="flex flex-col min-h-screen bg-background text-foreground pb-20">
@@ -75,9 +74,13 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
           </Link>
           <h1 className="text-xl font-bold tracking-tight">당사자 정보</h1>
         </header>
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center flex-col gap-4">
           <p className="text-zinc-400 font-medium">
             당사자를 찾을 수 없습니다.
+          </p>
+          <p className="text-red-500 text-xs font-mono">id: {id}</p>
+          <p className="text-red-500 text-xs font-mono">
+            error: {JSON.stringify(participantError)}
           </p>
         </main>
       </div>
