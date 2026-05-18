@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
 // PATCH: 지원자 배정
@@ -15,7 +15,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
+    const adminClient = createAdminClient()
+
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -28,11 +30,9 @@ export async function PATCH(
     const body = await request.json()
     const { supporter_id } = body
 
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('participants')
-      .update({
-        assigned_supporter_id: supporter_id,
-      })
+      .update({ assigned_supporter_id: supporter_id })
       .eq('id', id)
       .select()
       .single()
