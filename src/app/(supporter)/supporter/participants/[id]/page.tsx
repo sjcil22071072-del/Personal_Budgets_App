@@ -13,6 +13,7 @@ interface PageProps {
 
 export default async function ParticipantDetailPage({ params }: PageProps) {
   const { id } = await params;
+  console.log("ParticipantDetailPage called, id:", id); // 여기
   const supabase = await createClient();
   const adminClient = createAdminClient();
 
@@ -22,6 +23,7 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
   if (!user) redirect("/login");
 
   const authProfile = await getAuthenticatedUserProfileRole();
+  console.log("authProfile:", JSON.stringify(authProfile)); // 여기
   if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect("/");
   }
