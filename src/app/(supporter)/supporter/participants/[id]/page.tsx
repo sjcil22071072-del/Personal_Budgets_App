@@ -7,6 +7,8 @@ import { isAdminRole, isStaffRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
 import { getSupporters } from "@/app/actions/admin";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
