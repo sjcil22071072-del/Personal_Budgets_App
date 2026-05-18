@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantDetailClient from './ParticipantDetailClient'
@@ -14,25 +14,24 @@ interface PageProps {
 export default async function ParticipantDetailPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const adminClient = createAdminClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const authProfile = await getAuthenticatedUserProfileRole()
-
   if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
 
   const isAdmin = isAdminRole(authProfile.role)
 
-  // 당사자 상세 + 지원자 목록을 병렬 조회
   const [
     { data: participant },
     { data: recentTransactions },
     supportersResult,
   ] = await Promise.all([
-    supabase
+    adminClient
       .from('participants')
       .select(`
         *,
@@ -41,13 +40,12 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
       `)
       .eq('id', id)
       .single(),
-    supabase
+    adminClient
       .from('transactions')
       .select('*')
       .eq('participant_id', id)
       .order('date', { ascending: false })
       .limit(5),
-    // 관리자만 지원자 목록 조회 (일반 지원자는 빈 배열)
     isAdmin ? getSupporters() : Promise.resolve({ supporters: [], error: null }),
   ])
 
