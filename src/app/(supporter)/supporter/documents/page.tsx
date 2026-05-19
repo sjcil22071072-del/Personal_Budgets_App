@@ -24,7 +24,7 @@ export default async function SupporterDocumentsPage({
   }
 
   // 담당 당사자 목록 조회
-  let participantsQuery = supabase
+  let participantsQuery = adminClient
     .from('participants')
     .select('id, name')
 
@@ -32,23 +32,30 @@ export default async function SupporterDocumentsPage({
     participantsQuery = participantsQuery.eq('assigned_supporter_id', user.id)
   }
 
-  const { data: participants } = await participantsQuery
+  const { data: participants } = await participantsQuery.order('name', { ascending: true })
+  const participantIds = (participants || []).map((participant) => participant.id)
 
   // 기존 등록된 모든 서류 조회
   let documents: any[] = []
   try {
-    const { data: docsData } = await supabase
-      .from('file_links')
-      .select('*, participant:participants ( name )')
-      .order('created_at', { ascending: false })
-    documents = docsData || []
+    if (participantIds.length > 0) {
+      const { data: docsData } = await adminClient
+        .from('file_links')
+        .select('*, participant:participants ( name )')
+        .in('participant_id', participantIds)
+        .order('created_at', { ascending: false })
+      documents = docsData || []
+    }
   } catch {
     // file_links 테이블이 없거나 쿼리 실패 시 빈 배열
     documents = []
   }
 
   // SIS-A 평가 목록 조회 (migration 실행 전이면 빈 배열)
-  const sisAssessments = await getAllSisAssessments().catch(() => [])
+  const allSisAssessments = await getAllSisAssessments().catch(() => [])
+  const sisAssessments = participantIds.length > 0
+    ? allSisAssessments.filter((assessment) => participantIds.includes(assessment.participant_id))
+    : []
   const params = await searchParams
 
   return (
