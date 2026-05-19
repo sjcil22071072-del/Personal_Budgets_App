@@ -17,10 +17,13 @@ export default function HelpAutoTrigger({ sectionKey }: Props) {
   useEffect(() => {
     if (isFirstVisit) {
       // 페이지 로드 후 약간의 딜레이를 두고 열어 레이아웃이 안정된 뒤 표시
-      const timer = setTimeout(() => setOpen(true), 600)
+      const timer = setTimeout(() => {
+        markVisited()
+        setOpen(true)
+      }, 600)
       return () => clearTimeout(timer)
     }
-  }, [isFirstVisit])
+  }, [isFirstVisit, markVisited])
 
   if (!section || !open) return null
 
@@ -29,7 +32,6 @@ export default function HelpAutoTrigger({ sectionKey }: Props) {
       section={section}
       onClose={() => {
         setOpen(false)
-        markVisited()
       }}
     />
   )

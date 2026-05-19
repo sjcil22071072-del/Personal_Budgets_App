@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const PREFIX = 'help_visited_'
 
@@ -14,12 +14,12 @@ export function useFirstVisit(sectionKey: string): [boolean, () => void] {
     } catch {}
   }, [sectionKey])
 
-  const markVisited = () => {
+  const markVisited = useCallback(() => {
     try {
       localStorage.setItem(PREFIX + sectionKey, 'true')
     } catch {}
     setIsFirstVisit(false)
-  }
+  }, [sectionKey])
 
   return [isFirstVisit, markVisited]
 }
