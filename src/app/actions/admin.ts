@@ -88,11 +88,11 @@ export async function getSupporters() {
  
     const adminClient = createAdminClient()
  
-    const { data, error } = await adminClient
-      .from('profiles')
-      .select('id, name, role')
-      .eq('role', 'supporter')
-      .order('name', { ascending: true })
+const { data, error } = await adminClient
+  .from('profiles')
+  .select('id, name, role')
+  .in('role', ['supporter', 'admin'])
+  .order('name', { ascending: true })
  
     if (error) {
       console.error('[admin.getSupporters] query error:', error)
