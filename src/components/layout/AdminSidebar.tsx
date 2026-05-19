@@ -63,6 +63,11 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
     window.location.href = '/login'
   }
 
+  const handleSwitchAccount = async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/auth/login?switch=1'
+  }
+
   return (
     <aside className="h-full w-full bg-gradient-to-b from-slate-900 to-slate-800 text-slate-300 flex flex-col pb-4 shadow-2xl overflow-y-auto overflow-x-hidden">
       {/* 헤더 */}
@@ -187,6 +192,16 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
             <p className="text-xs text-slate-400 truncate">{user.email}</p>
           </div>
         )}
+        <button
+          onClick={handleSwitchAccount}
+          title={collapsed ? '다른 계정 로그인' : undefined}
+          className={`flex items-center gap-3 w-full rounded-xl text-left text-sm hover:bg-white/5 transition-all text-slate-400 hover:text-white py-2.5 ${
+            collapsed ? 'justify-center px-0' : 'px-3'
+          }`}
+        >
+          <span className="text-xl shrink-0">⇄</span>
+          {!collapsed && <span>다른 계정 로그인</span>}
+        </button>
         <button
           onClick={handleLogout}
           title={collapsed ? '로그아웃' : undefined}

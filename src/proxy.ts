@@ -53,6 +53,11 @@ export async function proxy(request: NextRequest) {
   // Logged in → redirect away from login page
   if (user && request.nextUrl.pathname.startsWith('/login')) {
     const url = request.nextUrl.clone()
+    if (url.searchParams.get('switch') === '1') {
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url)
+    }
+
     url.pathname = '/'
     return NextResponse.redirect(url)
   }

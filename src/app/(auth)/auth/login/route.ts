@@ -11,10 +11,17 @@ export async function GET(request: Request) {
       new URL(request.url).origin
 
   const supabase = await createClient()
+
+  // Starting a new login should not silently reuse the current app session.
+  await supabase.auth.signOut()
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: `${baseUrl}/auth/callback`,
+      queryParams: {
+        prompt: 'select_account',
+      },
     },
   })
 

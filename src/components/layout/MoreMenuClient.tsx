@@ -73,6 +73,11 @@ export default function MoreMenuClient({
     router.refresh();
   };
 
+  const handleSwitchAccount = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/auth/login?switch=1";
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* 나의 기록 */}
@@ -343,6 +348,12 @@ export default function MoreMenuClient({
 
       {/* 로그아웃 */}
       <section className="flex flex-col gap-4">
+        <button
+          onClick={handleSwitchAccount}
+          className="w-full p-5 rounded-[2rem] bg-blue-50 text-blue-600 font-black text-center ring-1 ring-blue-100 hover:bg-blue-100 transition-all active:scale-95"
+        >
+          다른 계정으로 로그인
+        </button>
         <button
           onClick={handleLogout}
           className="w-full p-5 rounded-[2rem] bg-red-50 text-red-600 font-black text-center ring-1 ring-red-100 hover:bg-red-100 transition-all active:scale-95"
