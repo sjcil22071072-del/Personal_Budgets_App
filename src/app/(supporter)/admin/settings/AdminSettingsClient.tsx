@@ -11,8 +11,10 @@ import EvalTemplateSettings from '@/components/admin/EvalTemplateSettings'
 interface Profile {
   id: string
   name: string | null
-  role: string
+  email: string | null
+  role: UserRole
   created_at: string
+  source: 'profile' | 'participant'
 }
 
 interface AdminSettingsClientProps {
@@ -22,10 +24,10 @@ interface AdminSettingsClientProps {
   evalSetting: OrgEvalSetting
 }
 
-const ROLE_OPTIONS: { value: UserRole; label: string; emoji: string; desc: string }[] = [
-  { value: 'admin', label: '관리자', emoji: '🔑', desc: '전체 시스템 관리 권한' },
-  { value: 'supporter', label: '지원자', emoji: '🤝', desc: '당사자 지원 및 회계 관리' },
-  { value: 'participant', label: '당사자', emoji: '👤', desc: '개인 예산 관리' },
+const ROLE_OPTIONS: { value: UserRole; label: string; desc: string }[] = [
+  { value: 'admin', label: '관리자', desc: '전체 시스템 관리 권한' },
+  { value: 'supporter', label: '지원자', desc: '당사자 지원 및 회계 관리' },
+  { value: 'participant', label: '당사자', desc: '개인 예산 관리' },
 ]
 
 const ROLE_COLORS: Record<string, string> = {
@@ -75,10 +77,9 @@ export default function AdminSettingsClient({
       </header>
 
       <main className="flex-1 w-full max-w-2xl mx-auto p-4 sm:p-6 flex flex-col gap-6">
-        {/* 현재 관리자 정보 */}
         <section className="warm-banner">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl">🔑</div>
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-lg font-black">A</div>
             <div>
               <p className="text-sm font-bold text-foreground">현재 관리자</p>
               <p className="text-xs text-muted-foreground">{currentUserEmail}</p>
@@ -86,24 +87,21 @@ export default function AdminSettingsClient({
           </div>
         </section>
 
-        {/* 알림 메시지 */}
         {message && (
           <div className={`p-4 rounded-2xl text-sm font-medium text-center animate-fade-in-up ${
-            message.type === 'success' 
-              ? 'bg-green-50 text-green-700 ring-1 ring-green-200' 
+            message.type === 'success'
+              ? 'bg-green-50 text-green-700 ring-1 ring-green-200'
               : 'bg-red-50 text-red-700 ring-1 ring-red-200'
           }`}>
             {message.text}
           </div>
         )}
 
-        {/* 역할 안내 */}
         <section className="flex flex-col gap-3">
           <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">역할 안내</h2>
           <div className="grid grid-cols-3 gap-3">
             {ROLE_OPTIONS.map((role) => (
-              <div key={role.value} className={`p-4 rounded-2xl bg-card ring-1 ring-border text-center`}>
-                <span className="text-2xl block mb-2">{role.emoji}</span>
+              <div key={role.value} className="p-4 rounded-2xl bg-card ring-1 ring-border text-center">
                 <p className="text-sm font-bold">{role.label}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">{role.desc}</p>
               </div>
@@ -111,7 +109,6 @@ export default function AdminSettingsClient({
           </div>
         </section>
 
-        {/* 사용자 목록 - 앱시트 스타일 테이블 */}
         <section className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">
@@ -121,7 +118,6 @@ export default function AdminSettingsClient({
 
           {profiles.length === 0 ? (
             <div className="p-8 rounded-2xl bg-muted text-center">
-              <span className="text-5xl mb-3 block">👥</span>
               <p className="text-muted-foreground font-medium">등록된 사용자가 없습니다.</p>
             </div>
           ) : (
@@ -130,48 +126,53 @@ export default function AdminSettingsClient({
                 <thead className="bg-zinc-50 border-b border-zinc-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-black text-zinc-500 uppercase tracking-wider">사용자</th>
-                    <th className="px-4 py-3 text-left text-xs font-black text-zinc-500 uppercase tracking-wider">가입일</th>
+                    <th className="px-4 py-3 text-left text-xs font-black text-zinc-500 uppercase tracking-wider">등록일</th>
                     <th className="px-4 py-3 text-left text-xs font-black text-zinc-500 uppercase tracking-wider">역할</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {profiles.map((profile) => {
                     const isCurrentUser = profile.id === currentUserId
+                    const isParticipantRecord = profile.source === 'participant'
+                    const initial = (profile.name || profile.email || '?')[0]
 
                     return (
                       <tr
-                        key={profile.id}
-                        className={`transition-colors hover:bg-zinc-50 ${
-                          isCurrentUser ? 'bg-blue-50/30' : ''
-                        }`}
+                        key={`${profile.source}-${profile.id}`}
+                        className={`transition-colors hover:bg-zinc-50 ${isCurrentUser ? 'bg-blue-50/30' : ''}`}
                       >
-                        {/* 사용자 이름 */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-sm font-bold text-zinc-600">
-                              {(profile.name || '?')[0]}
+                              {initial}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-zinc-900 text-sm">
-                                {profile.name || '이름 없음'}
-                              </span>
-                              {isCurrentUser && (
-                                <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 font-bold">나</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-zinc-900 text-sm truncate">
+                                  {profile.name || '이름 없음'}
+                                </span>
+                                {isCurrentUser && (
+                                  <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 font-bold">나</span>
+                                )}
+                                {isParticipantRecord && (
+                                  <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-bold">등록 당사자</span>
+                                )}
+                              </div>
+                              {profile.email && (
+                                <p className="text-xs text-zinc-400 truncate">{profile.email}</p>
                               )}
                             </div>
                           </div>
                         </td>
 
-                        {/* 가입일 */}
                         <td className="px-4 py-3">
                           <span className="text-sm text-zinc-600">
                             {new Date(profile.created_at).toLocaleDateString('ko-KR')}
                           </span>
                         </td>
 
-                        {/* 역할 (인라인 셀렉트) */}
                         <td className="px-4 py-3">
-                          {isCurrentUser ? (
+                          {isCurrentUser || isParticipantRecord ? (
                             <span className={`inline-flex px-3 py-1 rounded-lg text-xs font-bold ring-1 ${ROLE_COLORS[profile.role]}`}>
                               {ROLE_LABELS[profile.role] || profile.role}
                             </span>
@@ -184,7 +185,7 @@ export default function AdminSettingsClient({
                             >
                               {ROLE_OPTIONS.map((role) => (
                                 <option key={role.value} value={role.value}>
-                                  {role.emoji} {role.label}
+                                  {role.label}
                                 </option>
                               ))}
                             </select>
@@ -201,14 +202,11 @@ export default function AdminSettingsClient({
 
         <div className="h-px bg-zinc-200" />
 
-        {/* 평가 양식 기본값 설정 */}
         <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-100">
-          <span className="text-xl shrink-0 mt-0.5">💡</span>
           <div>
-            <p className="text-sm font-bold text-blue-800">평가 양식은 각 평가 작성 시에도 변경 가능합니다</p>
+            <p className="text-sm font-bold text-blue-800">평가 양식은 각 평가 작성 시에도 변경할 수 있습니다</p>
             <p className="text-xs text-blue-600 mt-1 leading-relaxed">
-              아래에서 설정하는 양식은 새 평가 작성 시 기본값으로 적용됩니다.
-              실무자가 개별 평가 작성 화면에서 양식을 변경하면, 해당 평가에는 변경된 양식이 저장됩니다.
+              아래에서 설정하는 양식은 새 평가 작성 화면의 기본값으로 적용됩니다.
             </p>
           </div>
         </div>

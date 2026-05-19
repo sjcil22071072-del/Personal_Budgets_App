@@ -18,20 +18,46 @@ export default async function AdminSettingsPage() {
   }
 
   const admin = createAdminClient()
-  // 전체 사용자 목록 조회 (관리자 전용 — RLS 회피)
+
   const { data: allProfiles } = await admin
     .from('profiles')
     .select('*')
     .order('created_at', { ascending: false })
 
-  // 현재 평가 양식 설정
+  const { data: participants } = await admin
+    .from('participants')
+    .select('id, name, email, created_at')
+    .order('created_at', { ascending: false })
+
+  const profileIds = new Set((allProfiles || []).map((profile) => profile.id))
+  const users = [
+    ...((allProfiles || []).map((profile) => ({
+      id: profile.id,
+      name: profile.name,
+      email: null,
+      role: profile.role,
+      created_at: profile.created_at,
+      source: 'profile' as const,
+    }))),
+    ...((participants || [])
+      .filter((participant) => !profileIds.has(participant.id))
+      .map((participant) => ({
+        id: participant.id,
+        name: participant.name,
+        email: participant.email,
+        role: 'participant' as const,
+        created_at: participant.created_at,
+        source: 'participant' as const,
+      }))),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
   const evalSetting = await getEvalTemplateSetting()
 
   return (
     <AdminSettingsClient
       currentUserId={user.id}
       currentUserEmail={user.email || ''}
-      profiles={allProfiles || []}
+      profiles={users}
       evalSetting={evalSetting}
     />
   )
