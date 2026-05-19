@@ -26,17 +26,11 @@ export default async function Home() {
     .eq("id", user.id)
     .maybeSingle();
 
-  console.log("HOME PROFILE RAW:", JSON.stringify(profileData, null, 2));
-
   const profile = (profileData.data as any)?.data ?? profileData.data;
 
   const role = String(profile?.role ?? "")
     .trim()
     .toLowerCase();
-
-  console.log("HOME USER:", user.id);
-  console.log("HOME PROFILE:", profile);
-  console.log("HOME ROLE:", role);
 
   if (role === "admin" || role === "superadmin" || role === "super_admin") {
     redirect("/admin");
@@ -47,13 +41,29 @@ export default async function Home() {
   }
 
   // 당사자 예산 정보 조회
-  const participantData = await supabase
+  const profileEmail =
+    typeof profile?.email === "string" && profile.email.trim()
+      ? profile.email.trim().toLowerCase()
+      : null;
+  const authEmail = user.email?.trim().toLowerCase() || null;
+  const participantEmail = profileEmail || authEmail;
+
+  let participantData = await adminClient
     .from("participants")
     .select("*, funding_sources(*)")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (!participantData.data && participantEmail) {
+    participantData = await adminClient
+      .from("participants")
+      .select("*, funding_sources(*)")
+      .eq("email", participantEmail)
+      .maybeSingle();
+  }
 
   const participant = participantData.data;
+  const participantId = participant?.id ?? user.id;
 
   // 날짜 계산
   const now = new Date();
@@ -115,7 +125,7 @@ export default async function Home() {
     supabase
       .from("transactions")
       .select("*")
-      .eq("participant_id", user.id)
+      .eq("participant_id", participantId)
       .order("date", { ascending: false })
       .limit(3),
 
@@ -124,7 +134,7 @@ export default async function Home() {
       .select(
         "id, date, amount, activity_name, status, receipt_image_url, activity_image_url",
       )
-      .eq("participant_id", user.id)
+      .eq("participant_id", participantId)
       .gte("date", firstDayOfMonth)
       .lte("date", lastDayOfMonth)
       .order("date", { ascending: true }),
@@ -132,7 +142,7 @@ export default async function Home() {
     supabase
       .from("transactions")
       .select("id, amount, date, activity_name, category")
-      .eq("participant_id", user.id)
+      .eq("participant_id", participantId)
       .gte("date", sixMonthsAgo)
       .lte("date", lastDayOfMonth)
       .order("date", { ascending: true }),
@@ -209,7 +219,7 @@ export default async function Home() {
   const currentMonth = `${year}-${String(month + 1).padStart(2, "0")}-01`;
 
   const rawMonthlyPlanProgress = await getMonthlyPlanProgress(
-    user.id,
+    participantId,
     currentMonth,
   );
 
@@ -240,7 +250,7 @@ export default async function Home() {
     const { data: evalData } = await supabase
       .from("evaluations")
       .select("month, easy_summary, next_step")
-      .eq("participant_id", user.id)
+      .eq("participant_id", participantId)
       .not("published_at", "is", null)
       .order("month", { ascending: false })
       .limit(1)
@@ -252,7 +262,7 @@ export default async function Home() {
   return (
     <HomeDashboard
       participant={participant}
-      participantId={user.id}
+      participantId={participantId}
       fundingSources={participant.funding_sources || []}
       recentTransactions={recentTransactions || []}
       remainingDays={remainingDays}
