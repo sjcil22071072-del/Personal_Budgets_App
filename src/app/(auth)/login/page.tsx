@@ -3,7 +3,6 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
-import { createClient } from "@/utils/supabase/client";
 
 const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
@@ -20,13 +19,7 @@ function GoogleLoginContent() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    window.location.href = "/auth/login";
   };
 
   return (
