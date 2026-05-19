@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -21,7 +21,7 @@ interface PlanContext {
 }
 
 /**
- * ?�계 1: ?�액·?�일 기반 ?�동 2가지 추천 (?�?�된 계획 기반 개인???�함)
+ * 단계 1: 잔액·요일 기반 활동 2가지 추천 (저장된 계획 기반 개인화 포함)
  */
 export async function suggestActivityOptions(
   balance: number,
@@ -30,7 +30,7 @@ export async function suggestActivityOptions(
   participantId?: string
 ): Promise<{ success: boolean; data?: { a: string; b: string }; error?: string }> {
   try {
-    // ?�전???�?�한 계획?�서 ?�동 목록 조회 (개인?�용)
+    // 이전에 저장한 계획에서 활동 목록 조회 (개인화용)
     let recentContext = ''
     if (participantId) {
       const supabase = await createClient()
@@ -47,39 +47,39 @@ export async function suggestActivityOptions(
 
       if (activities.length > 0) {
         const unique = [...new Set(activities)].slice(0, 6).join(', ')
-        recentContext = `\n???�람??최근??좋아?�던 ?�동?? ${unique}\n?�전 ?�동�?비슷?�거???��???�??�주�?추천?�되, 가?��? ?�로???�동???�안?�주?�요.`
+        recentContext = `\n이 사람이 최근에 좋아했던 활동들: ${unique}\n이전 활동과 비슷하거나 연관된 것 위주로 추천하되, 가끔은 새로운 활동도 제안해주세요.`
       }
     }
 
     const result = await callOpenAI([
       {
         role: 'system',
-        content: `?�신?� 발달?�애???�인???�한 ?�상 계획 ?�우미입?�다.
-?�용?�는 ?�번 ??${balance.toLocaleString()}?�이 ?�아?�습?�다.
-?�늘?� ${dayOfWeek}?�일(${month}???�니??${recentContext}
+        content: `당신은 발달장애인 성인을 위한 일상 계획 도우미입니다.
+사용자는 이번 달 ${balance.toLocaleString()}원이 남아있습니다.
+오늘은 ${dayOfWeek}요일(${month}월)입니다.${recentContext}
 
-?�상?�이�??�산??맞는 ?�동 2가지�?추천?�주?�요.
+일상적이고 예산에 맞는 활동 2가지를 추천해주세요.
 조건:
-- �??�동명�? 10글???�내
-- ?�산??5~25% ?��???비용
-- ?�실?�인 ?�상 ?�동 (?�사, ?�료, ?�핑, ?�책 ??
-- ?�수문자(#, &, ~, %, ^, /) ?�용 금�?
+- 각 활동명은 10글자 이내
+- 예산의 5~25% 수준의 비용
+- 현실적인 일상 활동 (식사, 음료, 쇼핑, 산책 등)
+- 특수문자(#, &, ~, %, ^, /) 사용 금지
 
-반드??JSON?�로�??�답:
-{"a": "?�동명A", "b": "?�동명B"}`,
+반드시 JSON으로만 응답:
+{"a": "활동명A", "b": "활동명B"}`,
       },
-      { role: 'user', content: '?�늘 ?????�는 ?�동??추천?�줘.' },
+      { role: 'user', content: '오늘 할 수 있는 활동을 추천해줘.' },
     ])
     const r = result as { a: string; b: string }
     return { success: true, data: { a: r.a, b: r.b } }
   } catch (error: any) {
-    console.error('?�동 추천 ?�류:', error)
+    console.error('활동 추천 오류:', error)
     return { success: false, error: error.message }
   }
 }
 
 /**
- * ?�계 2: ?�택???�동·?�액 기반 방법·비용 2가지 추천
+ * 단계 2: 선택한 활동·잔액 기반 방법·비용 2가지 추천
  */
 export async function suggestMethodOptions(
   activity: string,
@@ -89,20 +89,20 @@ export async function suggestMethodOptions(
     const result = await callOpenAI([
       {
         role: 'system',
-        content: `?�사?��? ?�늘 "${activity}"??�? ?�려�??�니??
-?�번 ???��? ?�산?� ${balance.toLocaleString()}?�입?�다.
+        content: `당사자가 오늘 "${activity}"을(를) 하려고 합니다.
+이번 달 남은 예산은 ${balance.toLocaleString()}원입니다.
 
-???�동???�는 2가지 방법??추천?�주?�요.
+이 활동을 하는 2가지 방법을 추천해주세요.
 조건:
-- 방법 A: ??간단?�거???�?�한 방법
-- 방법 B: 조금 ?�른 방법 (비용???�라???�니??
-- �??�명?� 15글???�내
-- ?�상 비용?� ?�라비아?�자(??�??�시
+- 방법 A: 더 간단하거나 저렴한 방법
+- 방법 B: 조금 다른 방법 (비용이 달라도 됩니다)
+- 각 설명은 15글자 이내
+- 예상 비용은 아라비아숫자(원)로 제시
 
-반드??JSON?�로�??�답:
-{"a": "방법 ?�명", "b": "방법 ?�명", "a_cost": 5000, "b_cost": 7000}`,
+반드시 JSON으로만 응답:
+{"a": "방법 설명", "b": "방법 설명", "a_cost": 5000, "b_cost": 7000}`,
       },
-      { role: 'user', content: `${activity}??�? ?�떻�??�면 좋을지 추천?�줘.` },
+      { role: 'user', content: `${activity}을(를) 어떻게 하면 좋을지 추천해줘.` },
     ])
     const r = result as { a: string; b: string; a_cost: number; b_cost: number }
     return {
@@ -115,13 +115,13 @@ export async function suggestMethodOptions(
       },
     }
   } catch (error: any) {
-    console.error('방법 추천 ?�류:', error)
+    console.error('방법 추천 오류:', error)
     return { success: false, error: error.message }
   }
 }
 
 /**
- * ?�사?�의 계획??DB???�??
+ * 당사자의 계획을 DB에 저장
  */
 export async function savePlan({
   participantId,
@@ -149,7 +149,7 @@ export async function savePlan({
 
   if (!user) throw new Error('Unauthorized')
 
-  // ?�사?�는 profiles ?�이블에 ?�이 ?�으므�?creator_id FK ?�반 방�?
+  // 당사자는 profiles 테이블에 행이 없으므로 creator_id FK 위반 방지
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
@@ -172,7 +172,7 @@ export async function savePlan({
 
   if (error) {
     console.error('Plan save error:', error)
-    throw new Error('계획 ?�?�에 ?�패?�습?�다.')
+    throw new Error('계획 저장에 실패했습니다.')
   }
 
   revalidatePath('/plan')
@@ -180,7 +180,7 @@ export async function savePlan({
 }
 
 /**
- * ?�사?�의 ?�?�된 계획 목록 조회
+ * 당사자의 저장된 계획 목록 조회
  */
 export async function getParticipantPlans(participantId: string) {
   const supabase = await createClient()

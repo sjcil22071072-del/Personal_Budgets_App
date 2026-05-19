@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -15,7 +15,7 @@ export interface CarePlanRow {
   updated_at: string
 }
 
-/** ?�정 참여?�의 ?�용계획??목록 조회 */
+/** 특정 참여자의 이용계획서 목록 조회 */
 export async function getCarePlans(participantId: string, year?: number): Promise<CarePlanRow[]> {
   const supabase = await createClient()
 
@@ -37,7 +37,7 @@ export async function getCarePlans(participantId: string, year?: number): Promis
   return (data || []) as CarePlanRow[]
 }
 
-/** ?�정 ?�용계획???�건 조회 */
+/** 특정 이용계획서 단건 조회 */
 export async function getCarePlan(
   participantId: string,
   planType: CarePlanType,
@@ -57,7 +57,7 @@ export async function getCarePlan(
   return data as CarePlanRow
 }
 
-/** ?�용계획???�??(upsert) */
+/** 이용계획서 저장 (upsert) */
 export async function upsertCarePlan(
   participantId: string,
   planType: CarePlanType,
@@ -67,7 +67,7 @@ export async function upsertCarePlan(
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: '로그?�이 ?�요?�니??' }
+  if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -76,7 +76,7 @@ export async function upsertCarePlan(
     .single()
 
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    return { success: false, error: '권한???�습?�다.' }
+    return { success: false, error: '권한이 없습니다.' }
   }
 
   const { error } = await supabase
@@ -95,7 +95,7 @@ export async function upsertCarePlan(
 
   if (error) {
     console.error('upsertCarePlan error:', error)
-    return { success: false, error: '?�?�에 ?�패?�습?�다.' }
+    return { success: false, error: '저장에 실패했습니다.' }
   }
 
   revalidatePath(`/supporter/documents/care-plans/${participantId}/${planType}`)
@@ -103,14 +103,14 @@ export async function upsertCarePlan(
   return { success: true }
 }
 
-/** ?�용계획????�� */
+/** 이용계획서 삭제 */
 export async function deleteCarePlan(carePlanId: string): Promise<{ success: boolean; error?: string }> {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { success: false, error: '?�모 모드?�서????��?????�습?�다.' }
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { success: false, error: '데모 모드에서는 삭제할 수 없습니다.' }
 
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: '로그?�이 ?�요?�니??' }
+  if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -119,7 +119,7 @@ export async function deleteCarePlan(carePlanId: string): Promise<{ success: boo
     .single()
 
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    return { success: false, error: '권한???�습?�다.' }
+    return { success: false, error: '권한이 없습니다.' }
   }
 
   const { error } = await supabase
@@ -129,15 +129,15 @@ export async function deleteCarePlan(carePlanId: string): Promise<{ success: boo
 
   if (error) {
     console.error('deleteCarePlan error:', error)
-    return { success: false, error: '??��???�패?�습?�다.' }
+    return { success: false, error: '삭제에 실패했습니다.' }
   }
 
   revalidatePath('/supporter/documents')
   return { success: true }
 }
 
-/** 모든 ?�사?�의 ?�용계획??(?�류 보�???목록??
- *  care_plans ?�이블이 ?�직 ?�성?��? ?��? 경우 �?배열 반환
+/** 모든 당사자의 이용계획서 (서류 보관함 목록용)
+ *  care_plans 테이블이 아직 생성되지 않은 경우 빈 배열 반환
  */
 export async function getAllCarePlans(): Promise<CarePlanRow[]> {
   const supabase = await createClient()
@@ -149,8 +149,8 @@ export async function getAllCarePlans(): Promise<CarePlanRow[]> {
     .order('created_at', { ascending: false })
 
   if (error) {
-    // ?�이�?미생??42P01) ??DB ?�류??�?배열�?처리???�이지 ?�래??방�?
-    console.warn('getAllCarePlans ???�용계획??조회 ?�패 (migration ?�행 ?�일 ???�음):', error.message)
+    // 테이블 미생성(42P01) 등 DB 오류는 빈 배열로 처리해 페이지 크래시 방지
+    console.warn('getAllCarePlans — 이용계획서 조회 실패 (migration 실행 전일 수 있음):', error.message)
     return []
   }
   return (data || []) as CarePlanRow[]

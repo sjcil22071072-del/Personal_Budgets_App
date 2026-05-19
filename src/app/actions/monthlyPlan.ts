@@ -1,4 +1,5 @@
-﻿'use server'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -6,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 export interface MonthlyPlanInput {
   id?: string
   participant_id: string
-  month: string                       // 'YYYY-MM-DD' (1??
+  month: string                       // 'YYYY-MM-DD' (1일)
   order_index: number                 // 1~6
   title: string
   description?: string | null
@@ -44,7 +45,7 @@ export interface MonthlyPlanProgress extends MonthlyPlan {
 }
 
 function normalizeMonth(month: string): string {
-  // 'YYYY-MM' ?�는 'YYYY-MM-DD' ??'YYYY-MM-01'
+  // 'YYYY-MM' 또는 'YYYY-MM-DD' → 'YYYY-MM-01'
   const m = month.length === 7 ? `${month}-01` : month
   return m.slice(0, 8) + '01'
 }
@@ -52,14 +53,14 @@ function normalizeMonth(month: string): string {
 async function assertStaff() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: '?�증 ?�요', supabase, user: null }
+  if (!user) return { ok: false, error: '인증 필요', supabase, user: null }
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role')
     .eq('id', user.id)
     .single()
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    return { ok: false, error: '권한???�습?�다.', supabase, user }
+    return { ok: false, error: '권한이 없습니다.', supabase, user }
   }
   return { ok: true, error: null, supabase, user }
 }
@@ -134,7 +135,7 @@ export async function getMonthlyPlanProgress(
 
 export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
   const { ok, error, supabase, user } = await assertStaff()
-  if (!ok || !user) return { error: error || '권한???�습?�다.' }
+  if (!ok || !user) return { error: error || '권한이 없습니다.' }
 
   const m = normalizeMonth(input.month)
 
@@ -155,9 +156,9 @@ export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
     updated_at: new Date().toISOString(),
   }
 
-  if (!payload.title) return { error: '?�목???�력?�주?�요.' }
+  if (!payload.title) return { error: '제목을 입력해주세요.' }
   if (payload.order_index < 1 || payload.order_index > 6) {
-    return { error: '계획 ?�서??1-6 ?�이?�야 ?�니??' }
+    return { error: '계획 순서는 1-6 사이여야 합니다.' }
   }
 
   if (input.id) {
@@ -181,10 +182,10 @@ export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
 }
 
 export async function deleteMonthlyPlan(id: string, participantId: string, month: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '?�모 모드?�서????��?????�습?�다.' }
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '데모 모드에서는 삭제할 수 없습니다.' }
 
   const { ok, error, supabase } = await assertStaff()
-  if (!ok) return { error: error || '권한???�습?�다.' }
+  if (!ok) return { error: error || '권한이 없습니다.' }
 
   const { error: delErr } = await supabase
     .from('monthly_plans')

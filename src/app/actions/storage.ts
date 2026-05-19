@@ -1,17 +1,17 @@
-﻿'use server'
+'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { extractStoragePath } from '@/utils/supabase/storage'
 
-const SIGNED_URL_EXPIRES = 3600 // 1?�간
+const SIGNED_URL_EXPIRES = 3600 // 1시간
 const EASY_READ_IMAGE_MAX_BYTES = 2 * 1024 * 1024 // 2MB
 
 /**
- * ?�랜??�� 목록???�수증·활?�사�?URL??signed URL�??�괄 변?�합?�다.
- * receipts, activity-photos 버킷??private(public=false)?????�용?�니??
+ * 트랜잭션 목록의 영수증·활동사진 URL을 signed URL로 일괄 변환합니다.
+ * receipts, activity-photos 버킷이 private(public=false)일 때 사용합니다.
  *
  * @param items - { id, receiptUrl, activityUrl } 배열
- * @returns id ??{ receipt?, activity? } 매핑
+ * @returns id → { receipt?, activity? } 매핑
  */
 export async function getSignedImageUrls(
   items: { id: string; receiptUrl: string | null; activityUrl: string | null }[]
@@ -23,7 +23,7 @@ export async function getSignedImageUrls(
   const admin = createAdminClient()
   const result: Record<string, { receipt?: string; activity?: string }> = {}
 
-  // ?�명 URL ?�성 ?�청??bucket별로 분류
+  // 서명 URL 생성 요청을 bucket별로 분류
   const receiptPaths: { id: string; path: string }[] = []
   const activityPaths: { id: string; path: string }[] = []
 
@@ -38,7 +38,7 @@ export async function getSignedImageUrls(
     }
   }
 
-  // receipts 버킷 signed URLs ?�괄 ?�성
+  // receipts 버킷 signed URLs 일괄 생성
   if (receiptPaths.length > 0) {
     const { data } = await admin.storage
       .from('receipts')
@@ -53,7 +53,7 @@ export async function getSignedImageUrls(
     }
   }
 
-  // activity-photos 버킷 signed URLs ?�괄 ?�성
+  // activity-photos 버킷 signed URLs 일괄 생성
   if (activityPaths.length > 0) {
     const { data } = await admin.storage
       .from('activity-photos')
@@ -72,8 +72,8 @@ export async function getSignedImageUrls(
 }
 
 /**
- * ?�일 ?��?지 URL??signed URL�?변?�합?�다.
- * 거래 ?�세 ?�면 ???�건 조회 ???�용?�니??
+ * 단일 이미지 URL을 signed URL로 변환합니다.
+ * 거래 상세 화면 등 단건 조회 시 사용합니다.
  */
 export async function getSignedImageUrl(
   url: string | null,
@@ -97,12 +97,12 @@ export async function getSignedImageUrl(
 }
 
 /**
- * Easy Read ?��?지�?activity-photos 버킷???�로?�합?�다.
- * @param file - ?�로?�할 ?�일 (2MB ?�하, ?��?지 ?�식)
- * @param participantId - ?�사??UUID
+ * Easy Read 이미지를 activity-photos 버킷에 업로드합니다.
+ * @param file - 업로드할 파일 (2MB 이하, 이미지 형식)
+ * @param participantId - 당사자 UUID
  * @param entityType - 'plan' | 'goal'
- * @param entityId - 계획 ?�는 목표??UUID
- * @returns Storage path 문자??(DB ?�?�용)
+ * @param entityId - 계획 또는 목표의 UUID
+ * @returns Storage path 문자열 (DB 저장용)
  */
 export async function uploadEasyReadImage(
   file: File,
@@ -111,15 +111,15 @@ export async function uploadEasyReadImage(
   entityId: string
 ): Promise<{ path?: string; error?: string }> {
   if (!file.type.startsWith('image/')) {
-    return { error: '?��?지 ?�일�??�로?�할 ???�습?�다.' }
+    return { error: '이미지 파일만 업로드할 수 있습니다.' }
   }
   if (file.size > EASY_READ_IMAGE_MAX_BYTES) {
-    return { error: '?�일 ?�기??2MB ?�하?�야 ?�니??' }
+    return { error: '파일 크기는 2MB 이하여야 합니다.' }
   }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '?�증 ?�요' }
+  if (!user) return { error: '인증 필요' }
 
   const ext = file.name.split('.').pop() || 'jpg'
   const storagePath = `${participantId}/easy-read/${entityType}-${entityId}.${ext}`

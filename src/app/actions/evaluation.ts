@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -16,22 +16,22 @@ export async function upsertEvaluation(formData: FormData) {
   const evaluation_template = ((formData.get('evaluation_template') as string) || 'pcp') as EvalTemplateId
   const isPcp = evaluation_template === 'pcp'
 
-  // PCP ?�용 컬럼
+  // PCP 전용 컬럼
   const tried = isPcp ? formData.get('tried') as string : null
   const learned = isPcp ? formData.get('learned') as string : null
   const pleased = isPcp ? formData.get('pleased') as string : null
   const concerned = isPcp ? formData.get('concerned') as string : null
   const next_step = isPcp ? formData.get('next_step') as string : null
 
-  // ?�출???�식 ?�형 기�??�로 effective setting 구성
-  // custom??경우?�만 기�? ?�정?�서 custom_fields�?가?�옴
+  // 제출된 양식 유형 기준으로 effective setting 구성
+  // custom인 경우에만 기관 설정에서 custom_fields를 가져옴
   const orgSetting = evaluation_template === 'custom' ? await getEvalTemplateSetting() : null
   const effectiveSetting: OrgEvalSetting = {
     active: evaluation_template,
     custom_fields: orgSetting?.custom_fields,
   }
 
-  // 비PCP: ?�출???�식 기�??�로 ?�드�??�집
+  // 비PCP: 제출된 양식 기준으로 필드를 수집
   let template_data: Record<string, string> | null = null
   if (!isPcp) {
     const fields = resolveTemplateFields(effectiveSetting)
@@ -41,7 +41,7 @@ export async function upsertEvaluation(formData: FormData) {
     }
   }
 
-  // AI 분석 ?�동??로직
+  // AI 분석 자동화 로직
   let ai_analysis = null
   let easy_summary = null
 
@@ -53,7 +53,7 @@ export async function upsertEvaluation(formData: FormData) {
 
   if (isPcp) {
     shouldRunAI = !!(apiKey && (tried || learned || pleased || concerned))
-    aiUserContent = `[?�도??�?: ${tried}\n[배운 �?: ${learned}\n[만족?�는 �?: ${pleased}\n[고�??�는 �?: ${concerned}\n[?�음 ?�계]: ${next_step}`
+    aiUserContent = `[시도한 것]: ${tried}\n[배운 것]: ${learned}\n[만족하는 것]: ${pleased}\n[고민되는 것]: ${concerned}\n[다음 단계]: ${next_step}`
   } else if (apiKey && template_data) {
     const fields = resolveTemplateFields(effectiveSetting)
     shouldRunAI = fields.some(f => template_data![f.id])
@@ -73,12 +73,12 @@ export async function upsertEvaluation(formData: FormData) {
           messages: [
             {
               role: 'system',
-              content: `?�는 ?�회복�? ?�문가?�자 발달?�애???�사?�의 ?�기주도???�을 ?�는 코치??
-              지?�자가 ?�성???��? ?�용??바탕?�로 ?�음 ??가지�??�성?�줘.
-              1. supporterAnalysis: 지?�자가 ?�후 ?�떤 ?�에 집중?�서 지?�해???��? ?�문가??분석 (지?�자??
-              2. easySummary: ${aiPromptHint} ?�사?��? ?�었?????�해?�기 ?�고 ?�취감을 ?�낄 ???�는 ?�뜻??2-3문장???�약 (?�사?�용)
+              content: `너는 사회복지 전문가이자 발달장애인 당사자의 자기주도적 삶을 돕는 코치야.
+              지원자가 작성한 평가 내용을 바탕으로 다음 두 가지를 작성해줘.
+              1. supporterAnalysis: 지원자가 향후 어떤 점에 집중해서 지원해야 할지 전문가적 분석 (지원자용)
+              2. easySummary: ${aiPromptHint} 당사자가 읽었을 때 이해하기 쉽고 성취감을 느낄 수 있는 따뜻한 2-3문장의 요약 (당사자용)
 
-              반드??JSON ?�식?�로 ?��??�줘: {"supporterAnalysis": "...", "easySummary": "..."}`,
+              반드시 JSON 형식으로 답변해줘: {"supporterAnalysis": "...", "easySummary": "..."}`,
             },
             {
               role: 'user',
@@ -94,8 +94,8 @@ export async function upsertEvaluation(formData: FormData) {
       ai_analysis = result
       easy_summary = result.easySummary
     } catch (e) {
-      console.error('AI 분석 ?�패:', e)
-      // AI 분석 ?�패?�도 ?�?��? 진행
+      console.error('AI 분석 실패:', e)
+      // AI 분석 실패해도 저장은 진행
     }
   }
 
@@ -122,7 +122,7 @@ export async function upsertEvaluation(formData: FormData) {
 
   if (error) {
     console.error('Evaluation Save Error:', error)
-    throw new Error('?��? ?�?�에 ?�패?�습?�다.')
+    throw new Error('평가 저장에 실패했습니다.')
   }
 
   revalidatePath(`/supporter/evaluations/${participantId}/${month}`)
@@ -141,14 +141,14 @@ export async function publishEvaluation(evaluationId: string, participantId: str
     .eq('id', user.id)
     .single()
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    throw new Error('권한???�습?�다.')
+    throw new Error('권한이 없습니다.')
   }
 
   const { error } = await supabase
     .from('evaluations')
     .update({ published_at: new Date().toISOString() })
     .eq('id', evaluationId)
-  if (error) throw new Error('발행???�패?�습?�다.')
+  if (error) throw new Error('발행에 실패했습니다.')
 
   revalidatePath(`/supporter/evaluations/${participantId}/${month}`)
   revalidatePath('/evaluations')
@@ -167,14 +167,14 @@ export async function unpublishEvaluation(evaluationId: string, participantId: s
     .eq('id', user.id)
     .single()
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    throw new Error('권한???�습?�다.')
+    throw new Error('권한이 없습니다.')
   }
 
   const { error } = await supabase
     .from('evaluations')
     .update({ published_at: null })
     .eq('id', evaluationId)
-  if (error) throw new Error('발행 취소???�패?�습?�다.')
+  if (error) throw new Error('발행 취소에 실패했습니다.')
 
   revalidatePath(`/supporter/evaluations/${participantId}/${month}`)
   revalidatePath('/evaluations')
@@ -194,7 +194,7 @@ export async function getEvaluation(participantId: string, month: string) {
 }
 
 export async function deleteEvaluation(evaluationId: string, participantId: string, month: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('?�모 모드?�서????��?????�습?�다.')
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('데모 모드에서는 삭제할 수 없습니다.')
 
   const supabase = await createClient()
 
@@ -208,7 +208,7 @@ export async function deleteEvaluation(evaluationId: string, participantId: stri
     .single()
 
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    throw new Error('권한???�습?�다.')
+    throw new Error('권한이 없습니다.')
   }
 
   const { error } = await supabase
@@ -216,7 +216,7 @@ export async function deleteEvaluation(evaluationId: string, participantId: stri
     .delete()
     .eq('id', evaluationId)
 
-  if (error) throw new Error('?��? ??��???�패?�습?�다.')
+  if (error) throw new Error('평가 삭제에 실패했습니다.')
 
   revalidatePath(`/supporter/evaluations/${participantId}/${month}`)
   revalidatePath('/supporter/evaluations')

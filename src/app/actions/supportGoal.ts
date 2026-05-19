@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -47,14 +47,14 @@ export interface SupportGoal {
 async function assertStaff() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: '?�증 ?�요', supabase, user: null }
+  if (!user) return { ok: false, error: '인증 필요', supabase, user: null }
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role')
     .eq('id', user.id)
     .single()
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    return { ok: false, error: '권한???�습?�다.', supabase, user }
+    return { ok: false, error: '권한이 없습니다.', supabase, user }
   }
   return { ok: true, error: null, supabase, user }
 }
@@ -71,11 +71,11 @@ export async function getSupportGoals(carePlanId: string): Promise<SupportGoal[]
 
 export async function upsertSupportGoal(input: SupportGoalInput) {
   const { ok, error, supabase, user } = await assertStaff()
-  if (!ok || !user) return { error: error || '권한???�습?�다.' }
+  if (!ok || !user) return { error: error || '권한이 없습니다.' }
 
-  if (!input.support_area?.trim()) return { error: '지???�역???�력?�주?�요.' }
+  if (!input.support_area?.trim()) return { error: '지원 영역을 입력해주세요.' }
   if (input.order_index < 1 || input.order_index > 10) {
-    return { error: '목표 ?�서??1-10 ?�이?�야 ?�니??' }
+    return { error: '목표 순서는 1-10 사이여야 합니다.' }
   }
 
   const payload = {
@@ -116,10 +116,10 @@ export async function upsertSupportGoal(input: SupportGoalInput) {
 }
 
 export async function deleteSupportGoal(id: string, participantId: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '?�모 모드?�서????��?????�습?�다.' }
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '데모 모드에서는 삭제할 수 없습니다.' }
 
   const { ok, error, supabase } = await assertStaff()
-  if (!ok) return { error: error || '권한???�습?�다.' }
+  if (!ok) return { error: error || '권한이 없습니다.' }
 
   const { error: delErr } = await supabase
     .from('support_goals')
@@ -135,7 +135,7 @@ export async function reorderSupportGoals(
   goals: { id: string; order_index: number }[]
 ) {
   const { ok, error, supabase } = await assertStaff()
-  if (!ok) return { error: error || '권한???�습?�다.' }
+  if (!ok) return { error: error || '권한이 없습니다.' }
 
   const updates = goals.map(g =>
     supabase

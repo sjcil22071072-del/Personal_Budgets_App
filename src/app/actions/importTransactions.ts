@@ -1,13 +1,13 @@
-﻿'use server'
+'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 
 export interface CsvRow {
   date: string        // YYYY-MM-DD
-  description: string // ?�용 (가게명)
-  memo: string        // 메모 (?�세?�명)
-  amount: number      // ?�수 = 출금(지�?, ?�수 = ?�금(?�입)
-  type: '출금' | '?�금' | string
+  description: string // 내용 (가게명)
+  memo: string        // 메모 (상세설명)
+  amount: number      // 양수 = 출금(지출), 음수 = 입금(수입)
+  type: '출금' | '입금' | string
 }
 
 export interface MatchResult {
@@ -24,21 +24,21 @@ export interface ParseAndMatchResult {
   parseErrors: string[]
 }
 
-// ?�?� ?�제 카카?�뱅??xlsx/csv ?�싱 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
-// ?�제 ?�맷 (Row 11???�더):
-//   거래?�시 | 구분 | 거래금액 | 거래 ???�액 | 거래구분 | ?�용 | 메모
+// ── 실제 카카오뱅크 xlsx/csv 파싱 ──────────────────────────────────────
+// 실제 포맷 (Row 11이 헤더):
+//   거래일시 | 구분 | 거래금액 | 거래 후 잔액 | 거래구분 | 내용 | 메모
 //
-// Row 1: '카카?�뱅??거래?�역' (?�?��?)
-// Row 4: ?�명, 계좌번호 ??메�??�보
-// Row 11: ?�더 ??
-// Row 12~: ?�제 ?�이??
+// Row 1: '카카오뱅크 거래내역' (타이틀)
+// Row 4: 성명, 계좌번호 등 메타정보
+// Row 11: 헤더 행
+// Row 12~: 실제 데이터
 
 function parseDate(raw: string | number | Date | null | undefined): string | null {
   if (!raw) return null
 
-  // Excel serial number (?�자)
+  // Excel serial number (숫자)
   if (typeof raw === 'number') {
-    // xlsx가 ?��? JS Date�?변?�하므�?보통 ?�기 ?��? ?�음
+    // xlsx가 이미 JS Date로 변환하므로 보통 여기 오지 않음
     const d = new Date(Math.round((raw - 25569) * 86400 * 1000))
     return d.toISOString().slice(0, 10)
   }
@@ -48,7 +48,7 @@ function parseDate(raw: string | number | Date | null | undefined): string | nul
     return raw.toISOString().slice(0, 10)
   }
 
-  // 문자?? '2026.03.05 10:53:34' ?�는 '2026-03-05'
+  // 문자열: '2026.03.05 10:53:34' 또는 '2026-03-05'
   const str = String(raw).replace(/\./g, '-')
   const m = str.match(/(\d{4}-\d{2}-\d{2})/)
   return m ? m[1] : null
@@ -61,8 +61,8 @@ function parseAmount(raw: unknown): number | null {
 }
 
 /**
- * xlsx ?�이브러리로 바이?�리 ??2D 배열 변??
- * ArrayBuffer | string (csv text) 모두 지??
+ * xlsx 라이브러리로 바이너리 → 2D 배열 변환
+ * ArrayBuffer | string (csv text) 모두 지원
  */
 async function parseWorkbook(buffer: ArrayBuffer): Promise<(unknown[])[]> {
   const XLSX = await import('xlsx')
@@ -70,18 +70,18 @@ async function parseWorkbook(buffer: ArrayBuffer): Promise<(unknown[])[]> {
   const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: true })
   const ws = wb.Sheets[wb.SheetNames[0]]
 
-  // header: 1 ??�??�을 배열 ?�덱?�로 ?�용 (?�더 ?�동 감�??��? ?�음)
+  // header: 1 → 첫 행을 배열 인덱스로 사용 (헤더 자동 감지하지 않음)
   const rows: (unknown[])[] = XLSX.utils.sheet_to_json(ws, {
     header: 1,
     defval: null,
-    raw: false,   // ?�짜·?�자 모두 문자?�로 받아 직접 ?�싱
+    raw: false,   // 날짜·숫자 모두 문자열로 받아 직접 파싱
   }) as (unknown[])[]
 
   return rows
 }
 
 /**
- * CSV ?�스?��? 2D 배열�?변??(xlsx ?�이)
+ * CSV 텍스트를 2D 배열로 변환 (xlsx 없이)
  */
 function parseCsvText(text: string): (string | null)[][] {
   return text
@@ -109,8 +109,8 @@ function splitCsvLine(line: string): string[] {
 }
 
 /**
- * 2D 배열?�서 '거래?�시' ?�더 ??찾기
- * 카카?�뱅?? ??11?�째???�더 ?�음
+ * 2D 배열에서 '거래일시' 헤더 행 찾기
+ * 카카오뱅크: 약 11행째에 헤더 있음
  */
 function findHeaderRow(rows: unknown[][]): { headerIdx: number; colMap: Record<string, number> } | null {
   for (let i = 0; i < Math.min(rows.length, 20); i++) {
@@ -118,7 +118,7 @@ function findHeaderRow(rows: unknown[][]): { headerIdx: number; colMap: Record<s
     if (!row) continue
     const headerText = row.map(c => String(c ?? '').trim())
     const dateColIdx = headerText.findIndex(c =>
-      c === '거래?�시' || c === '거래?? || c === '?�시'
+      c === '거래일시' || c === '거래일' || c === '일시'
     )
     if (dateColIdx >= 0) {
       const colMap: Record<string, number> = {}
@@ -134,13 +134,13 @@ function findHeaderRow(rows: unknown[][]): { headerIdx: number; colMap: Record<s
 function extractRows(rows: unknown[][], headerIdx: number, colMap: Record<string, number>): CsvRow[] {
   const result: CsvRow[] = []
 
-  // 카카?�뱅??컬럼 ?�서 ?�인
-  // 공식: 거래?�시(0) | 구분(1) | 거래금액(2) | 거래 ???�액(3) | 거래구분(4) | ?�용(5) | 메모(6)
-  // colMap?�로 ?�제 ?�덱??찾기
-  const iDate    = colMap['거래?�시'] ?? colMap['거래??] ?? colMap['?�시'] ?? 0
+  // 카카오뱅크 컬럼 순서 확인
+  // 공식: 거래일시(0) | 구분(1) | 거래금액(2) | 거래 후 잔액(3) | 거래구분(4) | 내용(5) | 메모(6)
+  // colMap으로 실제 인덱스 찾기
+  const iDate    = colMap['거래일시'] ?? colMap['거래일'] ?? colMap['일시'] ?? 0
   const iType    = colMap['구분'] ?? 1
-  const iAmount  = colMap['거래금액'] ?? colMap['출금(??'] ?? 2
-  const iContent = colMap['?�용'] ?? 5
+  const iAmount  = colMap['거래금액'] ?? colMap['출금(원)'] ?? 2
+  const iContent = colMap['내용'] ?? 5
   const iMemo    = colMap['메모'] ?? 6
 
   for (let i = headerIdx + 1; i < rows.length; i++) {
@@ -159,19 +159,19 @@ function extractRows(rows: unknown[][], headerIdx: number, colMap: Record<string
     const amountVal = parseAmount(rawAmount)
     if (amountVal === null) continue
 
-    // 거래금액???�수�?출금, ?�수�??�금
-    // 구분 컬럼??'출금'?�면 ?�수?�하??지출로 처리
+    // 거래금액이 음수면 출금, 양수면 입금
+    // 구분 컬럼이 '출금'이면 양수화하여 지출로 처리
     let finalAmount: number
     if (rawType === '출금') {
-      finalAmount = Math.abs(amountVal)   // ?�수 = 지�?
-    } else if (rawType === '?�금') {
-      finalAmount = -Math.abs(amountVal)  // ?�수 = ?�입
+      finalAmount = Math.abs(amountVal)   // 양수 = 지출
+    } else if (rawType === '입금') {
+      finalAmount = -Math.abs(amountVal)  // 음수 = 수입
     } else {
-      // 구분 ?�이 금액 부?�로 ?�단
+      // 구분 없이 금액 부호로 판단
       finalAmount = amountVal < 0 ? Math.abs(amountVal) : -Math.abs(amountVal)
     }
 
-    const description = rawContent || rawMemo || '(?�용 ?�음)'
+    const description = rawContent || rawMemo || '(내용 없음)'
     const memo = rawContent && rawMemo && rawContent !== rawMemo ? rawMemo : ''
 
     result.push({ date, description, memo, amount: finalAmount, type: rawType })
@@ -180,7 +180,7 @@ function extractRows(rows: unknown[][], headerIdx: number, colMap: Record<string
   return result
 }
 
-// ?�?� 메인 ?�서 (XLSX binary ?�는 CSV text) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+// ── 메인 파서 (XLSX binary 또는 CSV text) ─────────────────────────────
 async function parseKakaoBankFile(buffer: ArrayBuffer, fileName: string): Promise<{ rows: CsvRow[]; errors: string[] }> {
   const errors: string[] = []
   let rawRows: unknown[][]
@@ -191,27 +191,27 @@ async function parseKakaoBankFile(buffer: ArrayBuffer, fileName: string): Promis
   if (isXlsx) {
     rawRows = await parseWorkbook(buffer)
   } else {
-    // CSV ??text decode ???�싱
+    // CSV — text decode 후 파싱
     const text = new TextDecoder('utf-8').decode(buffer)
     rawRows = parseCsvText(text)
   }
 
   const found = findHeaderRow(rawRows)
   if (!found) {
-    errors.push('?�더 ??"거래?�시")??찾을 ???�습?�다. 카카?�뱅??거래?�역 ?�일?��? ?�인?�세??')
+    errors.push('헤더 행("거래일시")을 찾을 수 없습니다. 카카오뱅크 거래내역 파일인지 확인하세요.')
     return { rows: [], errors }
   }
 
   const rows = extractRows(rawRows, found.headerIdx, found.colMap)
 
   if (rows.length === 0) {
-    errors.push('?�싱??거래 ?�이 ?�습?�다. ?�일 ?�용???�인?�세??')
+    errors.push('파싱된 거래 행이 없습니다. 파일 내용을 확인하세요.')
   }
 
   return { rows, errors }
 }
 
-// ?�?� ?�버 ?�션: ?�일 ?�싱 + DB ?��??�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+// ── 서버 액션: 파일 파싱 + DB 대조 ──────────────────────────────────────
 export async function parseAndMatchFile(
   fileData: { buffer: number[]; name: string },
   participantId: string
@@ -227,7 +227,7 @@ export async function parseAndMatchFile(
     return { matched: [], unmatched: [], duplicate: [], parseErrors: errors }
   }
 
-  // ?�당 참�??�의 거래 조회 (?�짜+금액 ?��?
+  // 해당 참가자의 거래 조회 (날짜+금액 대조)
   const dates = [...new Set(rows.map(r => r.date))]
   const { data: existingTxs } = await supabase
     .from('transactions')
@@ -265,7 +265,7 @@ export async function parseAndMatchFile(
   return { matched, unmatched, duplicate, parseErrors: errors }
 }
 
-// ?�?� ?�택????�� ?�괄 ?�포???�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+// ── 선택된 항목 일괄 임포트 ──────────────────────────────────────────────
 export async function importSelectedRows(
   rows: CsvRow[],
   participantId: string,
@@ -283,10 +283,10 @@ export async function importSelectedRows(
     date: row.date,
     activity_name: row.description,
     amount: row.amount,
-    category: '기�?',
+    category: '기타',
     status: 'pending' as const,
     payment_method: '체크카드',
-    memo: row.memo || 'CSV ?�동 ?�포??,
+    memo: row.memo || 'CSV 자동 임포트',
   }))
 
   const { error } = await supabase.from('transactions').insert(records)
@@ -295,5 +295,5 @@ export async function importSelectedRows(
   return { imported: records.length }
 }
 
-// ?�위 ?�환 ???�전 ?�그?�처 ?��? (모달?�서 참조)
+// 하위 호환 — 이전 시그니처 유지 (모달에서 참조)
 export { type CsvRow as ImportCsvRow }

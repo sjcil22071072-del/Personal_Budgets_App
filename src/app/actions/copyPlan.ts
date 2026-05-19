@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -17,14 +17,14 @@ function prevMonth(month: string): string {
 async function assertStaff() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: '?�증 ?�요', supabase, user: null }
+  if (!user) return { ok: false, error: '인증 필요', supabase, user: null }
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role')
     .eq('id', user.id)
     .single()
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    return { ok: false, error: '권한???�습?�다.', supabase, user }
+    return { ok: false, error: '권한이 없습니다.', supabase, user }
   }
   return { ok: true, error: null, supabase, user }
 }
@@ -34,7 +34,7 @@ export async function copyMonthlyPlans(
   toMonth: string,
 ): Promise<{ copied: number; skipped: number; error?: string }> {
   const { ok, error, supabase, user } = await assertStaff()
-  if (!ok || !user) return { copied: 0, skipped: 0, error: error ?? '권한???�습?�다.' }
+  if (!ok || !user) return { copied: 0, skipped: 0, error: error ?? '권한이 없습니다.' }
 
   const to = normalizeMonth(toMonth)
   const from = prevMonth(to)
@@ -48,7 +48,7 @@ export async function copyMonthlyPlans(
 
   if (fetchErr) return { copied: 0, skipped: 0, error: fetchErr.message }
   if (!fromPlans || fromPlans.length === 0) {
-    return { copied: 0, skipped: 0, error: '?�월??복사??계획???�습?�다.' }
+    return { copied: 0, skipped: 0, error: '전월에 복사할 계획이 없습니다.' }
   }
 
   const { data: existingPlans } = await supabase
