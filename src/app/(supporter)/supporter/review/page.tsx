@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ReviewQueueClient from '@/components/transactions/ReviewQueueClient'
@@ -10,6 +10,7 @@ import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function ReviewQueuePage() {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
@@ -19,8 +20,7 @@ export default async function ReviewQueuePage() {
     redirect('/')
   }
 
-  // 미확인(pending) 거래 조회 — 담당 당사자만 (지원자), 전체 (관리자)
-  let participantsQuery = supabase
+  let participantsQuery = adminClient
     .from('participants')
     .select('id, name, funding_sources(id, name)')
 
@@ -31,7 +31,6 @@ export default async function ReviewQueuePage() {
   const { data: participants } = await participantsQuery
   const participantIds = (participants ?? []).map((p: any) => p.id)
 
-  // 재원 맵 (participant_id → FundingSource[])
   const allFundingSources: Record<string, { id: string; name: string }[]> = {}
   for (const p of participants ?? []) {
     allFundingSources[(p as any).id] = ((p as any).funding_sources ?? []).map((fs: any) => ({
@@ -40,8 +39,7 @@ export default async function ReviewQueuePage() {
     }))
   }
 
-  // pending 거래 조회
-  let txQuery = supabase
+  let txQuery = adminClient
     .from('transactions')
     .select(`
       id,
@@ -85,7 +83,6 @@ export default async function ReviewQueuePage() {
     place_lng: t.place_lng ?? null,
   }))
 
-  // 영수증 이미지 signed URL 변환 (버킷이 private일 때 필요)
   const signedUrls = await getSignedImageUrls(
     transactions.map(t => ({ id: t.id, receiptUrl: t.receipt_image_url, activityUrl: null }))
   )
@@ -97,17 +94,10 @@ export default async function ReviewQueuePage() {
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 text-foreground p-4 sm:p-8">
       <header className="flex items-center gap-3 mb-8">
-        <Link
-          href="/supporter/transactions"
-          className="text-zinc-400 hover:text-zinc-600 transition-colors text-xl"
-        >
-          ←
-        </Link>
+        <Link href="/supporter/transactions" className="text-zinc-400 hover:text-zinc-600 transition-colors text-xl">←</Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">영수증 검토 대기열</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">
-            당사자가 올린 영수증을 확인하고 잔액에 반영해요
-          </p>
+          <p className="text-sm text-zinc-500 mt-0.5">당사자가 올린 영수증을 확인하고 잔액에 반영해요</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {transactions.length > 0 && (
