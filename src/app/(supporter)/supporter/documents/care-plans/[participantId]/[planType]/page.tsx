@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import CarePlanForm from '@/components/documents/CarePlanForm'
@@ -23,6 +23,7 @@ export default async function CarePlanEditPage({ params, searchParams }: Props) 
   }
 
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 

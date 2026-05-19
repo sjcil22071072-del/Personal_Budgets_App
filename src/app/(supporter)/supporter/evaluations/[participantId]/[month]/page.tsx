@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import EvaluationPageClient from '@/components/evaluations/EvaluationPageClient'
@@ -18,6 +18,7 @@ interface Props {
 export default async function EvaluationDetailPage({ params }: Props) {
   const { participantId, month } = await params
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')

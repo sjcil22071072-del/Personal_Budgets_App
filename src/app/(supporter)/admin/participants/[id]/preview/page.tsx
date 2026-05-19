@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import PreviewClient from './PreviewClient'
 import { getSignedImageUrls } from '@/app/actions/storage'
@@ -13,6 +13,7 @@ interface PageProps {
 export default async function ParticipantPreviewPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
@@ -39,9 +40,9 @@ export default async function ParticipantPreviewPage({ params }: PageProps) {
     { data: allParticipants },
     { data: recentTransactions },
   ] = await Promise.all([
-    supabase.from('participants').select('*, funding_sources(*)').eq('id', id).single(),
-    supabase.from('participants').select('id, name').order('name', { ascending: true }),
-    supabase.from('transactions').select('*').eq('participant_id', id).order('date', { ascending: false }).limit(3),
+    adminClient.from('participants').select('*, funding_sources(*)').eq('id', id).single(),
+    adminClient.from('participants').select('id, name').order('name', { ascending: true }),
+    adminClient.from('transactions').select('*').eq('participant_id', id).order('date', { ascending: false }).limit(3),
   ])
   if (!participant) redirect('/admin/participants')
 

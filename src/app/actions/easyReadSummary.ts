@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { callOpenAI } from '@/utils/openai'
 import { revalidatePath } from 'next/cache'
 
@@ -18,6 +18,7 @@ export async function generateEasyReadSummary(
   month: string
 ): Promise<{ success?: boolean; error?: string }> {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: '인증 필요' }
 

@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SupportGoalsForm from '@/components/evaluations/SupportGoalsForm'
@@ -15,6 +15,7 @@ interface Props {
 export default async function SupportGoalsPage({ params }: Props) {
   const { participantId } = await params
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
