@@ -10,7 +10,7 @@ import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { getMonthlyPlanProgress } from '@/app/actions/monthlyPlan'
 import { parseMonth, getRecentMonths } from '@/utils/date'
 import { formatCurrency } from '@/utils/budget-visuals'
-import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 function SectionCard({
@@ -53,11 +53,11 @@ export default async function EvaluationsPage({
     redirect('/')
   }
 
-  // adminClient로 RLS/role 문제 우회
-  let query = adminClient.from('participants').select('id, name')
-  if (isSupporterRole(authProfile.role)) {
-    query = query.eq('assigned_supporter_id', user.id)
-  }
+  // 지원 업무 화면에서는 현재 담당자로 배정된 당사자만 보여준다.
+  const query = adminClient
+    .from('participants')
+    .select('id, name')
+    .eq('assigned_supporter_id', user.id)
   const { data: participants } = await query
 
   const carePlans = await getAllCarePlans().catch(() => [])
@@ -85,6 +85,7 @@ export default async function EvaluationsPage({
       .from('participants')
       .select('id, name')
       .eq('id', selectedId)
+      .eq('assigned_supporter_id', user.id)
       .single()
 
     if (participant) {

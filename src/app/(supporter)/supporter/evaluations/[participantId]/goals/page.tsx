@@ -25,10 +25,11 @@ export default async function SupportGoalsPage({ params }: Props) {
     redirect('/')
   }
 
-  const { data: participant } = await supabase
+  const { data: participant } = await adminClient
     .from('participants')
     .select('id, name')
     .eq('id', participantId)
+    .eq('assigned_supporter_id', user.id)
     .single()
   if (!participant) redirect('/supporter/evaluations')
 

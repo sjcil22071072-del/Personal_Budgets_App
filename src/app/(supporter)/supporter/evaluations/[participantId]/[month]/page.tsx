@@ -10,7 +10,7 @@ import { getSupportGoals } from '@/app/actions/supportGoal'
 import { getGoalEvaluations } from '@/app/actions/goalEvaluation'
 import { type EvalTemplateId } from '@/types/eval-templates'
 import { normalizeMonth, parseMonth } from '@/utils/date'
-import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface Props {
@@ -32,14 +32,11 @@ export default async function EvaluationDetailPage({ params }: Props) {
   }
 
   // 당사자 정보 조회
-  let participantQuery = adminClient
+  const participantQuery = adminClient
     .from('participants')
     .select('*')
     .eq('id', participantId)
-
-  if (isSupporterRole(authProfile.role)) {
-    participantQuery = participantQuery.eq('assigned_supporter_id', user.id)
-  }
+    .eq('assigned_supporter_id', user.id)
 
   const { data: participant } = await participantQuery.maybeSingle()
 
