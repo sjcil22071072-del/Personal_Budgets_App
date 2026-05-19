@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import DocumentManagerClient from '@/components/documents/DocumentManagerClient'
 import { getAllSisAssessments } from '@/app/actions/sisAssessment'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
-import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 export default async function SupporterDocumentsPage({
@@ -24,13 +24,10 @@ export default async function SupporterDocumentsPage({
   }
 
   // 담당 당사자 목록 조회
-  let participantsQuery = adminClient
+  const participantsQuery = adminClient
     .from('participants')
     .select('id, name')
-
-  if (isSupporterRole(authProfile.role)) {
-    participantsQuery = participantsQuery.eq('assigned_supporter_id', user.id)
-  }
+    .eq('assigned_supporter_id', user.id)
 
   const { data: participants } = await participantsQuery.order('name', { ascending: true })
   const participantIds = (participants || []).map((participant) => participant.id)
