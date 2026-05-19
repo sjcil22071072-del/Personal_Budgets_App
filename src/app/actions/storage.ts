@@ -86,13 +86,16 @@ export async function getSignedImageUrl(
   if (!user) return null
 
   const path = extractStoragePath(url, bucket)
+  console.log('extractStoragePath result:', path) // 추가
+
   if (!path) return null
 
   const admin = createAdminClient()
-  const { data } = await admin.storage
+  const { data, error } = await admin.storage  // error 추가
     .from(bucket)
     .createSignedUrl(path, SIGNED_URL_EXPIRES)
 
+  console.log('signedUrl:', data?.signedUrl, 'error:', error) // 추가
   return data?.signedUrl ?? null
 }
 
