@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
@@ -11,16 +12,17 @@ export interface ParticipantWithFundingSources {
 
 export async function getParticipantsWithFundingSources(): Promise<ParticipantWithFundingSources[]> {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data: profile } = await supabase
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
 
-  let query = supabase
+  let query = adminClient
     .from('participants')
     .select('id, name, funding_sources ( id, name )')
 
@@ -38,12 +40,12 @@ export async function getParticipantsWithFundingSources(): Promise<ParticipantWi
 
 export async function createTransaction(formData: FormData) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  // 당사자는 profiles 테이블에 행이 없으므로 creator_id FK 위반 방지
-  const { data: profile } = await supabase
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('id')
     .eq('id', user.id)
@@ -72,42 +74,37 @@ export async function createTransaction(formData: FormData) {
   let receipt_image_url = null
   let activity_image_url = null
 
-  // 영수증 사진 업로드 (실패해도 거래 저장은 진행)
   if (receiptFile && receiptFile.size > 0) {
     const fileExt = (receiptFile.name.split('.').pop() || 'jpg').toLowerCase()
     const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await adminClient.storage
       .from('receipts')
       .upload(fileName, receiptFile)
     if (uploadError) {
       console.error('Receipt Upload Error:', uploadError)
     } else {
-      const { data: { publicUrl } } = supabase.storage.from('receipts').getPublicUrl(fileName)
+      const { data: { publicUrl } } = adminClient.storage.from('receipts').getPublicUrl(fileName)
       receipt_image_url = publicUrl
     }
   }
 
-  // 활동 사진 업로드
   if (activityFile && activityFile.size > 0) {
     const fileExt = activityFile.name.split('.').pop()
     const fileName = `${participant_id}/${Date.now()}-activity.${fileExt}`
-
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await adminClient.storage
       .from('activity-photos')
       .upload(fileName, activityFile)
-
     if (!uploadError) {
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = adminClient.storage
         .from('activity-photos')
         .getPublicUrl(fileName)
       activity_image_url = publicUrl
     } else {
       console.error('Activity photo upload error:', uploadError)
-      // 활동사진 실패해도 거래 자체는 저장 진행
     }
   }
 
-  const { error } = await supabase.from('transactions').insert({
+  const { error } = await adminClient.from('transactions').insert({
     participant_id,
     creator_id,
     funding_source_id,
@@ -144,8 +141,12 @@ export async function createTransaction(formData: FormData) {
 
 export async function updateTransactionStatus(transactionId: string, newStatus: 'pending' | 'confirmed') {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
-  const { error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await adminClient
     .from('transactions')
     .update({ status: newStatus })
     .eq('id', transactionId)
@@ -162,11 +163,12 @@ export async function deleteTransaction(transactionId: string) {
   if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('데모 모드에서는 삭제할 수 없습니다.')
 
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('transactions')
     .delete()
     .eq('id', transactionId)
@@ -201,17 +203,18 @@ export async function updateTransactionDetail(
   fundingSourceId: string | null
 ) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('transactions')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', transactionId)
   if (error) throw new Error('Failed to update transaction')
 
   if (fundingSourceId) {
-    const { data: fs } = await supabase
+    const { data: fs } = await adminClient
       .from('funding_sources')
       .select('current_month_balance, current_year_balance')
       .eq('id', fundingSourceId)
@@ -231,7 +234,7 @@ export async function updateTransactionDetail(
         yearAdj = oldAmount
       }
       if (monthAdj !== 0 || yearAdj !== 0) {
-        await supabase
+        await adminClient
           .from('funding_sources')
           .update({
             current_month_balance: Number(fs.current_month_balance) + monthAdj,
@@ -251,23 +254,24 @@ export async function deleteTransactionWithBalance(transactionId: string) {
   if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('데모 모드에서는 삭제할 수 없습니다.')
 
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: tx } = await supabase
+  const { data: tx } = await adminClient
     .from('transactions')
     .select('status, amount, funding_source_id')
     .eq('id', transactionId)
     .single()
 
   if (tx?.status === 'confirmed' && tx.funding_source_id) {
-    const { data: fs } = await supabase
+    const { data: fs } = await adminClient
       .from('funding_sources')
       .select('current_month_balance, current_year_balance')
       .eq('id', tx.funding_source_id)
       .single()
     if (fs) {
-      await supabase
+      await adminClient
         .from('funding_sources')
         .update({
           current_month_balance: Number(fs.current_month_balance) + Number(tx.amount),
@@ -277,7 +281,7 @@ export async function deleteTransactionWithBalance(transactionId: string) {
     }
   }
 
-  const { error } = await supabase.from('transactions').delete().eq('id', transactionId)
+  const { error } = await adminClient.from('transactions').delete().eq('id', transactionId)
   if (error) throw new Error('Failed to delete transaction')
 
   revalidatePath('/supporter/transactions')
@@ -302,11 +306,12 @@ export async function updateTransaction(
   }
 ) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('transactions')
     .update(updates)
     .eq('id', transactionId)
@@ -321,20 +326,15 @@ export async function updateTransaction(
   return { success: true }
 }
 
-/**
- * 거래에 영수증/활동사진 업로드 및 URL 저장
- */
 export async function updateTransactionImages(
   transactionId: string,
   participantId: string,
   formData: FormData
 ): Promise<{ success?: boolean; error?: string; receipt_image_url?: string; activity_image_url?: string }> {
-  // 인증 확인
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: '로그인이 필요합니다.' }
 
-  // Storage·DB 조작은 서비스 롤 클라이언트 사용 (RLS 우회)
   const admin = createAdminClient()
 
   const receiptFile = formData.get('receipt') as File | null
@@ -348,10 +348,7 @@ export async function updateTransactionImages(
     const { error: uploadError } = await admin.storage
       .from('receipts')
       .upload(fileName, receiptFile, { upsert: true })
-    if (uploadError) {
-      return { error: `영수증 업로드 실패: ${uploadError.message}` }
-    }
-    // DB에는 공개 URL 형식으로 저장 (나중에 signed URL 생성 시 경로 추출에 사용)
+    if (uploadError) return { error: `영수증 업로드 실패: ${uploadError.message}` }
     const { data: { publicUrl } } = admin.storage.from('receipts').getPublicUrl(fileName)
     imageUpdates.receipt_image_url = publicUrl
   }
@@ -362,19 +359,12 @@ export async function updateTransactionImages(
     const { error: uploadError } = await admin.storage
       .from('activity-photos')
       .upload(fileName, activityFile, { upsert: true })
-    if (uploadError) {
-      return { error: `활동사진 업로드 실패: ${uploadError.message}` }
-    }
-    // DB에는 공개 URL 형식으로 저장 (나중에 signed URL 생성 시 경로 추출에 사용)
-    const { data: { publicUrl } } = admin.storage
-      .from('activity-photos')
-      .getPublicUrl(fileName)
+    if (uploadError) return { error: `활동사진 업로드 실패: ${uploadError.message}` }
+    const { data: { publicUrl } } = admin.storage.from('activity-photos').getPublicUrl(fileName)
     imageUpdates.activity_image_url = publicUrl
   }
 
-  if (Object.keys(imageUpdates).length === 0) {
-    return { error: '업로드할 파일이 없습니다.' }
-  }
+  if (Object.keys(imageUpdates).length === 0) return { error: '업로드할 파일이 없습니다.' }
 
   const { error } = await admin
     .from('transactions')
@@ -386,7 +376,6 @@ export async function updateTransactionImages(
   revalidatePath(`/supporter/transactions/${transactionId}`)
   revalidatePath('/supporter/transactions')
 
-  // 버킷이 private이므로 클라이언트에는 signed URL 반환
   const SIGNED_URL_EXPIRES = 3600
   const signedResult: { receipt_image_url?: string; activity_image_url?: string } = {}
   if (imageUpdates.receipt_image_url) {
@@ -411,19 +400,15 @@ export async function updateTransactionImages(
   return { success: true, ...signedResult }
 }
 
-/**
- * 특정 당사자의 특정 월(거래 날짜 기준) 월별 계획 목록을 반환.
- * 거래 등록/편집의 계획 드롭다운에서 사용.
- */
 export async function getMonthlyPlansForDate(
   participantId: string,
   date: string
 ): Promise<{ id: string; order_index: number; title: string }[]> {
   if (!participantId || !date) return []
-  const supabase = await createClient()
+  const adminClient = createAdminClient()
   const d = new Date(date)
   const monthStart = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
-  const { data } = await supabase
+  const { data } = await adminClient
     .from('monthly_plans')
     .select('id, order_index, title')
     .eq('participant_id', participantId)
@@ -431,4 +416,3 @@ export async function getMonthlyPlansForDate(
     .order('order_index', { ascending: true })
   return (data || []) as { id: string; order_index: number; title: string }[]
 }
-
