@@ -7,6 +7,7 @@ import TransactionTableClient from "@/components/transactions/TransactionTableCl
 import AdminHelpButton from "@/components/help/AdminHelpButton";
 import { isStaffRole, isSupporterRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
+import { getSignedImageUrls } from "@/app/actions/storage";
 
 export default async function TransactionsPage({
   searchParams,
@@ -26,7 +27,9 @@ export default async function TransactionsPage({
   const params = await searchParams;
   const supabase = await createClient();
   const adminClient = createAdminClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
 
@@ -45,9 +48,14 @@ export default async function TransactionsPage({
 
   const { data: participants } = await participantsQuery;
 
-  const participantFundingSources: Record<string, { id: string; name: string }[]> = {};
+  const participantFundingSources: Record<
+    string,
+    { id: string; name: string }[]
+  > = {};
   for (const p of participants || []) {
-    participantFundingSources[(p as any).id] = ((p as any).funding_sources || []).map((fs: any) => ({
+    participantFundingSources[(p as any).id] = (
+      (p as any).funding_sources || []
+    ).map((fs: any) => ({
       id: fs.id,
       name: fs.name,
     }));
@@ -55,27 +63,44 @@ export default async function TransactionsPage({
 
   let txQuery = adminClient
     .from("transactions")
-    .select("*, participant:participants!transactions_participant_id_fkey ( name )");
+    .select(
+      "*, participant:participants!transactions_participant_id_fkey ( name )",
+    );
 
-  if (params.participant) txQuery = txQuery.eq("participant_id", params.participant);
+  if (params.participant)
+    txQuery = txQuery.eq("participant_id", params.participant);
   if (params.status) txQuery = txQuery.eq("status", params.status);
   if (params.category) txQuery = txQuery.eq("category", params.category);
-  if (params.paymentMethod) txQuery = txQuery.eq("payment_method", params.paymentMethod);
+  if (params.paymentMethod)
+    txQuery = txQuery.eq("payment_method", params.paymentMethod);
   if (params.dateFrom) txQuery = txQuery.gte("date", params.dateFrom);
   if (params.dateTo) txQuery = txQuery.lte("date", params.dateTo);
-  if (params.keyword) txQuery = txQuery.or(`activity_name.ilike.%${params.keyword}%,memo.ilike.%${params.keyword}%`);
+  if (params.keyword)
+    txQuery = txQuery.or(
+      `activity_name.ilike.%${params.keyword}%,memo.ilike.%${params.keyword}%`,
+    );
   if (params.plan) {
     if (params.plan === "none") txQuery = txQuery.is("monthly_plan_id", null);
     else txQuery = txQuery.eq("monthly_plan_id", params.plan);
   }
 
-  if (params.sort === "amount_asc") txQuery = txQuery.order("amount", { ascending: true });
-  else if (params.sort === "amount_desc") txQuery = txQuery.order("amount", { ascending: false });
-  else if (params.sort === "date_asc") txQuery = txQuery.order("date", { ascending: true });
-  else if (params.sort === "name_asc") txQuery = txQuery.order("activity_name", { ascending: true });
-  else if (params.sort === "name_desc") txQuery = txQuery.order("activity_name", { ascending: false });
-  else if (params.sort === "category_asc") txQuery = txQuery.order("category", { ascending: true, nullsFirst: false });
-  else if (params.sort === "category_desc") txQuery = txQuery.order("category", { ascending: false, nullsFirst: false });
+  if (params.sort === "amount_asc")
+    txQuery = txQuery.order("amount", { ascending: true });
+  else if (params.sort === "amount_desc")
+    txQuery = txQuery.order("amount", { ascending: false });
+  else if (params.sort === "date_asc")
+    txQuery = txQuery.order("date", { ascending: true });
+  else if (params.sort === "name_asc")
+    txQuery = txQuery.order("activity_name", { ascending: true });
+  else if (params.sort === "name_desc")
+    txQuery = txQuery.order("activity_name", { ascending: false });
+  else if (params.sort === "category_asc")
+    txQuery = txQuery.order("category", { ascending: true, nullsFirst: false });
+  else if (params.sort === "category_desc")
+    txQuery = txQuery.order("category", {
+      ascending: false,
+      nullsFirst: false,
+    });
   else txQuery = txQuery.order("date", { ascending: false });
 
   txQuery = txQuery.limit(100);
@@ -87,7 +112,22 @@ export default async function TransactionsPage({
     }
   }
 
-  const { data: transactions } = await txQuery;
+  const { data: rawTransactions } = await txQuery;
+
+  // signed URL 일괄 변환
+  const signedUrls = await getSignedImageUrls(
+    (rawTransactions || []).map((t: any) => ({
+      id: t.id,
+      receiptUrl: t.receipt_image_url ?? null,
+      activityUrl: t.activity_image_url ?? null,
+    })),
+  );
+
+  const transactions = (rawTransactions || []).map((t: any) => ({
+    ...t,
+    receipt_image_url: signedUrls[t.id]?.receipt ?? t.receipt_image_url,
+    activity_image_url: signedUrls[t.id]?.activity ?? t.activity_image_url,
+  }));
 
   let planOptions: { id: string; label: string }[] = [];
   if (params.participant) {
@@ -105,20 +145,35 @@ export default async function TransactionsPage({
   }
 
   const totalCount = transactions?.length || 0;
-  const pendingCount = transactions?.filter((t: any) => t.status === "pending").length || 0;
-  const confirmedCount = transactions?.filter((t: any) => t.status === "confirmed").length || 0;
-  const totalAmount = transactions?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) || 0;
+  const pendingCount =
+    transactions?.filter((t: any) => t.status === "pending").length || 0;
+  const confirmedCount =
+    transactions?.filter((t: any) => t.status === "confirmed").length || 0;
+  const totalAmount =
+    transactions?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) ||
+    0;
 
-  const categories = Array.from(new Set((transactions || []).map((t: any) => t.category).filter(Boolean))) as string[];
-  const paymentMethods = Array.from(new Set((transactions || []).map((t: any) => t.payment_method).filter(Boolean))) as string[];
+  const categories = Array.from(
+    new Set((transactions || []).map((t: any) => t.category).filter(Boolean)),
+  ) as string[];
+  const paymentMethods = Array.from(
+    new Set(
+      (transactions || []).map((t: any) => t.payment_method).filter(Boolean),
+    ),
+  ) as string[];
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 text-foreground p-4 sm:p-8">
       <header className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">거래 및 회계 관리 (장부)</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+          거래 및 회계 관리 (장부)
+        </h1>
         <div className="flex items-center gap-2 print:hidden">
           <AdminHelpButton pageKey="transactions" />
-          <Link href="/supporter/transactions/new" className="px-4 py-2 bg-zinc-900 text-white text-sm font-bold rounded-lg hover:bg-zinc-800 transition-colors">
+          <Link
+            href="/supporter/transactions/new"
+            className="px-4 py-2 bg-zinc-900 text-white text-sm font-bold rounded-lg hover:bg-zinc-800 transition-colors"
+          >
             + 내역 직접 등록
           </Link>
         </div>
@@ -127,26 +182,49 @@ export default async function TransactionsPage({
       <main className="w-full max-w-6xl flex flex-col gap-6">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="p-5 rounded-xl bg-white ring-1 ring-zinc-200 text-center shadow-sm">
-            <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">전체 건수</p>
-            <p className="text-3xl font-black text-zinc-900 mt-1">{totalCount}</p>
+            <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">
+              전체 건수
+            </p>
+            <p className="text-3xl font-black text-zinc-900 mt-1">
+              {totalCount}
+            </p>
           </div>
-          <div className={`p-5 rounded-xl ring-1 text-center shadow-sm ${pendingCount > 0 ? "bg-orange-50 ring-orange-200" : "bg-white ring-zinc-200"}`}>
-            <p className="text-xs font-black text-orange-400 uppercase tracking-widest">임시대기</p>
-            <p className={`text-3xl font-black mt-1 ${pendingCount > 0 ? "text-orange-600" : "text-zinc-900"}`}>{pendingCount}</p>
+          <div
+            className={`p-5 rounded-xl ring-1 text-center shadow-sm ${pendingCount > 0 ? "bg-orange-50 ring-orange-200" : "bg-white ring-zinc-200"}`}
+          >
+            <p className="text-xs font-black text-orange-400 uppercase tracking-widest">
+              임시대기
+            </p>
+            <p
+              className={`text-3xl font-black mt-1 ${pendingCount > 0 ? "text-orange-600" : "text-zinc-900"}`}
+            >
+              {pendingCount}
+            </p>
           </div>
           <div className="p-5 rounded-xl bg-white ring-1 ring-zinc-200 text-center shadow-sm">
-            <p className="text-xs font-black text-green-500 uppercase tracking-widest">확정 완료</p>
-            <p className="text-3xl font-black text-green-600 mt-1">{confirmedCount}</p>
+            <p className="text-xs font-black text-green-500 uppercase tracking-widest">
+              확정 완료
+            </p>
+            <p className="text-3xl font-black text-green-600 mt-1">
+              {confirmedCount}
+            </p>
           </div>
           <div className="p-5 rounded-xl bg-white ring-1 ring-zinc-200 text-center shadow-sm">
-            <p className="text-xs font-black text-blue-400 uppercase tracking-widest">합계 금액</p>
-            <p className="text-2xl font-black text-zinc-900 mt-1">{formatCurrency(totalAmount)}원</p>
+            <p className="text-xs font-black text-blue-400 uppercase tracking-widest">
+              합계 금액
+            </p>
+            <p className="text-2xl font-black text-zinc-900 mt-1">
+              {formatCurrency(totalAmount)}원
+            </p>
           </div>
         </div>
 
         <TransactionTableClient
           transactions={transactions || []}
-          participants={(participants || []).map((p: any) => ({ id: p.id, name: p.name || "이름없음" }))}
+          participants={(participants || []).map((p: any) => ({
+            id: p.id,
+            name: p.name || "이름없음",
+          }))}
           participantFundingSources={participantFundingSources}
           categories={categories}
           paymentMethods={paymentMethods}
