@@ -418,6 +418,7 @@ export async function deleteFundingSource(fundingSourceId: string) {
 // ──────────────────────────────────────────
 
 export type InvitationRole = 'admin' | 'supporter' | 'participant'
+export type StaffRole = 'admin' | 'supporter'
 
 export interface Invitation {
   id: string
@@ -426,6 +427,73 @@ export interface Invitation {
   note: string | null
   used_at: string | null
   created_at: string
+}
+
+export async function registerStaffUser(formData: {
+  name: string
+  email: string
+  role: StaffRole
+  note?: string
+}): Promise<{ success?: boolean; error?: string; mode?: 'updated' | 'invited' }> {
+  const { supabase, user } = await verifyAdmin()
+
+  const email = formData.email.trim().toLowerCase()
+  const name = formData.name.trim()
+  const note = formData.note?.trim() || null
+
+  if (!name) return { error: '이름을 입력해주세요.' }
+  if (!email) return { error: '이메일을 입력해주세요.' }
+  if (!['admin', 'supporter'].includes(formData.role)) {
+    return { error: '관리자 또는 지원자만 등록할 수 있습니다.' }
+  }
+
+  const { data: existingProfile, error: profileLookupError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (profileLookupError) {
+    return { error: `사용자 확인 실패: ${profileLookupError.message}` }
+  }
+
+  if (existingProfile?.id) {
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ role: formData.role, name })
+      .eq('id', existingProfile.id)
+
+    if (updateError) {
+      return { error: `역할 변경 실패: ${updateError.message}` }
+    }
+
+    revalidatePath('/admin/settings')
+    revalidatePath('/admin/users/new')
+    revalidatePath('/admin/invitations')
+    return { success: true, mode: 'updated' }
+  }
+
+  const { error: invitationError } = await supabase
+    .from('user_invitations')
+    .upsert(
+      {
+        email,
+        role: formData.role,
+        note: note || name,
+        invited_by: user.id,
+        used_at: null,
+      },
+      { onConflict: 'email' }
+    )
+
+  if (invitationError) {
+    return { error: `등록 실패: ${invitationError.message}` }
+  }
+
+  revalidatePath('/admin/settings')
+  revalidatePath('/admin/users/new')
+  revalidatePath('/admin/invitations')
+  return { success: true, mode: 'invited' }
 }
 
 /**

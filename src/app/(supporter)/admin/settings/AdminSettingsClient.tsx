@@ -114,6 +114,12 @@ export default function AdminSettingsClient({
             <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">
               사용자 목록 ({profiles.length}명)
             </h2>
+            <Link
+              href="/admin/users/new"
+              className="rounded-xl bg-zinc-900 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-zinc-800"
+            >
+              관리자/지원자 등록
+            </Link>
           </div>
 
           {profiles.length === 0 ? (
