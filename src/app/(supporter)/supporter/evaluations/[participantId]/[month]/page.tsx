@@ -9,33 +9,46 @@ import { getMonthlyPlanProgress } from '@/app/actions/monthlyPlan'
 import { getSupportGoals } from '@/app/actions/supportGoal'
 import { getGoalEvaluations } from '@/app/actions/goalEvaluation'
 import { type EvalTemplateId } from '@/types/eval-templates'
-import { parseMonth } from '@/utils/date'
+import { normalizeMonth, parseMonth } from '@/utils/date'
+import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
 interface Props {
   params: Promise<{ participantId: string; month: string }>
 }
 
 export default async function EvaluationDetailPage({ params }: Props) {
-  const { participantId, month } = await params
+  const { participantId, month: monthParam } = await params
+  const month = normalizeMonth(monthParam)
   const supabase = await createClient()
   const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
 
+  const authProfile = await getAuthenticatedUserProfileRole()
+  if (!authProfile || !isStaffRole(authProfile.role)) {
+    redirect('/')
+  }
+
   // 당사자 정보 조회
-  const { data: participant } = await supabase
+  let participantQuery = adminClient
     .from('participants')
     .select('*')
     .eq('id', participantId)
-    .single()
+
+  if (isSupporterRole(authProfile.role)) {
+    participantQuery = participantQuery.eq('assigned_supporter_id', user.id)
+  }
+
+  const { data: participant } = await participantQuery.maybeSingle()
 
   if (!participant) redirect('/supporter/evaluations')
 
   // 해당 월의 거래 내역 요약 정보 조회 (평가 참고용)
   const { startDate, endDate, display: displayMonth } = parseMonth(month)
 
-  const { data: transactions } = await supabase
+  const { data: transactions } = await adminClient
     .from('transactions')
     .select('*')
     .eq('participant_id', participantId)
@@ -47,12 +60,12 @@ export default async function EvaluationDetailPage({ params }: Props) {
   const count = transactions?.length || 0
 
   // 기존 평가 데이터 조회
-  const { data: existingEvaluation } = await supabase
+  const { data: existingEvaluation } = await adminClient
     .from('evaluations')
     .select('*')
     .eq('participant_id', participantId)
     .eq('month', month)
-    .single()
+    .maybeSingle()
 
   // 기관 평가 양식 기본 설정 (custom_fields 등 참조용)
   const evalSetting = await getEvalTemplateSetting()
@@ -62,7 +75,7 @@ export default async function EvaluationDetailPage({ params }: Props) {
 
   // 지원 목표 + 목표별 평가 (현재 연도 care_plan 기준)
   const currentYear = new Date().getFullYear()
-  const { data: carePlans } = await supabase
+  const { data: carePlans } = await adminClient
     .from('care_plans')
     .select('id, plan_year')
     .eq('participant_id', participantId)

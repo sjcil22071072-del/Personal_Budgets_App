@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getEvalTemplateSetting } from '@/app/actions/evalTemplates'
 import { resolveTemplateFields, resolveAiPrompt, type EvalTemplateId, type OrgEvalSetting } from '@/types/eval-templates'
+import { normalizeMonth } from '@/utils/date'
 
 export async function upsertEvaluation(formData: FormData) {
   const supabase = await createClient()
@@ -12,7 +13,7 @@ export async function upsertEvaluation(formData: FormData) {
   if (!user) throw new Error('Unauthorized')
 
   const participantId = formData.get('participant_id') as string
-  const month = formData.get('month') as string
+  const month = normalizeMonth(formData.get('month') as string)
   const evaluation_template = ((formData.get('evaluation_template') as string) || 'pcp') as EvalTemplateId
   const isPcp = evaluation_template === 'pcp'
 
@@ -188,7 +189,7 @@ export async function getEvaluation(participantId: string, month: string) {
     .from('evaluations')
     .select('*')
     .eq('participant_id', participantId)
-    .eq('month', month)
+    .eq('month', normalizeMonth(month))
     .single()
   return data ?? null
 }

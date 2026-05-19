@@ -138,6 +138,7 @@ export default async function EvaluationsPage({
           <EvaluationsPageClient
             participants={(participants || []).map((p: any) => ({ id: p.id, name: p.name || '이름없음' }))}
             initialParticipantId={selectedId}
+            initialMonth={selectedMonthRaw}
           />
         </div>
 
