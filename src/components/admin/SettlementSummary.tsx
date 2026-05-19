@@ -1,8 +1,9 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 
 export default async function SettlementSummary() {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const now = new Date()
   const currentMonth = now.toISOString().slice(0, 7)
@@ -26,9 +27,9 @@ export default async function SettlementSummary() {
     { data: evaluations },
     { data: files },
   ] = await Promise.all([
-    supabase.from('transactions').select('participant_id, status').in('participant_id', ids).gte('date', firstDay).lt('date', nextMonthFirst),
-    supabase.from('evaluations').select('participant_id, published_at').in('participant_id', ids).eq('month', currentMonth),
-    supabase.from('file_links').select('participant_id').in('participant_id', ids).then(r => r, () => ({ data: null as any[] | null })),
+    adminClient.from('transactions').select('participant_id, status').in('participant_id', ids).gte('date', firstDay).lt('date', nextMonthFirst),
+    adminClient.from('evaluations').select('participant_id, published_at').in('participant_id', ids).eq('month', currentMonth),
+    adminClient.from('file_links').select('participant_id').in('participant_id', ids).then(r => r, () => ({ data: null as any[] | null })),
   ])
 
   const summary = participants.map(p => {

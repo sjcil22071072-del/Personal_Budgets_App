@@ -34,6 +34,7 @@ export async function suggestActivityOptions(
     let recentContext = ''
     if (participantId) {
       const supabase = await createClient()
+  const adminClient = createAdminClient()
       const { data: plans } = await supabase
         .from('plans')
         .select('activity_name')
@@ -145,6 +146,7 @@ export async function savePlan({
   place_lng?: number | null
 }) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) throw new Error('Unauthorized')
@@ -157,7 +159,7 @@ export async function savePlan({
     .single()
   const creator_id = profile ? user.id : null
 
-  const { error } = await supabase.from('plans').insert({
+  const { error } = await adminClient.from('plans').insert({
     participant_id: participantId,
     activity_name: activityName,
     date,
@@ -184,6 +186,7 @@ export async function savePlan({
  */
 export async function getParticipantPlans(participantId: string) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   const { data, error } = await supabase
     .from('plans')

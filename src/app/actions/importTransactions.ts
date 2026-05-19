@@ -217,6 +217,7 @@ export async function parseAndMatchFile(
   participantId: string
 ): Promise<ParseAndMatchResult> {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
@@ -272,6 +273,7 @@ export async function importSelectedRows(
   fundingSourceId: string
 ): Promise<{ imported: number; error?: string }> {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
@@ -289,7 +291,7 @@ export async function importSelectedRows(
     memo: row.memo || 'CSV 자동 임포트',
   }))
 
-  const { error } = await supabase.from('transactions').insert(records)
+  const { error } = await adminClient.from('transactions').insert(records)
   if (error) return { imported: 0, error: error.message }
 
   return { imported: records.length }

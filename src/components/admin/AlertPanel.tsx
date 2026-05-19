@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
 
@@ -11,6 +11,7 @@ interface Alert {
 
 export default async function AlertPanel() {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const alerts: Alert[] = []
 
   // 3개 독립 쿼리 병렬 실행 (순차 대기 → 동시 대기)
@@ -20,9 +21,9 @@ export default async function AlertPanel() {
     { data: pendingTxs },
     { data: evaluations },
   ] = await Promise.all([
-    supabase.from('participants').select('id, name, alert_threshold, funding_sources(monthly_budget, current_month_balance)'),
-    supabase.from('transactions').select('participant_id, participants!transactions_participant_id_fkey(name)').eq('status', 'pending'),
-    supabase.from('evaluations').select('participant_id').eq('month', currentMonth),
+    adminClient.from('participants').select('id, name, alert_threshold, funding_sources(monthly_budget, current_month_balance)'),
+    adminClient.from('transactions').select('participant_id, participants!transactions_participant_id_fkey(name)').eq('status', 'pending'),
+    adminClient.from('evaluations').select('participant_id').eq('month', currentMonth),
   ])
 
   // 1. 잔액 경고 — current_month_balance / monthly_budget < alert_threshold
