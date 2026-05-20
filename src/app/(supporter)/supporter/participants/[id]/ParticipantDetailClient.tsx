@@ -199,12 +199,6 @@ export default function ParticipantDetailClient({
               <span>{isEditing ? '편집 종료' : '정보 편집'}</span>
             </button>
           )}
-          <Link href={`/admin/participants/${participant.id}/report`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-colors">
-            <span>🖨️</span><span>월간 보고서</span>
-          </Link>
-          <Link href={`/admin/participants/${participant.id}/preview`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">
-            <span>👁</span><span>앱 미리보기</span>
-          </Link>
           {isAdmin && (
             <button onClick={handleDelete} disabled={isDeleting} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 transition-colors disabled:opacity-50">
               <span>🗑</span><span>{isDeleting ? '삭제 중...' : '삭제'}</span>
