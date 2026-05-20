@@ -133,15 +133,11 @@ export default async function EvaluationsPage({
       </header>
 
       <main className="max-w-5xl flex flex-col gap-4">
-        <div className="bg-white rounded-2xl ring-1 ring-zinc-200 shadow-sm px-6 py-5">
-          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3">월별 평가 작성 / 조회</p>
-          <p className="text-xs text-zinc-500 mb-4">당사자와 월을 선택하면 아래에서 바로 평가 내용을 확인할 수 있습니다.</p>
-          <EvaluationsPageClient
-            participants={(participants || []).map((p: any) => ({ id: p.id, name: p.name || '이름없음' }))}
-            initialParticipantId={selectedId}
-            initialMonth={selectedMonthRaw}
-          />
-        </div>
+        <EvaluationsPageClient
+          participants={(participants || []).map((p: any) => ({ id: p.id, name: p.name || '이름없음' }))}
+          initialParticipantId={selectedId}
+          initialMonth={selectedMonthRaw}
+        />
 
         {inlineData && (
           <div className="flex flex-col gap-4 animate-in fade-in duration-300">
