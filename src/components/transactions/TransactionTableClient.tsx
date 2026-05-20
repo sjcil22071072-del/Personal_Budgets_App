@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import ImportResultModal from './ImportResultModal'
 import { updateTransactionStatus, deleteTransaction } from '@/app/actions/transaction'
 import * as XLSX from 'xlsx'
 
@@ -32,9 +31,8 @@ interface TransactionTableClientProps {
   currentFilters: {
     participant?: string; status?: string; category?: string
     paymentMethod?: string; dateFrom?: string; dateTo?: string
-    sort?: string; keyword?: string; plan?: string
+    sort?: string; keyword?: string
   }
-  planOptions?: { id: string; label: string }[]
 }
 
 type SortField = 'date' | 'amount' | 'name' | 'category'
@@ -55,11 +53,9 @@ function parseSortParam(sort: string): { field: SortField; dir: SortDir } {
 export default function TransactionTableClient({
   transactions, participants, participantFundingSources = {},
   categories, paymentMethods, currentFilters,
-  planOptions = [],
 }: TransactionTableClientProps) {
   const router = useRouter()
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const [showImport, setShowImport] = useState(false)
   const [filters, setFilters] = useState({
     participant: currentFilters.participant || '',
     status: currentFilters.status || '',
@@ -69,7 +65,6 @@ export default function TransactionTableClient({
     dateTo: currentFilters.dateTo || '',
     sort: currentFilters.sort || '',
     keyword: currentFilters.keyword || '',
-    plan: currentFilters.plan || '',
   })
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
@@ -84,7 +79,7 @@ export default function TransactionTableClient({
   }
 
   const clearFilters = () => {
-    setFilters({ participant: '', status: '', category: '', paymentMethod: '', dateFrom: '', dateTo: '', sort: '', keyword: '', plan: '' })
+    setFilters({ participant: '', status: '', category: '', paymentMethod: '', dateFrom: '', dateTo: '', sort: '', keyword: '' })
     router.push('/supporter/transactions')
   }
 
@@ -231,15 +226,6 @@ export default function TransactionTableClient({
 
   return (
     <>
-      {showImport && (
-        <ImportResultModal
-          participants={participants}
-          participantFundingSources={participantFundingSources}
-          onClose={() => setShowImport(false)}
-          onImported={() => { router.refresh(); setShowImport(false) }}
-        />
-      )}
-
       <>
           {/* 필터 영역 */}
           <div className="bg-white rounded-xl ring-1 ring-zinc-200 shadow-sm overflow-hidden print:hidden">
@@ -275,12 +261,6 @@ export default function TransactionTableClient({
               </div>
 
               <div className="flex items-center gap-2 ml-auto shrink-0">
-                <button onClick={() => setShowImport(true)} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-1 print:hidden">📤 CSV 가져오기</button>
-                <a
-                  href={`/api/export/transactions?${new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([, v]) => v)))}`}
-                  download
-                  className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1"
-                >📥 CSV</a>
                 <button onClick={() => window.print()} className="px-3 py-1.5 bg-zinc-700 text-white rounded-lg text-sm font-bold hover:bg-zinc-900 transition-colors print:hidden">🖨️ 인쇄</button>
                 <button onClick={() => setShowAdvanced(!showAdvanced)} className="px-3 py-1.5 bg-zinc-100 text-zinc-600 rounded-lg text-sm font-bold hover:bg-zinc-200">
                   {showAdvanced ? '▲ 닫기' : '▼ 고급 필터'}
@@ -331,24 +311,6 @@ export default function TransactionTableClient({
                     <label className="block text-xs font-bold text-zinc-500 mb-1">종료 날짜</label>
                     <input type="date" value={filters.dateTo} onChange={e => setFilters({ ...filters, dateTo: e.target.value })}
                       className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div className={!filters.participant ? 'opacity-50' : ''}>
-                    <label className="block text-xs font-bold text-zinc-500 mb-1">월별 계획</label>
-                    <select
-                      value={filters.plan}
-                      onChange={e => setFilters({ ...filters, plan: e.target.value })}
-                      disabled={!filters.participant}
-                      className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-zinc-50"
-                    >
-                      <option value="">전체</option>
-                      <option value="none">계획 없음 (자유 지출)</option>
-                      {planOptions.map(p => (
-                        <option key={p.id} value={p.id}>{p.label}</option>
-                      ))}
-                    </select>
-                    {!filters.participant && (
-                      <p className="text-[10px] text-zinc-400 mt-1">당사자를 먼저 선택하세요.</p>
-                    )}
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">

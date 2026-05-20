@@ -66,8 +66,6 @@ interface HomeDashboardProps {
   monthlyTrend?: MonthlyData[]
   uiPreferences?: UIPreferences | null
   latestEvaluation?: { month: string; easy_summary: string | null; next_step: string | null } | null
-  monthlyPlanProgress?: import('@/app/actions/monthlyPlan').MonthlyPlanProgress[]
-  currentMonth?: string
 }
 
 export default function HomeDashboard({
@@ -75,7 +73,6 @@ export default function HomeDashboard({
   remainingDays, totalDaysInMonth, userName,
   dailyTransactions = [], monthlyTrend = [],
   uiPreferences, latestEvaluation,
-  monthlyPlanProgress = [], currentMonth,
 }: HomeDashboardProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
@@ -187,24 +184,6 @@ export default function HomeDashboard({
       case 'weekly_chart':
         if (dailyTransactions.length === 0) return null
         return <WeeklyChartBlock dailyTransactions={dailyTransactions} themeColor={visual.themeColor} />
-
-      case 'plan_shortcut':
-        return (
-          <Link
-            href="/plan"
-            className="group flex items-center gap-4 p-5 rounded-2xl bg-white ring-1 ring-zinc-200 hover:ring-zinc-900 hover:bg-zinc-50 transition-all shadow-sm active:scale-[0.98]"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-              <span className="text-3xl">🤔</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-black text-zinc-800 text-base">오늘 계획 AI</p>
-              <p className="text-xs text-zinc-400 font-bold mt-0.5">오늘 활동을 미리 계획해요</p>
-            </div>
-            <span className="text-zinc-300 group-hover:text-zinc-600 transition-colors text-lg">▸</span>
-          </Link>
-        )
-
       case 'calendar_shortcut':
         return (
           <Link
@@ -391,8 +370,6 @@ export default function HomeDashboard({
             remainingDays={remainingDays}
             participantId={participantId}
             fundingSources={fundingSources}
-            monthlyPlanProgress={monthlyPlanProgress}
-            currentMonth={currentMonth}
           />
         </div>
 

@@ -8,18 +8,9 @@ import { createTransaction } from '@/app/actions/transaction'
 import { createCardRegistration } from '@/app/actions/cardRegistration'
 import { EasyTerm } from '@/components/ui/EasyTerm'
 import { speak } from '@/utils/tts'
-import {
-  loadEmojiCatalog, searchEmoji, getEmojisByGroup,
-  GROUP_LABELS, GROUP_ORDER,
-  type EmojiEntry,
-} from '@/utils/emojiCatalog'
-import CashViz from './BalanceCashViz'
-import MonthlyPlanMiniProgress from './MonthlyPlanMiniProgress'
 
-type WidgetStyle = 'pie' | 'water' | 'emoji' | 'text' | 'cash'
+type WidgetStyle = 'pie' | 'water' | 'text'
 type UploadMode = 'receipt' | 'activity' | 'card'
-
-const DEFAULT_EMOJI_FAVORITES = ['🍎', '🍪', '⭐', '🐥', '🌸', '🎈', '🍋', '🍩', '🦊', '🎀']
 
 const THEME = {
   green:  { fill: '#22c55e', stroke: '#16a34a', light: '#dcfce7', text: 'text-green-700', bg: 'bg-green-50', border: 'border-green-100' },
@@ -143,8 +134,6 @@ interface Props {
   remainingDays: number
   participantId?: string
   fundingSources?: { id: string; name: string }[]
-  monthlyPlanProgress?: import('@/app/actions/monthlyPlan').MonthlyPlanProgress[]
-  currentMonth?: string
 }
 
 // ── 피자 그래프 ────────────────────────────────────────────────
@@ -317,261 +306,6 @@ function WaterViz({
   )
 }
 
-// ── 이모지 격자 ───────────────────────────────────────────────
-function EmojiViz({
-  percentage,
-  emoji,
-  onPickerToggle,
-  showPicker,
-  onSelectEmoji,
-}: {
-  percentage: number
-  emoji: string
-  onPickerToggle: () => void
-  showPicker: boolean
-  onSelectEmoji: (e: string) => void
-}) {
-  const remaining = Math.max(0, Math.min(10, Math.round(percentage / 10)))
-
-  // 즐겨찾기 (localStorage, 최대 10개)
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return DEFAULT_EMOJI_FAVORITES
-    try {
-      const saved = localStorage.getItem('emoji-favorites')
-      const parsed = saved ? JSON.parse(saved) : null
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_EMOJI_FAVORITES
-    } catch { return DEFAULT_EMOJI_FAVORITES }
-  })
-
-  // 카탈로그 — 피커가 처음 열릴 때 lazy load
-  const [catalog, setCatalog] = useState<EmojiEntry[]>([])
-  const [catalogLoading, setCatalogLoading] = useState(false)
-
-  // 탭: 'fav' | 'search' | group key
-  const [tab, setTab] = useState<string>('fav')
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // 피커가 열릴 때 카탈로그 로드
-  useEffect(() => {
-    if (!showPicker || catalog.length > 0 || catalogLoading) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCatalogLoading(true)
-    loadEmojiCatalog().then(data => {
-      setCatalog(data)
-      setCatalogLoading(false)
-    })
-  }, [showPicker, catalog.length, catalogLoading])
-
-  function saveFavorites(next: string[]) {
-    setFavorites(next)
-    localStorage.setItem('emoji-favorites', JSON.stringify(next))
-  }
-
-  function addFavorite(e: string) {
-    if (!e || favorites.includes(e) || favorites.length >= 10) return
-    saveFavorites([...favorites, e])
-  }
-
-  function removeFavorite(e: string) {
-    saveFavorites(favorites.filter(f => f !== e))
-  }
-
-  function pickEmoji(e: string) {
-    addFavorite(e)
-    onSelectEmoji(e)
-  }
-
-  function isEmojiChar(str: string) {
-    return /\p{Emoji}/u.test(str.trim()) && str.trim().length <= 4
-  }
-
-  const searchResults = searchQuery.trim().length > 0 && catalog.length > 0
-    ? searchEmoji(catalog, searchQuery)
-    : []
-
-  const browseGroup = catalog.length > 0 && tab !== 'fav' && tab !== 'search'
-    ? getEmojisByGroup(catalog, tab)
-    : []
-
-  const TABS = [
-    { key: 'fav', label: '⭐ 즐겨찾기' },
-    { key: 'search', label: '🔍 검색' },
-    ...GROUP_ORDER.slice(0, 6).map(g => ({
-      key: g,
-      label: `${GROUP_LABELS[g]?.icon} ${GROUP_LABELS[g]?.label}`,
-    })),
-  ]
-
-  return (
-    <div className="py-4 px-3">
-      {/* 이모지 격자 */}
-      <div className="grid grid-cols-5 gap-2 sm:gap-3 px-2">
-        {Array.from({ length: 10 }, (_, i) => {
-          const filled = i < remaining
-          return (
-            <div
-              key={i}
-              className={`aspect-square flex items-center justify-center rounded-2xl transition-all duration-500 ${
-                filled ? 'bg-white shadow-sm ring-1 ring-zinc-100' : 'bg-zinc-50'
-              }`}
-            >
-              <span className={`text-3xl select-none transition-all duration-700 ${
-                filled ? 'scale-100' : 'opacity-[0.12] scale-90 grayscale'
-              }`}>{emoji}</span>
-            </div>
-          )
-        })}
-      </div>
-
-      <p className="text-center text-sm font-bold text-zinc-400 mt-4">
-        {remaining > 0 ? (
-          <><span className="text-zinc-700">{remaining}개</span> 남았어요 (10개 중)</>
-        ) : '이번 달 예산을 모두 사용했어요'}
-      </p>
-
-      <div className="flex justify-center mt-3 pb-1">
-        <button
-          onClick={onPickerToggle}
-          className={`text-xs font-bold px-4 py-1.5 rounded-full transition-all ${
-            showPicker ? 'bg-zinc-800 text-white' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
-          }`}
-        >
-          {showPicker ? '닫기 ✕' : '이모지 바꾸기 ✏️'}
-        </button>
-      </div>
-
-      {showPicker && (
-        <div className="mt-2 border-t border-zinc-100 animate-fade-in-up">
-          {/* 탭 스크롤 */}
-          <div className="flex gap-1 overflow-x-auto py-2 px-1 no-scrollbar">
-            {TABS.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${
-                  tab === t.key ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="px-1 pb-2">
-            {/* 즐겨찾기 탭 */}
-            {tab === 'fav' && (
-              <div className="flex flex-col gap-3">
-                <p className="text-[10px] font-black text-zinc-400 tracking-wider">
-                  즐겨찾기 ({favorites.length}/10) — 길게 눌러 삭제
-                </p>
-                {favorites.length === 0 ? (
-                  <p className="text-xs text-zinc-300 text-center py-4">
-                    검색이나 카테고리에서 이모지를 추가해보세요
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-5 gap-2">
-                    {favorites.map(e => (
-                      <div key={e} className="relative group">
-                        <button
-                          onClick={() => onSelectEmoji(e)}
-                          aria-pressed={emoji === e}
-                          className={`w-full aspect-square rounded-2xl flex items-center justify-center text-2xl transition-all ${
-                            emoji === e
-                              ? 'bg-zinc-900 ring-2 ring-zinc-900 ring-offset-1 scale-110'
-                              : 'bg-zinc-100 hover:bg-zinc-200 active:scale-95'
-                          }`}
-                        >{e}</button>
-                        <button
-                          onClick={() => removeFavorite(e)}
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[9px] font-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="삭제"
-                        >×</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 검색 탭 */}
-            {tab === 'search' && (
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="영어 이름 검색 (예: cat, apple) 또는 이모지 붙여넣기"
-                    className="flex-1 px-3 py-2 rounded-xl bg-zinc-50 ring-1 ring-zinc-200 text-sm focus:ring-zinc-900 focus:outline-none"
-                    autoFocus
-                  />
-                  {isEmojiChar(searchQuery) && (
-                    <button
-                      onClick={() => { pickEmoji(searchQuery.trim()); setSearchQuery('') }}
-                      disabled={favorites.includes(searchQuery.trim()) || favorites.length >= 10}
-                      className="px-3 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold disabled:bg-zinc-300 shrink-0"
-                    >
-                      {emoji === searchQuery.trim() ? '선택됨' : '추가'}
-                    </button>
-                  )}
-                </div>
-                {catalogLoading && (
-                  <p className="text-xs text-zinc-400 text-center py-2">이모지 데이터 로딩 중...</p>
-                )}
-                {searchResults.length > 0 && (
-                  <div className="grid grid-cols-6 gap-1.5">
-                    {searchResults.map(({ emoji: e, slug }) => (
-                      <button
-                        key={e}
-                        onClick={() => pickEmoji(e)}
-                        title={slug.replace(/_/g, ' ')}
-                        className={`aspect-square rounded-xl flex items-center justify-center text-2xl transition-all active:scale-95 ${
-                          favorites.includes(e)
-                            ? 'bg-zinc-200 ring-1 ring-zinc-400'
-                            : 'bg-zinc-50 hover:bg-blue-50 hover:ring-1 hover:ring-blue-200'
-                        }`}
-                      >{e}</button>
-                    ))}
-                  </div>
-                )}
-                {!catalogLoading && searchQuery.trim() && searchResults.length === 0 && (
-                  <p className="text-xs text-zinc-400 text-center py-2">
-                    결과 없음 — 이모지를 직접 붙여넣거나 영어 키워드로 검색하세요
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* 카테고리 탭 */}
-            {tab !== 'fav' && tab !== 'search' && (
-              <div>
-                {catalogLoading ? (
-                  <p className="text-xs text-zinc-400 text-center py-4">로딩 중...</p>
-                ) : (
-                  <div className="grid grid-cols-7 gap-1 max-h-48 overflow-y-auto">
-                    {browseGroup.map(({ emoji: e, slug }) => (
-                      <button
-                        key={e}
-                        onClick={() => pickEmoji(e)}
-                        title={slug.replace(/_/g, ' ')}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-xl transition-all active:scale-95 ${
-                          favorites.includes(e)
-                            ? 'bg-zinc-200 ring-1 ring-zinc-300'
-                            : 'hover:bg-zinc-100'
-                        } ${emoji === e ? 'ring-2 ring-zinc-900 scale-110' : ''}`}
-                      >{e}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── 숫자/텍스트 표시 모드 ────────────────────────────────────────
 function TextViz({ percentage, currentBalance }: { percentage: number; currentBalance: number }) {
   const isLow = percentage < 30
@@ -602,14 +336,10 @@ export default function BalanceVisualWidget({
   remainingDays,
   participantId,
   fundingSources = [],
-  monthlyPlanProgress = [],
-  currentMonth,
 }: Props) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [style, setStyle] = useState<WidgetStyle>('pie')
-  const [selectedEmoji, setSelectedEmoji] = useState('🍎')
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
   // 낙관적(optimistic) 잔액 차감 — 임시 저장 즉시 반영
   const [pendingDeduction, setPendingDeduction] = useState(0)
@@ -676,22 +406,14 @@ export default function BalanceVisualWidget({
     const raw = localStorage.getItem('balance-widget-style') as string | null
     // 구버전 'pouch' → 새 버전 'pie'로 마이그레이션
     const s = raw === 'pouch' ? 'pie' : (raw as WidgetStyle | null)
-    const e = localStorage.getItem('balance-widget-emoji')
-    if (s && ['pie', 'water', 'cash', 'emoji', 'text'].includes(s)) setStyle(s)
-    if (e) setSelectedEmoji(e)
+    if (s && ['pie', 'water', 'text'].includes(s)) setStyle(s)
   }, [])
 
   const changeStyle = (s: WidgetStyle) => {
     setStyle(s)
     localStorage.setItem('balance-widget-style', s)
-    if (s !== 'emoji') setShowEmojiPicker(false)
   }
 
-  const changeEmoji = (e: string) => {
-    setSelectedEmoji(e)
-    localStorage.setItem('balance-widget-emoji', e)
-    setShowEmojiPicker(false)
-  }
 
   // ── 인라인 업로드 핸들러 ──────────────────────────────────────
   const handleInlineUpload = async (
@@ -864,8 +586,6 @@ export default function BalanceVisualWidget({
   const STYLE_OPTIONS = [
     { key: 'pie'   as WidgetStyle, label: '🍕', title: '피자 그래프', short: '피자' },
     { key: 'water' as WidgetStyle, label: '🥤', title: '물컵 그래프', short: '물컵' },
-    { key: 'cash'  as WidgetStyle, label: '💵', title: '지폐·동전',   short: '현금' },
-    { key: 'emoji' as WidgetStyle, label: '✨', title: '이모지',      short: '이모지' },
     { key: 'text'  as WidgetStyle, label: '🔢', title: '숫자 표시',   short: '숫자' },
   ]
 
@@ -968,22 +688,6 @@ export default function BalanceVisualWidget({
             pendingPct={simValue > 0 ? 0 : (totalBudget > 0 ? Math.round((pendingDeduction / totalBudget) * 100) : 0)}
           />
         )}
-        {style === 'cash' && (
-          <CashViz
-            displayBalance={simValue > 0 ? simBalance : displayBalance}
-            pendingDeduction={simValue > 0 ? 0 : pendingDeduction}
-            totalBudget={totalBudget}
-          />
-        )}
-        {style === 'emoji' && (
-          <EmojiViz
-            percentage={activePct}
-            emoji={selectedEmoji}
-            showPicker={showEmojiPicker}
-            onPickerToggle={() => setShowEmojiPicker(p => !p)}
-            onSelectEmoji={changeEmoji}
-          />
-        )}
         {style === 'text' && <TextViz percentage={activePct} currentBalance={simValue > 0 ? simBalance : displayBalance} />}
       </div>
 
@@ -1002,15 +706,6 @@ export default function BalanceVisualWidget({
         <span className="text-2xl shrink-0">{icon}</span>
         <p className="text-sm font-bold text-zinc-700 leading-snug break-keep">{statusMessage}</p>
       </div>
-
-      {/* 이번 달 계획 진행 (있을 때만) */}
-      {participantId && currentMonth && monthlyPlanProgress.length > 0 && (
-        <MonthlyPlanMiniProgress
-          participantId={participantId}
-          month={currentMonth}
-          plans={monthlyPlanProgress}
-        />
-      )}
 
       {/* 숨겨진 파일 입력 */}
       <input

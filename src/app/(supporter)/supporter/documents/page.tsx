@@ -57,7 +57,7 @@ export default async function SupporterDocumentsPage({
       <header className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">증빙 및 서류 관리</h1>
-          <p className="text-zinc-500 mt-1">당사자별 계획서, 평가서, 참고자료를 업로드하거나 링크를 공유합니다.</p>
+          <p className="text-zinc-500 mt-1">당사자별 평가서, 참고자료, 증빙자료를 업로드하거나 링크를 공유합니다.</p>
         </div>
         <AdminHelpButton pageKey="documents" />
       </header>

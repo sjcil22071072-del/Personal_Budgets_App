@@ -3,9 +3,7 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import EvaluationsPageClient from '@/components/evaluations/EvaluationsPageClient'
-import MonthlyPlanProgressTable from '@/components/evaluations/MonthlyPlanProgressTable'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
-import { getMonthlyPlanProgress } from '@/app/actions/monthlyPlan'
 import { parseMonth, getRecentMonths } from '@/utils/date'
 import { formatCurrency } from '@/utils/budget-visuals'
 import { isStaffRole } from '@/utils/user-role'
@@ -73,7 +71,6 @@ export default async function EvaluationsPage({
     month: string
     totalSpent: number
     txCount: number
-    planProgress: any[]
     existingEvaluation: any | null
     transactions: any[]
     cardRegistrations: { id: string; created_at: string; image_urls: string[] }[]
@@ -96,7 +93,7 @@ export default async function EvaluationsPage({
     if (participant && canViewParticipant) {
       const { data: transactions } = await adminClient
         .from('transactions')
-        .select('*, monthly_plan:monthly_plans(id, title, order_index)')
+        .select('*')
         .eq('participant_id', selectedId)
         .gte('date', startDate)
         .lt('date', endDate)
@@ -111,8 +108,6 @@ export default async function EvaluationsPage({
         .eq('participant_id', selectedId)
         .eq('month', startDate)
         .single()
-
-      const planProgress = await getMonthlyPlanProgress(selectedId, startDate)
 
       const { data: cardData } = await adminClient
         .from('card_registrations')
@@ -143,7 +138,6 @@ export default async function EvaluationsPage({
         month: startDate,
         totalSpent,
         txCount: transactions?.length || 0,
-        planProgress,
         existingEvaluation,
         transactions: transactions || [],
         cardRegistrations,
@@ -192,7 +186,7 @@ export default async function EvaluationsPage({
             <SectionCard id="section-summary" icon="📊" title="월별 활동 요약" accentClass="text-zinc-800" borderClass="border-zinc-100" defaultOpen={true}
               badge={<span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-bold">{inlineData.displayMonth}</span>}
             >
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
                   <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">총 지출</p>
                   <p className="text-2xl font-black text-zinc-900">{formatCurrency(inlineData.totalSpent)}원</p>
@@ -201,48 +195,12 @@ export default async function EvaluationsPage({
                   <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">활동 건수</p>
                   <p className="text-2xl font-black text-zinc-900">{inlineData.txCount}건</p>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">계획 수</p>
-                  <p className="text-2xl font-black text-zinc-900">{inlineData.planProgress.length}개</p>
-                </div>
               </div>
             </SectionCard>
 
             <SectionCard id="section-budget" icon="💳" title="예산 사용 내역" accentClass="text-blue-800" borderClass="border-blue-100" defaultOpen={true}
-              badge={
-                inlineData.planProgress.some((p: any) => !p.easy_description) && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">쉬운 설명 미작성 있음</span>
-                )
-              }
             >
               <div className="flex flex-col gap-4 -mx-6 px-0">
-                <div className="px-0">
-                  <MonthlyPlanProgressTable
-                    participantId={inlineData.participant!.id}
-                    month={inlineData.month}
-                    plans={inlineData.planProgress}
-                    editable={false}
-                  />
-                </div>
-                {inlineData.planProgress.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">당사자용 쉬운 설명 현황</p>
-                      <Link href={`/supporter/evaluations/${inlineData.participant?.id}/${inlineData.month.slice(0,7)}/plans`}
-                        className="text-[10px] font-bold text-blue-600 underline underline-offset-2 hover:text-blue-800">편집하기 →</Link>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {inlineData.planProgress.map((p: any) => (
-                        <div key={p.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white ring-1 ring-blue-200 text-xs">
-                          <span className="w-5 h-5 rounded-lg bg-zinc-900 text-white font-black text-[10px] flex items-center justify-center shrink-0">{p.order_index}</span>
-                          {p.easy_description
-                            ? <span className="font-bold text-zinc-800">{p.easy_description}</span>
-                            : <span className="text-amber-600 font-bold italic">미작성</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 {inlineData.transactions.length > 0 && (
                   <div className="bg-white rounded-2xl ring-1 ring-zinc-200 overflow-hidden">
                     <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
@@ -255,7 +213,6 @@ export default async function EvaluationsPage({
                         <tr>
                           <th className="px-6 py-2 text-left">날짜</th>
                           <th className="px-4 py-2 text-left">활동</th>
-                          <th className="px-4 py-2 text-left">계획</th>
                           <th className="px-4 py-2 text-right">금액</th>
                         </tr>
                       </thead>
@@ -264,9 +221,6 @@ export default async function EvaluationsPage({
                           <tr key={tx.id} className="hover:bg-zinc-50 transition-colors">
                             <td className="px-6 py-3 text-zinc-500 text-xs">{tx.date}</td>
                             <td className="px-4 py-3 font-bold text-zinc-900">{tx.activity_name}</td>
-                            <td className="px-4 py-3 text-xs text-zinc-500">
-                              {tx.monthly_plan?.title || <span className="italic text-zinc-300">계획 외</span>}
-                            </td>
                             <td className="px-4 py-3 text-right font-black text-zinc-900">{formatCurrency(Number(tx.amount))}원</td>
                           </tr>
                         ))}

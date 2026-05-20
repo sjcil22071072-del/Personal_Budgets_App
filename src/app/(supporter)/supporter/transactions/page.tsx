@@ -21,7 +21,6 @@ export default async function TransactionsPage({
     dateTo?: string;
     sort?: string;
     keyword?: string;
-    plan?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -79,11 +78,6 @@ export default async function TransactionsPage({
     txQuery = txQuery.or(
       `activity_name.ilike.%${params.keyword}%,memo.ilike.%${params.keyword}%`,
     );
-  if (params.plan) {
-    if (params.plan === "none") txQuery = txQuery.is("monthly_plan_id", null);
-    else txQuery = txQuery.eq("monthly_plan_id", params.plan);
-  }
-
   if (params.sort === "amount_asc")
     txQuery = txQuery.order("amount", { ascending: true });
   else if (params.sort === "amount_desc")
@@ -128,21 +122,6 @@ export default async function TransactionsPage({
     receipt_image_url: signedUrls[t.id]?.receipt ?? t.receipt_image_url,
     activity_image_url: signedUrls[t.id]?.activity ?? t.activity_image_url,
   }));
-
-  let planOptions: { id: string; label: string }[] = [];
-  if (params.participant) {
-    const { data: planRows } = await adminClient
-      .from("monthly_plans")
-      .select("id, month, order_index, title")
-      .eq("participant_id", params.participant)
-      .order("month", { ascending: false })
-      .order("order_index", { ascending: true })
-      .limit(100);
-    planOptions = (planRows || []).map((p: any) => ({
-      id: p.id,
-      label: `${p.month?.slice(0, 7)} · ${p.order_index}. ${p.title}`,
-    }));
-  }
 
   const totalCount = transactions?.length || 0;
   const pendingCount =
@@ -229,7 +208,6 @@ export default async function TransactionsPage({
           categories={categories}
           paymentMethods={paymentMethods}
           currentFilters={params}
-          planOptions={planOptions}
         />
       </main>
     </div>

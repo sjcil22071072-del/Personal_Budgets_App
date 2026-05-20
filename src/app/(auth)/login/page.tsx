@@ -126,11 +126,8 @@ function GoogleLoginContent() {
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-zinc-600">
                     <span>• SVG 주머니·지폐 잔액 시각화</span>
                     <span>• 영수증 사진으로 활동 기록</span>
-                    <span>• 월별계획 · 전월 복사</span>
                     <span>• 지원목표 · 4+1 평가</span>
-                    <span>• 이용계획서 자동 생성</span>
                     <span>• SIS-A 지원필요도 사정</span>
-                    <span>• CSV 거래내역 가져오기</span>
                     <span>• 활동 지도 (카카오맵)</span>
                     <span>• TTS 음성 읽기</span>
                     <span>• AI 쉬운 요약</span>

@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import HomeDashboard from "@/components/home/HomeDashboard";
 import { UIPreferences, DEFAULT_PREFERENCES } from "@/types/ui-preferences";
 import { getSignedImageUrls } from "@/app/actions/storage";
-import { getMonthlyPlanProgress } from "@/app/actions/monthlyPlan";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -214,32 +213,6 @@ export default async function Home() {
       })),
     });
   }
-
-  // 이번 달 월별 계획 진행률
-  const currentMonth = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-
-  const rawMonthlyPlanProgress = await getMonthlyPlanProgress(
-    participantId,
-    currentMonth,
-  );
-
-  // 월별 계획 이미지 signed URL 처리
-  const monthlyPlanProgress = await Promise.all(
-    rawMonthlyPlanProgress.map(async (p) => {
-      if (!p.easy_image_url) return p;
-
-      const { data } = await adminClient.storage
-        .from("activity-photos")
-        .createSignedUrl(p.easy_image_url, 86400);
-
-      return {
-        ...p,
-        easy_image_url: data?.signedUrl ?? p.easy_image_url,
-      };
-    }),
-  );
-
-  // 지원자 편지 블록이 활성화된 경우에만 최근 발행된 평가 조회
   let latestEvaluation: {
     month: string;
     easy_summary: string | null;
@@ -272,8 +245,6 @@ export default async function Home() {
       monthlyTrend={monthlyTrend}
       uiPreferences={uiPreferences}
       latestEvaluation={latestEvaluation}
-      monthlyPlanProgress={monthlyPlanProgress}
-      currentMonth={currentMonth}
     />
   );
 }

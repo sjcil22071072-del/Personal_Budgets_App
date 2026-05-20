@@ -204,7 +204,7 @@ export interface Database {
           participant_id: string
           title: string
           url: string
-          file_type: '계획서' | '평가서' | '참고자료' | '증빙자료' | '기타'
+          file_type: '평가서' | '참고자료' | '증빙자료' | '기타'
           created_at: string
         }
         Insert: {
@@ -212,7 +212,7 @@ export interface Database {
           participant_id: string
           title: string
           url: string
-          file_type: '계획서' | '평가서' | '참고자료' | '증빙자료' | '기타'
+          file_type: '평가서' | '참고자료' | '증빙자료' | '기타'
           created_at?: string
         }
         Update: {
@@ -220,7 +220,7 @@ export interface Database {
           participant_id?: string
           title?: string
           url?: string
-          file_type?: '계획서' | '평가서' | '참고자료' | '증빙자료' | '기타'
+          file_type?: '평가서' | '참고자료' | '증빙자료' | '기타'
           created_at?: string
         }
       }

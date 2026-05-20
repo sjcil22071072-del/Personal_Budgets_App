@@ -85,7 +85,7 @@ export default function ParticipantDetailClient({
 
   const handleDelete = async () => {
     const confirmed = confirm(
-      `정말로 "${participant.name}" 당사자를 삭제하시겠습니까?\n\n관련된 모든 거래 내역, 계획, 평가, 재원 데이터가 함께 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.`
+      `정말로 "${participant.name}" 당사자를 삭제하시겠습니까?\n\n관련된 모든 거래 내역, 평가, 재원 데이터가 함께 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.`
     )
     if (!confirmed) return
     setIsDeleting(true)

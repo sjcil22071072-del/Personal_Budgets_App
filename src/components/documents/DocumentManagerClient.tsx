@@ -128,13 +128,12 @@ export default function DocumentManagerClient({
 
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">서류 제목</label>
-              <input name="title" type="text" placeholder="예: 3월 활동 계획서" className="p-3 rounded-xl bg-zinc-50 ring-1 ring-zinc-200 focus:ring-zinc-900 focus:outline-none" required />
+              <input name="title" type="text" placeholder="예: 3월 활동 기록" className="p-3 rounded-xl bg-zinc-50 ring-1 ring-zinc-200 focus:ring-zinc-900 focus:outline-none" required />
             </div>
 
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">서류 종류</label>
               <select name="file_type" className="p-3 rounded-xl bg-zinc-50 ring-1 ring-zinc-200 focus:ring-zinc-900 focus:outline-none font-medium" required>
-                <option value="계획서">계획서</option>
                 <option value="평가서">평가서</option>
                 <option value="참고자료">참고자료</option>
                 <option value="증빙자료">증빙자료</option>

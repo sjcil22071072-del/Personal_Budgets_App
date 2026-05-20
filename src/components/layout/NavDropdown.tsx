@@ -18,14 +18,12 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/receipt',  icon: '🧾', label: '영수증' },
   { href: '/card-registration', icon: '💳', label: '카드 등록하기' },
   { href: '/calendar', icon: '📅', label: '달력' },
-  { href: '/plan',     icon: '🤔', label: '나의 계획' },
   { href: '/gallery',  icon: '📸', label: '사진 모아보기' },
   {
     href: '/more',
     icon: '⚙️',
     label: '더보기',
     subs: [
-      { href: '/my-plan',              icon: '🎯', label: '내 목표 보기' },
       { href: '/evaluations',          icon: '💌', label: '지원자 선생님의 편지' },
       { href: '/card-registration',     icon: '💳', label: '카드 등록하기' },
       { href: '/more?open=display',    icon: '🌗', label: '화면 설정' },

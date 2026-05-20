@@ -104,7 +104,7 @@ export async function getSignedImageUrl(
  * @param file - 업로드할 파일 (2MB 이하, 이미지 형식)
  * @param participantId - 당사자 UUID
  * @param entityType - 'plan' | 'goal'
- * @param entityId - 계획 또는 목표의 UUID
+ * @param entityId - 대상 항목 UUID
  * @returns Storage path 문자열 (DB 저장용)
  */
 export async function uploadEasyReadImage(
