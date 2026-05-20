@@ -11,15 +11,29 @@ export default function NavigationProgress() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  function clearTimers() {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    if (animRef.current) {
+      clearInterval(animRef.current)
+      animRef.current = null
+    }
+  }
+
   // Start progress bar on pathname change (navigation complete)
   // We detect navigation START via click on links using a global click handler
   useEffect(() => {
     function onLinkClick(e: MouseEvent) {
-      const target = (e.target as HTMLElement).closest('a')
+      const target = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null
       if (!target) return
       const href = target.getAttribute('href')
       if (!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('mailto')) return
+      if (target.target === '_blank' || target.hasAttribute('download')) return
+
       // Internal navigation starting
+      clearTimers()
       setVisible(true)
       setWidth(15)
       let w = 15
@@ -31,14 +45,17 @@ export default function NavigationProgress() {
     }
 
     window.addEventListener('click', onLinkClick, true)
-    return () => window.removeEventListener('click', onLinkClick, true)
+    return () => {
+      window.removeEventListener('click', onLinkClick, true)
+      clearTimers()
+    }
   }, [])
 
   // Complete progress bar when pathname changes
   useEffect(() => {
     if (pathname !== prevPathname.current) {
       prevPathname.current = pathname
-      if (animRef.current) clearInterval(animRef.current)
+      clearTimers()
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setWidth(100)
       timerRef.current = setTimeout(() => {
@@ -47,7 +64,10 @@ export default function NavigationProgress() {
       }, 300)
     }
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
     }
   }, [pathname])
 
