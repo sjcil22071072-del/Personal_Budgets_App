@@ -11,7 +11,7 @@ import BalanceVisualWidget from './BalanceVisualWidget'
 import BudgetTrendChart from './BudgetTrendChart'
 import BlockCustomizeSheet from './BlockCustomizeSheet'
 import WeeklyChartBlock from './WeeklyChartBlock'
-import { UIPreferences, DEFAULT_PREFERENCES, BlockId } from '@/types/ui-preferences'
+import { UIPreferences, DEFAULT_PREFERENCES, BlockId, BLOCK_METADATA } from '@/types/ui-preferences'
 import { saveUIPreferences } from '@/app/actions/preferences'
 import NavDropdown from '@/components/layout/NavDropdown'
 import HelpButton from '@/components/help/HelpButton'
@@ -75,20 +75,31 @@ export default function HomeDashboard({
 }: HomeDashboardProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
-  const [localPreferences, setLocalPreferences] = useState<UIPreferences>(
-    uiPreferences ?? DEFAULT_PREFERENCES
-  )
+  const [localPreferences, setLocalPreferences] = useState<UIPreferences>(() => {
+    const prefs = uiPreferences ?? DEFAULT_PREFERENCES
+    return {
+      ...prefs,
+      enabled_blocks: (prefs.enabled_blocks || []).filter(id => id in BLOCK_METADATA)
+    }
+  })
 
   // 미리보기 등 외부에서 uiPreferences prop이 바뀌면 즉시 동기화
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalPreferences(uiPreferences ?? DEFAULT_PREFERENCES)
+    const prefs = uiPreferences ?? DEFAULT_PREFERENCES
+    setLocalPreferences({
+      ...prefs,
+      enabled_blocks: (prefs.enabled_blocks || []).filter(id => id in BLOCK_METADATA)
+    })
   }, [uiPreferences])
 
   async function handleSavePreferences(newPrefs: UIPreferences) {
-    setLocalPreferences(newPrefs)
+    const sanitizedPrefs = {
+      ...newPrefs,
+      enabled_blocks: (newPrefs.enabled_blocks || []).filter(id => id in BLOCK_METADATA)
+    }
+    setLocalPreferences(sanitizedPrefs)
     setIsSheetOpen(false)
-    await saveUIPreferences(participantId, newPrefs)
+    await saveUIPreferences(participantId, sanitizedPrefs)
   }
 
   // 통합 계산

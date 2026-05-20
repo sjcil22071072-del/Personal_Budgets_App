@@ -38,8 +38,9 @@ export default function BlockCustomizeSheet({
   const shouldFlip    = useRef(false)
 
   function buildBlockList(prefs: UIPreferences): BlockItem[] {
-    const enabledSet = new Set(prefs.enabled_blocks)
-    const result: BlockItem[] = prefs.enabled_blocks.map(id => ({ id, enabled: true }))
+    const validEnabled = (prefs.enabled_blocks || []).filter(id => id in BLOCK_METADATA)
+    const enabledSet = new Set(validEnabled)
+    const result: BlockItem[] = validEnabled.map(id => ({ id, enabled: true }))
     OPTIONAL_BLOCKS.forEach(id => {
       if (!enabledSet.has(id)) result.push({ id, enabled: false })
     })
