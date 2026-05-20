@@ -728,50 +728,6 @@ export default function BalanceVisualWidget({
       {/* FAB + 인라인 업로드 모달 — Portal로 document.body에 마운트해 fixed 위치 보장 */}
       {mounted && createPortal(
         <>
-          {/* 사진 찍기 FAB */}
-          <button
-            type="button"
-            onClick={() => setShowPhotoMenu(v => !v)}
-            className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-5 py-3.5 rounded-full bg-green-500 text-white shadow-xl hover:bg-green-400 transition-all active:scale-90"
-            aria-label="사진 찍기"
-          >
-            <span className="text-xl inline-block align-middle">➕</span>
-            <span className="text-xl inline-block align-middle">📷</span>
-            <span className="text-sm font-black inline-block align-middle">사진 찍기</span>
-          </button>
-          {showPhotoMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-30"
-                onClick={() => setShowPhotoMenu(false)}
-                aria-hidden="true"
-              />
-              <div className="fixed bottom-24 right-6 z-40 flex flex-col gap-2 animate-fade-in-up">
-                <button
-                  type="button"
-                  onClick={() => { setShowPhotoMenu(false); receiptInputRef.current?.click() }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-blue-600 text-white font-black text-sm shadow-lg whitespace-nowrap"
-                >
-                  <span className="text-xl">🧾</span> 영수증 찍기
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowPhotoMenu(false); activityInputRef.current?.click() }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-purple-600 text-white font-black text-sm shadow-lg whitespace-nowrap"
-                >
-                  <span className="text-xl">🖼️</span> 활동사진 찍기
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowPhotoMenu(false); setUploadMode('card'); setUploadToast(null) }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-zinc-900 text-white font-black text-sm shadow-lg whitespace-nowrap"
-                >
-                  <span className="text-xl">💳</span> 카드 등록하기
-                </button>
-              </div>
-            </>
-          )}
-
           {/* 인라인 업로드 모달 — 화면 중앙 */}
           {uploadMode && (
             <>

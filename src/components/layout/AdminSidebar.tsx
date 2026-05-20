@@ -40,18 +40,12 @@ const menuItems: MenuItem[] = [
   { name: '시스템 설정',      href: '/admin/settings',         icon: '⚙️' },
 ]
 
-const quickItems: SubItem[] = [
-  { name: '➕ 당사자 등록',    href: '/admin/participants/new' },
-  { name: '🧾 영수증 검토',    href: '/supporter/review' },
-  { name: '📊 예산 배정',      href: '/admin/participants' },
-  { name: '😊 피드백 확인',    href: '/admin/feedback' },
-]
+
 
 export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps) {
   const pathname = usePathname()
   const { user, supabase } = useAuth()
   const [openSubs, setOpenSubs] = useState<Record<string, boolean>>({})
-  const [quickOpen, setQuickOpen] = useState(false)
 
   const toggleSub = (href: string) =>
     setOpenSubs(prev => ({ ...prev, [href]: !prev[href] }))
@@ -150,33 +144,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
         })}
       </nav>
 
-      {/* 빠른 설정 섹션 */}
-      {!collapsed && (
-        <div className="px-2 mt-3 shrink-0">
-          <div className="h-px bg-white/10 mb-3" />
-          <button
-            onClick={() => setQuickOpen(p => !p)}
-            className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-          >
-            <span className="text-base">⚡</span>
-            <span className="flex-1 text-left font-bold">빠른 설정</span>
-            <span className="text-xs">{quickOpen ? '▲' : '▼'}</span>
-          </button>
-          {quickOpen && (
-            <div className="mt-1 flex flex-col gap-0.5">
-              {quickItems.map(q => (
-                <Link
-                  key={q.href}
-                  href={q.href}
-                  className="text-xs px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-                >
-                  {q.name}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* 사용자 정보 + 로그아웃 */}
       <div className="px-2 mt-3 space-y-1 shrink-0">
