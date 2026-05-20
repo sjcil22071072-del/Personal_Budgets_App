@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient, createAdminClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -9,12 +8,7 @@ import AdminParticipantBoard from "@/components/admin/AdminParticipantBoard";
 import { isAdminRole, isSupporterRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
 
-export default async function AdminDashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ view?: string; supporter_id?: string }>;
-}) {
-  const params = await searchParams;
+export default async function AdminDashboardPage() {
   const supabase = await createClient();
   const authData = await supabase.auth.getUser();
   const user = authData.data.user;
@@ -32,96 +26,31 @@ export default async function AdminDashboardPage({
     redirect("/");
   }
 
-  const adminClient = createAdminClient();
-
-  const { data: supporters } = await adminClient
-    .from("profiles")
-    .select("id, name, email")
-    .eq("role", "supporter")
-    .order("name", { ascending: true });
-
-  const isSuppoterView = params.view === "supporter";
-  const selectedSupporterId = params.supporter_id || "";
-
-  const selectedSupporterName =
-    (supporters || []).find((s: any) => s.id === selectedSupporterId)?.name ||
-    "";
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground pb-20">
       <header className="flex h-16 items-center justify-between px-4 sm:px-6 z-10 sticky top-0 bg-background/80 backdrop-blur-md border-b border-zinc-200">
         <h1 className="text-xl font-bold tracking-tight">
-          {isSuppoterView ? "실무자 뷰" : "관리자 대시보드"}
+          관리자 대시보드
         </h1>
         <div className="flex items-center gap-2">
-          <Link
-            href="/admin"
-            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-colors ${
-              !isSuppoterView
-                ? "bg-red-50 text-red-500"
-                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
-            }`}
-          >
-            관리자
-          </Link>
-          <Link
-            href="/admin?view=supporter"
-            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-colors ${
-              isSuppoterView
-                ? "bg-blue-50 text-blue-600"
-                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
-            }`}
-          >
-            실무자 뷰
-          </Link>
           <Link
             href="/admin/participants"
             className="text-xs font-bold text-zinc-400 hover:text-zinc-600 transition-colors ml-1"
           >
-            전체 →
+            전체 목록
           </Link>
           <AdminHelpButton pageKey="dashboard" />
         </div>
       </header>
 
       <main className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 flex flex-col gap-6">
-        {/* 실무자 뷰 배너 + 실무자 선택 */}
-        {isSuppoterView ? (
-          <div className="flex flex-col gap-3 px-4 py-4 rounded-xl bg-blue-50 border border-blue-200">
-            <div className="flex items-center gap-2 text-blue-700 text-sm font-bold">
-              <span>👁</span>
-              <span>
-                실무자 접근 범위 미리보기 — 선택한 실무자의 담당 당사자 데이터만
-                표시됩니다.
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(supporters || []).map((s: any) => (
-                <Link
-                  key={s.id}
-                  href={`/admin?view=supporter&supporter_id=${s.id}`}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
-                    selectedSupporterId === s.id
-                      ? "bg-blue-600 text-white"
-                      : "bg-white ring-1 ring-blue-200 text-blue-700 hover:bg-blue-100"
-                  }`}
-                >
-                  {s.name || s.email}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium">
-            <span className="mt-0.5 text-base">ℹ️</span>
-            <span>
-              현재 화면은 관리자 화면입니다. 좌측 하단 로그아웃 시 당사자 화면을
-              선택해 볼 수 있습니다.
-            </span>
-          </div>
-        )}
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium">
+          <span className="mt-0.5 text-base">ℹ</span>
+          <span>
+            현재 화면은 관리자 화면입니다. 당사자 등록, 예산 현황, 검토 대기 항목을 관리합니다.
+          </span>
+        </div>
 
-        {/* 환영 메시지 */}
         <section className="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-700 text-white shadow-lg">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">👋</span>
@@ -134,7 +63,6 @@ export default async function AdminDashboardPage({
           </p>
         </section>
 
-        {/* 알림 패널 */}
         <Suspense
           fallback={
             <div className="rounded-2xl border border-zinc-200 bg-zinc-50 overflow-hidden animate-pulse">
@@ -157,7 +85,6 @@ export default async function AdminDashboardPage({
           <AlertPanel />
         </Suspense>
 
-        {/* 당사자별 통합 현황 */}
         <Suspense
           fallback={
             <div className="rounded-2xl bg-zinc-50 animate-pulse h-64" />
@@ -166,7 +93,6 @@ export default async function AdminDashboardPage({
           <AdminParticipantBoard />
         </Suspense>
 
-        {/* 빠른 실행 */}
         <section className="flex flex-col gap-3">
           <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em] ml-1">
             빠른 실행

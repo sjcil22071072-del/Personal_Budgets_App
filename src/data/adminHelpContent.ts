@@ -16,7 +16,6 @@ export const ADMIN_HELP: Record<string, AdminHelpPage> = {
     items: [
       { icon: '📊', title: '요약 카드', desc: '등록된 당사자 수, 이번 달 총 지출, 미확인 영수증 건수를 한눈에 확인합니다.' },
       { icon: '⚠️', title: '주의 필요 항목', desc: '예산 잔액이 설정한 기준액 미만인 당사자를 자동으로 표시합니다. 당사자 설정에서 경보 기준액을 변경할 수 있습니다.' },
-      { icon: '👁️', title: '실무자 뷰 전환', desc: '상단 토글에서 "실무자" 또는 "당사자"를 선택하면 해당 역할의 화면을 미리 볼 수 있습니다.' },
     ],
   },
   participants: {
