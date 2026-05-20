@@ -93,18 +93,27 @@ export default function TransactionCalendar({ transactions }: Props) {
             const hasPending = dayTxs.some(t => t.status === 'pending')
             
             // 활동사진 우선, 없으면 영수증 사진
-            const thumbnailUrl =
-              dayTxs.find(t => t.activity_image_url)?.activity_image_url ??
-              dayTxs.find(t => t.receipt_image_url)?.receipt_image_url ??
-              null
+            const thumbnailUrls = dayTxs
+              .map(t => t.activity_image_url || t.receipt_image_url)
+              .filter((url): url is string => Boolean(url))
+            const thumbnailUrl = thumbnailUrls[0] ?? null
+            const visibleThumbs = thumbnailUrls.slice(0, 2)
+            const hiddenThumbCount = Math.max(0, thumbnailUrls.length - visibleThumbs.length)
 
             return (
-              <button
+              <div
                 key={d}
                 role="gridcell"
+                tabIndex={0}
                 onClick={() => setSelectedDate(dateStr)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setSelectedDate(dateStr)
+                  }
+                }}
                 className={`
-                  relative aspect-square min-w-[44px] min-h-[44px] flex flex-col items-center justify-start pt-2 rounded-2xl transition-all overflow-hidden
+                  relative aspect-square min-w-[44px] min-h-[44px] flex flex-col items-center justify-start pt-2 rounded-2xl transition-all overflow-hidden cursor-pointer
                   ${isSelected ? 'bg-zinc-900 text-white shadow-md scale-105 z-10 ring-2 ring-zinc-900' : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 active:scale-95'}
                   ${isToday && !isSelected ? 'ring-2 ring-primary ring-inset text-primary bg-blue-50/50' : ''}
                 `}
@@ -121,13 +130,27 @@ export default function TransactionCalendar({ transactions }: Props) {
                 
                 {/* 지출 표시 마커 및 썸네일 아이콘 */}
                 <div className="mt-auto mb-2 flex flex-col items-center gap-1 z-10">
-                  {thumbnailUrl && (
-                    <button
-                      className="w-5 h-5 rounded-md overflow-hidden ring-1 ring-white/50 shadow-sm mt-1 cursor-zoom-in"
-                      onClick={e => { e.stopPropagation(); setLightboxSrc(thumbnailUrl) }}
-                    >
-                      <Image src={thumbnailUrl} alt="영수증" fill sizes="20px" className="object-cover" />
-                    </button>
+                  {visibleThumbs.length > 0 && (
+                    <div className="flex items-center justify-center gap-0.5 mt-1">
+                      {visibleThumbs.map((url, index) => (
+                        <button
+                          key={`${url}-${index}`}
+                          type="button"
+                          className="relative w-5 h-5 rounded-md overflow-hidden ring-1 ring-white/70 shadow-sm cursor-zoom-in bg-white"
+                          onClick={e => { e.stopPropagation(); setLightboxSrc(url) }}
+                          aria-label={`${d}일 사진 ${index + 1} 크게 보기`}
+                        >
+                          <Image src={url} alt="사진" fill sizes="20px" className="object-cover" />
+                        </button>
+                      ))}
+                      {hiddenThumbCount > 0 && (
+                        <span className={`min-w-5 h-5 px-1 rounded-md text-[10px] font-black flex items-center justify-center ring-1 ring-white/70 shadow-sm ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-zinc-900/80 text-white'
+                        }`}>
+                          +{hiddenThumbCount}
+                        </span>
+                      )}
+                    </div>
                   )}
                   {!thumbnailUrl && (hasConfirmed || hasPending) && (
                     <div className="flex gap-1 h-2 mt-2">
@@ -140,7 +163,7 @@ export default function TransactionCalendar({ transactions }: Props) {
                     </div>
                   )}
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>
