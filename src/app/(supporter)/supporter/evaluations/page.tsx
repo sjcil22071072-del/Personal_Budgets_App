@@ -2,8 +2,6 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import CarePlanSection from '@/components/documents/CarePlanSection'
-import { getAllCarePlans } from '@/app/actions/carePlan'
 import EvaluationsPageClient from '@/components/evaluations/EvaluationsPageClient'
 import MonthlyPlanProgressTable from '@/components/evaluations/MonthlyPlanProgressTable'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
@@ -12,6 +10,9 @@ import { parseMonth, getRecentMonths } from '@/utils/date'
 import { formatCurrency } from '@/utils/budget-visuals'
 import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
+import { extractStoragePath } from '@/utils/supabase/storage'
+
+const CARD_PHOTO_SIGNED_URL_EXPIRES = 60 * 15
 
 function SectionCard({
   id, icon, title, badge, accentClass = 'text-zinc-700', borderClass = 'border-zinc-200', defaultOpen = true, children,
@@ -53,19 +54,18 @@ export default async function EvaluationsPage({
     redirect('/')
   }
 
-  // 지원 업무 화면에서는 현재 담당자로 배정된 당사자만 보여준다.
-  const query = adminClient
+  let query = adminClient
     .from('participants')
     .select('id, name')
-    .eq('assigned_supporter_id', user.id)
-  const { data: participants } = await query
 
-  const carePlans = await getAllCarePlans().catch(() => [])
+  if (authProfile.role === 'supporter') {
+    query = query.eq('assigned_supporter_id', user.id)
+  }
+
+  const { data: participants } = await query
 
   const selectedId = params.participant_id || participants?.[0]?.id
   const selectedMonthRaw = params.month || getRecentMonths(1)[0].value
-  const { year: selectedYear } = parseMonth(selectedMonthRaw)
-  const selectedName = participants?.find((p: any) => p.id === selectedId)?.name
 
   let inlineData: {
     participant: { id: string; name: string } | null
@@ -76,6 +76,7 @@ export default async function EvaluationsPage({
     planProgress: any[]
     existingEvaluation: any | null
     transactions: any[]
+    cardRegistrations: { id: string; created_at: string; image_urls: string[] }[]
   } | null = null
 
   if (selectedId && selectedMonthRaw) {
@@ -85,10 +86,14 @@ export default async function EvaluationsPage({
       .from('participants')
       .select('id, name')
       .eq('id', selectedId)
-      .eq('assigned_supporter_id', user.id)
       .single()
 
-    if (participant) {
+    const canViewParticipant = Boolean(participant) && (
+      authProfile.role === 'admin' ||
+      participants?.some((p: any) => p.id === selectedId)
+    )
+
+    if (participant && canViewParticipant) {
       const { data: transactions } = await adminClient
         .from('transactions')
         .select('*, monthly_plan:monthly_plans(id, title, order_index)')
@@ -109,6 +114,29 @@ export default async function EvaluationsPage({
 
       const planProgress = await getMonthlyPlanProgress(selectedId, startDate)
 
+      const { data: cardData } = await adminClient
+        .from('card_registrations')
+        .select('id, participant_id, image_urls, created_at')
+        .eq('participant_id', selectedId)
+        .order('created_at', { ascending: false })
+
+      const cardRegistrations = await Promise.all((cardData || []).map(async (item: any) => {
+        const signedUrls = await Promise.all(((item.image_urls || []) as string[]).map(async (url: string) => {
+          const path = extractStoragePath(url, 'card-photos')
+          if (!path) return null
+          const { data } = await adminClient.storage
+            .from('card-photos')
+            .createSignedUrl(path, CARD_PHOTO_SIGNED_URL_EXPIRES)
+          return data?.signedUrl ?? null
+        }))
+
+        return {
+          id: item.id,
+          created_at: item.created_at,
+          image_urls: signedUrls.filter((url): url is string => Boolean(url)),
+        }
+      }))
+
       inlineData = {
         participant: { id: participant.id, name: participant.name || '이름없음' },
         displayMonth: display,
@@ -118,6 +146,7 @@ export default async function EvaluationsPage({
         planProgress,
         existingEvaluation,
         transactions: transactions || [],
+        cardRegistrations,
       }
     }
   }
@@ -126,8 +155,8 @@ export default async function EvaluationsPage({
     <div className="flex flex-col min-h-screen bg-zinc-50 p-6 md:p-8">
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-zinc-900">계획과 평가</h1>
-          <p className="text-zinc-500 text-sm mt-1">이용계획서 작성과 월별 평가를 한 곳에서 관리합니다.</p>
+          <h1 className="text-2xl font-black text-zinc-900">당사자 평가</h1>
+          <p className="text-zinc-500 text-sm mt-1">월별 평가와 당사자 등록 카드를 한 곳에서 확인합니다.</p>
         </div>
         <AdminHelpButton pageKey="evaluations" />
       </header>
@@ -251,6 +280,44 @@ export default async function EvaluationsPage({
               </div>
             </SectionCard>
 
+            <SectionCard id="section-card-registration" icon="💳" title="당사자가 등록한 카드" accentClass="text-zinc-800" borderClass="border-zinc-100" defaultOpen={true}
+              badge={<span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-bold">{inlineData.cardRegistrations.length}건</span>}
+            >
+              {inlineData.cardRegistrations.length === 0 ? (
+                <div className="rounded-xl bg-zinc-50 p-6 text-center text-sm font-bold text-zinc-400">
+                  선택한 당사자가 등록한 카드가 없습니다.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {inlineData.cardRegistrations.map((item) => (
+                    <article key={item.id} className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className="text-sm font-black text-zinc-900">{item.created_at.slice(0, 10)} 등록</p>
+                        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-500">{item.image_urls.length}장</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {item.image_urls.map((url, index) => (
+                          <a
+                            key={`${item.id}-${index}`}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block aspect-[4/3] overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
+                          >
+                            <img
+                              src={url}
+                              alt={`등록 카드 ${index === 0 ? '앞면' : index === 1 ? '뒷면' : `${index + 1}번째 사진`}`}
+                              className="h-full w-full object-cover transition-transform hover:scale-105"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </SectionCard>
+
             {inlineData.existingEvaluation && (
               <SectionCard id="section-evaluation" icon="📝" title="월별 평가 결과" accentClass="text-emerald-800" borderClass="border-emerald-100" defaultOpen={true}>
                 {inlineData.existingEvaluation.easy_summary && (
@@ -274,17 +341,6 @@ export default async function EvaluationsPage({
                 </div>
               </SectionCard>
             )}
-
-            <SectionCard id="section-care-plan" icon="📁" title="연간 지원 계획" accentClass="text-violet-800" borderClass="border-violet-100" defaultOpen={false}
-              badge={<span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 text-[10px] font-bold">보건복지부형 · 서울형 · 직접지급형</span>}
-            >
-              <CarePlanSection
-                selectedParticipantId={selectedId}
-                selectedParticipantName={selectedName}
-                selectedYear={selectedYear}
-                carePlans={carePlans as any}
-              />
-            </SectionCard>
           </div>
         )}
       </main>

@@ -76,6 +76,7 @@ export async function createCardRegistration(formData: FormData) {
 
   revalidatePath('/')
   revalidatePath('/card-registration')
+  revalidatePath('/supporter/evaluations')
   revalidatePath('/supporter/documents')
 
   return { success: true }

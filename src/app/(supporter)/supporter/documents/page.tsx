@@ -2,13 +2,9 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import DocumentManagerClient from '@/components/documents/DocumentManagerClient'
-import { getAllSisAssessments } from '@/app/actions/sisAssessment'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
-import { extractStoragePath } from '@/utils/supabase/storage'
-
-const CARD_PHOTO_SIGNED_URL_EXPIRES = 60 * 15
 
 export default async function SupporterDocumentsPage({
   searchParams,
@@ -40,7 +36,6 @@ export default async function SupporterDocumentsPage({
 
   // 기존 등록된 모든 서류 조회
   let documents: any[] = []
-  let cardRegistrations: any[] = []
   try {
     if (participantIds.length > 0) {
       const { data: docsData } = await adminClient
@@ -55,39 +50,6 @@ export default async function SupporterDocumentsPage({
     documents = []
   }
 
-  try {
-    if (participantIds.length > 0) {
-      const { data: cardData } = await adminClient
-        .from('card_registrations')
-        .select('*, participant:participants ( name )')
-        .in('participant_id', participantIds)
-        .order('created_at', { ascending: false })
-
-      cardRegistrations = await Promise.all((cardData || []).map(async (item: any) => {
-        const signedUrls = await Promise.all((item.image_urls || []).map(async (url: string) => {
-          const path = extractStoragePath(url, 'card-photos')
-          if (!path) return null
-          const { data } = await adminClient.storage
-            .from('card-photos')
-            .createSignedUrl(path, CARD_PHOTO_SIGNED_URL_EXPIRES)
-          return data?.signedUrl ?? null
-        }))
-
-        return {
-          ...item,
-          image_urls: signedUrls.filter((url): url is string => Boolean(url)),
-        }
-      }))
-    }
-  } catch {
-    cardRegistrations = []
-  }
-
-  // SIS-A 평가 목록 조회 (migration 실행 전이면 빈 배열)
-  const allSisAssessments = await getAllSisAssessments().catch(() => [])
-  const sisAssessments = participantIds.length > 0
-    ? allSisAssessments.filter((assessment) => participantIds.includes(assessment.participant_id))
-    : []
   const params = await searchParams
 
   return (
@@ -104,8 +66,6 @@ export default async function SupporterDocumentsPage({
         <DocumentManagerClient
           participants={(participants || []) as any}
           initialDocuments={documents as any}
-          initialCardRegistrations={cardRegistrations as any}
-          sisAssessments={sisAssessments as any}
           initialParticipantId={params.participant_id}
         />
       </main>

@@ -454,7 +454,7 @@ export default function ParticipantDetailClient({
             </Link>
             <Link href={`/supporter/evaluations?participant_id=${participant.id}`} className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.97] group">
               <span className="text-2xl group-hover:scale-110 transition-transform">📝</span>
-              <span className="text-xs font-black text-zinc-700 text-center">계획과 평가</span>
+              <span className="text-xs font-black text-zinc-700 text-center">당사자 평가</span>
             </Link>
             <Link href={`/supporter/documents?participant_id=${participant.id}`} className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.97] group">
               <span className="text-2xl group-hover:scale-110 transition-transform">📁</span>

@@ -51,7 +51,7 @@ export const ADMIN_HELP: Record<string, AdminHelpPage> = {
     ],
   },
   evaluations: {
-    pageTitle: '계획과 평가',
+    pageTitle: '당사자 평가',
     items: [
       { icon: '📋', title: '월별 평가 선택', desc: '당사자와 월을 선택하면 해당 월의 평가를 바로 작성하거나 이미 작성된 내용을 확인합니다.' },
       { icon: '🔀', title: '양식 선택', desc: 'PCP 4+1, 서울시형, 보건복지부형, 자체 양식 중 평가 목적에 맞는 양식을 선택합니다. 기저장된 내용과 다른 양식을 고르면 덮어쓰기 경고가 표시됩니다.' },
