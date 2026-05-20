@@ -3,11 +3,12 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { isStaffRole } from '@/utils/user-role'
 
 export interface MonthlyPlanInput {
   id?: string
   participant_id: string
-  month: string                       // 'YYYY-MM-DD' (1일)
+  month: string                       // first day, 'YYYY-MM-DD'
   order_index: number                 // 1~6
   title: string
   description?: string | null
@@ -15,7 +16,7 @@ export interface MonthlyPlanInput {
   support_goal_id?: string | null
   planned_budget: number
   target_count?: number | null
-  scheduled_dates?: string[] | null   // ['YYYY-MM-DD', ...]
+  scheduled_dates?: string[] | null
   easy_description?: string | null
   easy_image_url?: string | null
 }
@@ -45,31 +46,44 @@ export interface MonthlyPlanProgress extends MonthlyPlan {
 }
 
 function normalizeMonth(month: string): string {
-  // 'YYYY-MM' 또는 'YYYY-MM-DD' → 'YYYY-MM-01'
+  // Normalize 'YYYY-MM' or 'YYYY-MM-DD' to the first day of the month.
   const m = month.length === 7 ? `${month}-01` : month
   return m.slice(0, 8) + '01'
 }
 
 async function assertStaff() {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: '인증 필요', supabase, user: null }
-  const { data: profile } = await supabase
+  if (!user) return { ok: false, error: 'Authentication required.', supabase, user: null }
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('id, role')
     .eq('id', user.id)
     .single()
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
-    return { ok: false, error: '권한이 없습니다.', supabase, user }
+  if (!profile || !isStaffRole(profile.role)) {
+    return { ok: false, error: 'Permission denied.', supabase, user }
   }
   return { ok: true, error: null, supabase, user }
+}
+
+async function assertAssignedParticipant(participantId: string, userId: string) {
+  const adminClient = createAdminClient()
+  const { data: participant } = await adminClient
+    .from('participants')
+    .select('id')
+    .eq('id', participantId)
+    .eq('assigned_supporter_id', userId)
+    .maybeSingle()
+
+  return Boolean(participant)
 }
 
 export async function getMonthlyPlans(
   participantId: string,
   month: string
 ): Promise<MonthlyPlan[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const m = normalizeMonth(month)
   const { data } = await supabase
     .from('monthly_plans')
@@ -91,7 +105,7 @@ export async function getMonthlyPlanProgress(
   participantId: string,
   month: string
 ): Promise<MonthlyPlanProgress[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const m = normalizeMonth(month)
 
   const plans = await getMonthlyPlans(participantId, m)
@@ -134,8 +148,13 @@ export async function getMonthlyPlanProgress(
 }
 
 export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
-  const { ok, error, supabase, user } = await assertStaff()
-  if (!ok || !user) return { error: error || '권한이 없습니다.' }
+  const { ok, error, user } = await assertStaff()
+  const adminClient = createAdminClient()
+  if (!ok || !user) return { error: error || 'Permission denied.' }
+
+  if (!await assertAssignedParticipant(input.participant_id, user.id)) {
+    return { error: 'Only assigned participants can be edited.' }
+  }
 
   const m = normalizeMonth(input.month)
 
@@ -156,19 +175,20 @@ export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
     updated_at: new Date().toISOString(),
   }
 
-  if (!payload.title) return { error: '제목을 입력해주세요.' }
+  if (!payload.title) return { error: 'Title is required.' }
   if (payload.order_index < 1 || payload.order_index > 6) {
-    return { error: '계획 순서는 1-6 사이여야 합니다.' }
+    return { error: 'Plan order must be between 1 and 6.' }
   }
 
   if (input.id) {
-    const { error: upErr } = await supabase
+    const { error: upErr } = await adminClient
       .from('monthly_plans')
       .update(payload)
       .eq('id', input.id)
+      .eq('participant_id', input.participant_id)
     if (upErr) return { error: upErr.message }
   } else {
-    const { error: insErr } = await supabase
+    const { error: insErr } = await adminClient
       .from('monthly_plans')
       .insert(payload)
     if (insErr) return { error: insErr.message }
@@ -184,13 +204,18 @@ export async function upsertMonthlyPlan(input: MonthlyPlanInput) {
 export async function deleteMonthlyPlan(id: string, participantId: string, month: string) {
   if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return { error: '데모 모드에서는 삭제할 수 없습니다.' }
 
-  const { ok, error, supabase } = await assertStaff()
-  if (!ok) return { error: error || '권한이 없습니다.' }
+  const { ok, error, user } = await assertStaff()
+  if (!ok || !user) return { error: error || '권한이 없습니다.' }
+  if (!await assertAssignedParticipant(participantId, user.id)) {
+    return { error: '담당 당사자만 월별 계획을 삭제할 수 있습니다.' }
+  }
 
-  const { error: delErr } = await supabase
+  const adminClient = createAdminClient()
+  const { error: delErr } = await adminClient
     .from('monthly_plans')
     .delete()
     .eq('id', id)
+    .eq('participant_id', participantId)
   if (delErr) return { error: delErr.message }
 
   const m = normalizeMonth(month)
