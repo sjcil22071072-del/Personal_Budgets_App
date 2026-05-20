@@ -6,6 +6,9 @@ import { getAllSisAssessments } from '@/app/actions/sisAssessment'
 import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
+import { extractStoragePath } from '@/utils/supabase/storage'
+
+const CARD_PHOTO_SIGNED_URL_EXPIRES = 60 * 15
 
 export default async function SupporterDocumentsPage({
   searchParams,
@@ -59,7 +62,22 @@ export default async function SupporterDocumentsPage({
         .select('*, participant:participants ( name )')
         .in('participant_id', participantIds)
         .order('created_at', { ascending: false })
-      cardRegistrations = cardData || []
+
+      cardRegistrations = await Promise.all((cardData || []).map(async (item: any) => {
+        const signedUrls = await Promise.all((item.image_urls || []).map(async (url: string) => {
+          const path = extractStoragePath(url, 'card-photos')
+          if (!path) return null
+          const { data } = await adminClient.storage
+            .from('card-photos')
+            .createSignedUrl(path, CARD_PHOTO_SIGNED_URL_EXPIRES)
+          return data?.signedUrl ?? null
+        }))
+
+        return {
+          ...item,
+          image_urls: signedUrls.filter((url): url is string => Boolean(url)),
+        }
+      }))
     }
   } catch {
     cardRegistrations = []

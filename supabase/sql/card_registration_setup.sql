@@ -2,7 +2,7 @@
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES
-  ('card-photos', 'card-photos', true, 10485760, ARRAY['image/jpeg','image/png','image/webp','image/heic','image/heif'])
+  ('card-photos', 'card-photos', false, 10485760, ARRAY['image/jpeg','image/png','image/webp','image/heic','image/heif'])
 ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
@@ -18,15 +18,7 @@ DO $$ BEGIN
   END IF;
 END $$;
 
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'card_photos_select'
-  ) THEN
-    CREATE POLICY "card_photos_select" ON storage.objects
-      FOR SELECT TO public
-      USING (bucket_id = 'card-photos');
-  END IF;
-END $$;
+DROP POLICY IF EXISTS "card_photos_select" ON storage.objects;
 
 CREATE TABLE IF NOT EXISTS public.card_registrations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
