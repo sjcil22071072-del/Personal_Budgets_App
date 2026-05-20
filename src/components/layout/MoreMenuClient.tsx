@@ -153,17 +153,6 @@ export default function MoreMenuClient({
                 사진 모아보기
               </span>
             </Link>
-            <Link
-              href="/card-registration"
-              className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.98] group"
-            >
-              <span className="text-3xl group-hover:scale-110 transition-transform">
-                💳
-              </span>
-              <span className="text-sm font-black text-zinc-800">
-                카드 등록하기
-              </span>
-            </Link>
           </div>
         )}
       </section>

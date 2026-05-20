@@ -1,11 +1,15 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient, createClient } from '@/utils/supabase/server'
 import NavDropdown from '@/components/layout/NavDropdown'
 import CardRegistrationForm from '@/components/card/CardRegistrationForm'
+import { extractStoragePath } from '@/utils/supabase/storage'
+
+const CARD_PHOTO_SIGNED_URL_EXPIRES = 60 * 15
 
 export default async function CardRegistrationPage() {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -35,6 +39,30 @@ export default async function CardRegistrationPage() {
     )
   }
 
+  const { data: cardData } = await adminClient
+    .from('card_registrations')
+    .select('id, participant_id, image_urls, created_at')
+    .eq('participant_id', user.id)
+    .order('created_at', { ascending: false })
+
+  const cardRegistrations = await Promise.all((cardData || []).map(async (item) => {
+    const imageUrls = (item.image_urls || []) as string[]
+    const signedUrls = await Promise.all(imageUrls.map(async (url: string) => {
+      const path = extractStoragePath(url, 'card-photos')
+      if (!path) return null
+      const { data } = await adminClient.storage
+        .from('card-photos')
+        .createSignedUrl(path, CARD_PHOTO_SIGNED_URL_EXPIRES)
+      return data?.signedUrl ?? null
+    }))
+
+    return {
+      id: item.id,
+      created_at: item.created_at,
+      image_urls: signedUrls.filter((url): url is string => Boolean(url)),
+    }
+  }))
+
   return (
     <div className="flex min-h-dvh flex-col bg-background pb-10 text-foreground">
       <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-zinc-200 bg-background/80 px-4 backdrop-blur-md">
@@ -55,7 +83,7 @@ export default async function CardRegistrationPage() {
           <p className="mt-0.5 text-sm font-medium text-zinc-500">카드 사진만 따로 등록할 수 있어요.</p>
         </div>
 
-        <CardRegistrationForm />
+        <CardRegistrationForm registrations={cardRegistrations} />
       </main>
     </div>
   )

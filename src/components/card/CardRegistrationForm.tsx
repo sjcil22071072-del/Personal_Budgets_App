@@ -6,7 +6,17 @@ import { createCardRegistration } from '@/app/actions/cardRegistration'
 
 type CardSide = 'front' | 'back'
 
-export default function CardRegistrationForm() {
+interface CardRegistrationItem {
+  id: string
+  created_at: string
+  image_urls: string[]
+}
+
+export default function CardRegistrationForm({
+  registrations,
+}: {
+  registrations: CardRegistrationItem[]
+}) {
   const router = useRouter()
   const [frontFile, setFrontFile] = useState<File | null>(null)
   const [backFile, setBackFile] = useState<File | null>(null)
@@ -60,7 +70,7 @@ export default function CardRegistrationForm() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-8">
       <div className="rounded-[2rem] bg-white p-5 ring-1 ring-zinc-200 shadow-sm">
         <p className="rounded-2xl bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-700">
           실물 카드의 앞뒷면을 모두 등록해주세요.
@@ -96,6 +106,49 @@ export default function CardRegistrationForm() {
           {submitting ? '등록하는 중...' : '카드 등록하기'}
         </button>
       </div>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h3 className="text-base font-black text-zinc-900">내가 등록했던 카드</h3>
+          <p className="mt-0.5 text-sm font-medium text-zinc-500">등록한 카드 사진을 다시 확인할 수 있어요.</p>
+        </div>
+
+        {registrations.length === 0 ? (
+          <div className="rounded-[2rem] bg-white p-8 text-center text-sm font-bold text-zinc-400 ring-1 ring-zinc-200 shadow-sm">
+            아직 등록한 카드가 없어요.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {registrations.map((item) => (
+              <article key={item.id} className="rounded-[2rem] bg-white p-4 ring-1 ring-zinc-200 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-black text-zinc-800">{item.created_at.slice(0, 10)} 등록</p>
+                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-500">
+                    {item.image_urls.length}장
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {item.image_urls.map((url, index) => (
+                    <a
+                      key={`${item.id}-${index}`}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200"
+                    >
+                      <img
+                        src={url}
+                        alt={`등록한 카드 ${index === 0 ? '앞면' : index === 1 ? '뒷면' : `${index + 1}번째 사진`}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }
