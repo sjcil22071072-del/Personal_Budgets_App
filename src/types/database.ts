@@ -104,6 +104,29 @@ export interface Database {
           created_at?: string
         }
       }
+      family_registrations: {
+        Row: {
+          id: string
+          participant_id: string
+          image_url: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          participant_id: string
+          image_url: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string
+          image_url?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       funding_sources: {
         Row: {
           id: string
@@ -149,6 +172,8 @@ export interface Database {
           payment_method: string | null
           receipt_image_url: string | null
           activity_image_url?: string | null
+          receipt_image_urls: string[]
+          activity_image_urls: string[]
           evidence_image_urls: string[]
           status: 'pending' | 'confirmed'
           creator_id: string | null
@@ -170,6 +195,8 @@ export interface Database {
           payment_method?: string | null
           receipt_image_url?: string | null
           activity_image_url?: string | null
+          receipt_image_urls?: string[]
+          activity_image_urls?: string[]
           evidence_image_urls?: string[]
           status?: 'pending' | 'confirmed'
           creator_id?: string | null
@@ -191,6 +218,8 @@ export interface Database {
           payment_method?: string | null
           receipt_image_url?: string | null
           activity_image_url?: string | null
+          receipt_image_urls?: string[]
+          activity_image_urls?: string[]
           evidence_image_urls?: string[]
           status?: 'pending' | 'confirmed'
           creator_id?: string | null

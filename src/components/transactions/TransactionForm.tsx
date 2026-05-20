@@ -15,9 +15,36 @@ export default function TransactionForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // 영수증 상태 (최대 5장)
+  const [receiptFiles, setReceiptFiles] = useState<File[]>([])
+  const [receiptPreviews, setReceiptPreviews] = useState<string[]>([])
+
   // 증빙서류 상태 (최대 5장)
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
   const [evidencePreviews, setEvidencePreviews] = useState<string[]>([])
+
+  // 활동사진 상태 (최대 5장)
+  const [activityFiles, setActivityFiles] = useState<File[]>([])
+  const [activityPreviews, setActivityPreviews] = useState<string[]>([])
+
+  const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || [])
+    if (!newFiles.length) return
+    const remaining = 5 - receiptFiles.length
+    const toAdd = newFiles.slice(0, remaining)
+    setReceiptFiles(prev => [...prev, ...toAdd])
+    toAdd.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => setReceiptPreviews(prev => [...prev, reader.result as string])
+      reader.readAsDataURL(file)
+    })
+    e.target.value = ''
+  }
+
+  const handleRemoveReceipt = (idx: number) => {
+    setReceiptFiles(prev => prev.filter((_, i) => i !== idx))
+    setReceiptPreviews(prev => prev.filter((_, i) => i !== idx))
+  }
 
   const handleEvidenceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || [])
@@ -38,6 +65,25 @@ export default function TransactionForm({
     setEvidencePreviews(prev => prev.filter((_, i) => i !== idx))
   }
 
+  const handleActivityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || [])
+    if (!newFiles.length) return
+    const remaining = 5 - activityFiles.length
+    const toAdd = newFiles.slice(0, remaining)
+    setActivityFiles(prev => [...prev, ...toAdd])
+    toAdd.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => setActivityPreviews(prev => [...prev, reader.result as string])
+      reader.readAsDataURL(file)
+    })
+    e.target.value = ''
+  }
+
+  const handleRemoveActivity = (idx: number) => {
+    setActivityFiles(prev => prev.filter((_, i) => i !== idx))
+    setActivityPreviews(prev => prev.filter((_, i) => i !== idx))
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
@@ -45,8 +91,11 @@ export default function TransactionForm({
 
     const formData = new FormData(e.currentTarget)
     formData.append('participant_id', participantId)
-    // 증빙서류 첨부
+    
+    // 파일 첨부
+    receiptFiles.forEach((file, i) => formData.set(`receipt_${i}`, file))
     evidenceFiles.forEach((file, i) => formData.set(`evidence_${i}`, file))
+    activityFiles.forEach((file, i) => formData.set(`activity_${i}`, file))
 
     try {
       await createTransaction(formData)
@@ -182,12 +231,50 @@ export default function TransactionForm({
           />
         </div>
 
-        {/* 증빙서류 (최대 5장) */}
+        {/* 1. 영수증 사진 (최대 5장) */}
         <div className="space-y-2 md:col-span-2">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-bold text-zinc-500 ml-1">
-              📋 증빙서류 <span className="text-zinc-400 font-medium">(선택, 최대 5장)</span>
+            <label className="text-sm font-bold text-zinc-500 ml-1">🧾 영수증 사진 <span className="text-zinc-400 font-medium">(선택, 최대 5장)</span></label>
+            {receiptFiles.length > 0 && receiptFiles.length < 5 && (
+              <label className="text-xs font-bold text-blue-600 cursor-pointer">
+                + 추가
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleReceiptChange} />
+              </label>
+            )}
+          </div>
+          {receiptPreviews.length > 0 ? (
+            <div className="grid grid-cols-4 gap-2">
+              {receiptPreviews.map((src, i) => (
+                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200">
+                  <img src={src} alt={`영수증 ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveReceipt(i)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs font-black flex items-center justify-center hover:bg-red-600"
+                  >✕</button>
+                </div>
+              ))}
+              {receiptFiles.length < 5 && (
+                <label className="aspect-square rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-zinc-400 transition-colors">
+                  <span className="text-xl">📸</span>
+                  <span className="text-xs text-zinc-400">추가</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleReceiptChange} />
+                </label>
+              )}
+            </div>
+          ) : (
+            <label className="flex items-center justify-center gap-3 p-5 rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 cursor-pointer hover:border-zinc-300 transition-colors">
+              <span className="text-2xl">🧾</span>
+              <span className="text-sm font-bold text-zinc-500">영수증 사진 첨부 (이미지, 최대 5장)</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleReceiptChange} />
             </label>
+          )}
+        </div>
+
+        {/* 2. 증빙서류 (최대 5장) */}
+        <div className="space-y-2 md:col-span-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-bold text-zinc-500 ml-1">📋 증빙서류 <span className="text-zinc-400 font-medium">(선택, 최대 5장)</span></label>
             {evidenceFiles.length > 0 && evidenceFiles.length < 5 && (
               <label className="text-xs font-bold text-blue-600 cursor-pointer">
                 + 추가
@@ -220,6 +307,46 @@ export default function TransactionForm({
               <span className="text-2xl">📋</span>
               <span className="text-sm font-bold text-zinc-500">증빙서류 첨부 (이미지/PDF, 최대 5장)</span>
               <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleEvidenceChange} />
+            </label>
+          )}
+        </div>
+
+        {/* 3. 활동사진 (최대 5장) */}
+        <div className="space-y-2 md:col-span-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-bold text-zinc-500 ml-1">📸 활동 사진 <span className="text-zinc-400 font-medium">(선택, 최대 5장)</span></label>
+            {activityFiles.length > 0 && activityFiles.length < 5 && (
+              <label className="text-xs font-bold text-blue-600 cursor-pointer">
+                + 추가
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleActivityChange} />
+              </label>
+            )}
+          </div>
+          {activityPreviews.length > 0 ? (
+            <div className="grid grid-cols-4 gap-2">
+              {activityPreviews.map((src, i) => (
+                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200">
+                  <img src={src} alt={`활동 ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveActivity(i)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs font-black flex items-center justify-center hover:bg-red-600"
+                  >✕</button>
+                </div>
+              ))}
+              {activityFiles.length < 5 && (
+                <label className="aspect-square rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-zinc-400 transition-colors">
+                  <span className="text-xl">📸</span>
+                  <span className="text-xs text-zinc-400">추가</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleActivityChange} />
+                </label>
+              )}
+            </div>
+          ) : (
+            <label className="flex items-center justify-center gap-3 p-5 rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 cursor-pointer hover:border-zinc-300 transition-colors">
+              <span className="text-2xl">📸</span>
+              <span className="text-sm font-bold text-zinc-500">활동 사진 첨부 (이미지, 최대 5장)</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleActivityChange} />
             </label>
           )}
         </div>

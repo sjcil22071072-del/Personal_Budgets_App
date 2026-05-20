@@ -62,11 +62,23 @@ export async function createTransaction(formData: FormData) {
   const status = (formData.get('status') as 'pending' | 'confirmed') || 'pending'
   const is_expense = formData.get('is_expense') !== 'false'
   const payment_method = (formData.get('payment_method') as string) || '체크카드'
-  const receiptFile = formData.get('receipt') as File | null
-  const activityFile = formData.get('activity_image') as File | null
   const place_name = (formData.get('place_name') as string) || null
   const place_lat = formData.get('place_lat') ? Number(formData.get('place_lat')) : null
   const place_lng = formData.get('place_lng') ? Number(formData.get('place_lng')) : null
+
+  // 영수증 사진 목록 (최대 5장)
+  const receiptFiles: File[] = []
+  for (let i = 0; i < 5; i++) {
+    const f = formData.get(`receipt_${i}`) as File | null
+    if (f && f.size > 0) receiptFiles.push(f)
+  }
+
+  // 활동 사진 목록 (최대 5장)
+  const activityFiles: File[] = []
+  for (let i = 0; i < 5; i++) {
+    const f = formData.get(`activity_${i}`) as File | null
+    if (f && f.size > 0) activityFiles.push(f)
+  }
 
   // 증빙서류 파일 목록 (최대 5장)
   const evidenceFiles: File[] = []
@@ -77,35 +89,35 @@ export async function createTransaction(formData: FormData) {
 
   const amount = is_expense ? rawAmount : -Math.abs(rawAmount)
 
-  let receipt_image_url = null
-  let activity_image_url = null
+  const receipt_image_urls: string[] = []
+  const activity_image_urls: string[] = []
   const evidence_image_urls: string[] = []
 
-  if (receiptFile && receiptFile.size > 0) {
-    const fileExt = (receiptFile.name.split('.').pop() || 'jpg').toLowerCase()
-    const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`
+  // 영수증 업로드 (최대 5장)
+  for (const [idx, file] of receiptFiles.entries()) {
+    const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+    const fileName = `${user.id}-${Date.now()}-receipt-${idx}.${fileExt}`
     const { error: uploadError } = await adminClient.storage
       .from('receipts')
-      .upload(fileName, receiptFile)
-    if (uploadError) {
-      console.error('Receipt Upload Error:', uploadError)
-    } else {
+      .upload(fileName, file)
+    if (!uploadError) {
       const { data: { publicUrl } } = adminClient.storage.from('receipts').getPublicUrl(fileName)
-      receipt_image_url = publicUrl
+      receipt_image_urls.push(publicUrl)
+    } else {
+      console.error('Receipt upload error:', uploadError)
     }
   }
 
-  if (activityFile && activityFile.size > 0) {
-    const fileExt = activityFile.name.split('.').pop()
-    const fileName = `${participant_id}/${Date.now()}-activity.${fileExt}`
+  // 활동사진 업로드 (최대 5장)
+  for (const [idx, file] of activityFiles.entries()) {
+    const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+    const fileName = `${participant_id}/${Date.now()}-activity-${idx}.${fileExt}`
     const { error: uploadError } = await adminClient.storage
       .from('activity-photos')
-      .upload(fileName, activityFile)
+      .upload(fileName, file)
     if (!uploadError) {
-      const { data: { publicUrl } } = adminClient.storage
-        .from('activity-photos')
-        .getPublicUrl(fileName)
-      activity_image_url = publicUrl
+      const { data: { publicUrl } } = adminClient.storage.from('activity-photos').getPublicUrl(fileName)
+      activity_image_urls.push(publicUrl)
     } else {
       console.error('Activity photo upload error:', uploadError)
     }
@@ -138,8 +150,8 @@ export async function createTransaction(formData: FormData) {
     category,
     memo: memo || null,
     status,
-    receipt_image_url,
-    activity_image_url,
+    receipt_image_urls,
+    activity_image_urls,
     evidence_image_urls,
     payment_method,
     place_name,
@@ -158,7 +170,6 @@ export async function createTransaction(formData: FormData) {
   revalidatePath(`/supporter/${participant_id}/transactions`)
   revalidatePath('/supporter/transactions')
   revalidatePath(`/admin/participants/${participant_id}`)
-  revalidatePath(`/admin/participants/${participant_id}/preview`)
   return { success: true }
 }
 
@@ -498,6 +509,180 @@ export async function removeEvidenceImage(
   const { error: dbError } = await admin
     .from('transactions')
     .update({ evidence_image_urls: newUrls })
+    .eq('id', transactionId)
+
+  if (dbError) return { error: `삭제 실패: ${dbError.message}` }
+
+  revalidatePath(`/supporter/transactions/${transactionId}`)
+  return { success: true }
+}
+
+/**
+ * 영수증 이미지 1장을 추가로 업로드합니다 (최대 5장 제한).
+ */
+export async function addReceiptImage(
+  transactionId: string,
+  participantId: string,
+  file: File
+): Promise<{ success?: boolean; error?: string; url?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const admin = createAdminClient()
+
+  const { data: tx } = await admin
+    .from('transactions')
+    .select('receipt_image_urls')
+    .eq('id', transactionId)
+    .single()
+
+  const currentUrls: string[] = (tx?.receipt_image_urls as string[]) || []
+  if (currentUrls.length >= 5) {
+    return { error: '영수증 사진은 최대 5장까지 첨부할 수 있습니다.' }
+  }
+
+  const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const fileName = `${user.id}-${Date.now()}-receipt.${fileExt}`
+  const { error: uploadError } = await admin.storage
+    .from('receipts')
+    .upload(fileName, file, { upsert: false })
+
+  if (uploadError) return { error: `업로드 실패: ${uploadError.message}` }
+
+  const { data: { publicUrl } } = admin.storage.from('receipts').getPublicUrl(fileName)
+  const newUrls = [...currentUrls, publicUrl]
+
+  const { error: dbError } = await admin
+    .from('transactions')
+    .update({ receipt_image_urls: newUrls })
+    .eq('id', transactionId)
+
+  if (dbError) return { error: `저장 실패: ${dbError.message}` }
+
+  revalidatePath(`/supporter/transactions/${transactionId}`)
+  return { success: true, url: publicUrl }
+}
+
+/**
+ * 영수증 이미지 1장을 삭제합니다.
+ */
+export async function removeReceiptImage(
+  transactionId: string,
+  imageUrl: string
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const admin = createAdminClient()
+
+  const { data: tx } = await admin
+    .from('transactions')
+    .select('receipt_image_urls')
+    .eq('id', transactionId)
+    .single()
+
+  const currentUrls: string[] = (tx?.receipt_image_urls as string[]) || []
+  const newUrls = currentUrls.filter(u => u !== imageUrl)
+
+  const marker = '/object/public/receipts/'
+  const idx = imageUrl.indexOf(marker)
+  if (idx !== -1) {
+    const path = imageUrl.slice(idx + marker.length)
+    await admin.storage.from('receipts').remove([path])
+  }
+
+  const { error: dbError } = await admin
+    .from('transactions')
+    .update({ receipt_image_urls: newUrls })
+    .eq('id', transactionId)
+
+  if (dbError) return { error: `삭제 실패: ${dbError.message}` }
+
+  revalidatePath(`/supporter/transactions/${transactionId}`)
+  return { success: true }
+}
+
+/**
+ * 활동사진 이미지 1장을 추가로 업로드합니다 (최대 5장 제한).
+ */
+export async function addActivityImage(
+  transactionId: string,
+  participantId: string,
+  file: File
+): Promise<{ success?: boolean; error?: string; url?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const admin = createAdminClient()
+
+  const { data: tx } = await admin
+    .from('transactions')
+    .select('activity_image_urls')
+    .eq('id', transactionId)
+    .single()
+
+  const currentUrls: string[] = (tx?.activity_image_urls as string[]) || []
+  if (currentUrls.length >= 5) {
+    return { error: '활동 사진은 최대 5장까지 첨부할 수 있습니다.' }
+  }
+
+  const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const fileName = `${participantId}/${Date.now()}-activity.${fileExt}`
+  const { error: uploadError } = await admin.storage
+    .from('activity-photos')
+    .upload(fileName, file, { upsert: false })
+
+  if (uploadError) return { error: `업로드 실패: ${uploadError.message}` }
+
+  const { data: { publicUrl } } = admin.storage.from('activity-photos').getPublicUrl(fileName)
+  const newUrls = [...currentUrls, publicUrl]
+
+  const { error: dbError } = await admin
+    .from('transactions')
+    .update({ activity_image_urls: newUrls })
+    .eq('id', transactionId)
+
+  if (dbError) return { error: `저장 실패: ${dbError.message}` }
+
+  revalidatePath(`/supporter/transactions/${transactionId}`)
+  return { success: true, url: publicUrl }
+}
+
+/**
+ * 활동사진 이미지 1장을 삭제합니다.
+ */
+export async function removeActivityImage(
+  transactionId: string,
+  imageUrl: string
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const admin = createAdminClient()
+
+  const { data: tx } = await admin
+    .from('transactions')
+    .select('activity_image_urls')
+    .eq('id', transactionId)
+    .single()
+
+  const currentUrls: string[] = (tx?.activity_image_urls as string[]) || []
+  const newUrls = currentUrls.filter(u => u !== imageUrl)
+
+  const marker = '/object/public/activity-photos/'
+  const idx = imageUrl.indexOf(marker)
+  if (idx !== -1) {
+    const path = imageUrl.slice(idx + marker.length)
+    await admin.storage.from('activity-photos').remove([path])
+  }
+
+  const { error: dbError } = await admin
+    .from('transactions')
+    .update({ activity_image_urls: newUrls })
     .eq('id', transactionId)
 
   if (dbError) return { error: `삭제 실패: ${dbError.message}` }

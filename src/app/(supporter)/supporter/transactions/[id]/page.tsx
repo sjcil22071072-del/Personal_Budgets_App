@@ -37,14 +37,26 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     .eq("id", id)
     .single();
 
-  const [signedReceipt, signedActivity] = await Promise.all([
-    getSignedImageUrl(tx?.receipt_image_url ?? null, "receipts"),
-    getSignedImageUrl(tx?.activity_image_url ?? null, "activity-photos"),
+  const [signedReceiptUrls, signedActivityUrls] = await Promise.all([
+    Promise.all(
+      (tx?.receipt_image_urls || []).map((url: string) =>
+        getSignedImageUrl(url, "receipts")
+      )
+    ),
+    Promise.all(
+      (tx?.activity_image_urls || []).map((url: string) =>
+        getSignedImageUrl(url, "activity-photos")
+      )
+    ),
   ]);
+
   if (tx) {
-    tx.receipt_image_url = signedReceipt ?? tx.receipt_image_url;
-    tx.activity_image_url = signedActivity ?? tx.activity_image_url;
-    // evidence_image_urls는 public 버킷이라 signed URL 불필요
+    tx.receipt_image_urls = (tx.receipt_image_urls || []).map(
+      (url: string, idx: number) => signedReceiptUrls[idx] ?? url
+    );
+    tx.activity_image_urls = (tx.activity_image_urls || []).map(
+      (url: string, idx: number) => signedActivityUrls[idx] ?? url
+    );
   }
 
   if (!tx) {
