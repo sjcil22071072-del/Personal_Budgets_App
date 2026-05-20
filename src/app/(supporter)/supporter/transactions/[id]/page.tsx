@@ -44,6 +44,7 @@ export default async function TransactionDetailPage({ params }: PageProps) {
   if (tx) {
     tx.receipt_image_url = signedReceipt ?? tx.receipt_image_url;
     tx.activity_image_url = signedActivity ?? tx.activity_image_url;
+    // evidence_image_urls는 public 버킷이라 signed URL 불필요
   }
 
   if (!tx) {

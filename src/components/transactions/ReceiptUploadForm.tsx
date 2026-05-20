@@ -37,6 +37,32 @@ export default function ReceiptUploadForm({
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
 
+  // 증빙서류 상태 (최대 5장)
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
+  const [evidencePreviews, setEvidencePreviews] = useState<string[]>([])
+
+  const handleEvidenceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || [])
+    if (!newFiles.length) return
+    const remaining = 5 - evidenceFiles.length
+    const toAdd = newFiles.slice(0, remaining)
+    setEvidenceFiles(prev => [...prev, ...toAdd])
+    toAdd.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setEvidencePreviews(prev => [...prev, reader.result as string])
+      }
+      reader.readAsDataURL(file)
+    })
+    e.target.value = ''
+  }
+
+  const handleRemoveEvidence = (idx: number) => {
+    setEvidenceFiles(prev => prev.filter((_, i) => i !== idx))
+    setEvidencePreviews(prev => prev.filter((_, i) => i !== idx))
+  }
+
+
   const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -77,6 +103,8 @@ export default function ReceiptUploadForm({
       formData.set('amount', amount)
       if (receiptFile) formData.set('receipt', receiptFile)
       if (activityFile) formData.set('activity_image', activityFile)
+      // 증빙서류 (최대 5장)
+      evidenceFiles.forEach((file, i) => formData.set(`evidence_${i}`, file))
 
       const result = await createTransaction(formData)
       if (result.success) {
@@ -212,6 +240,46 @@ export default function ReceiptUploadForm({
           onChange={(e) => setDate(e.target.value)}
           className="w-full p-4 rounded-2xl bg-white ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-lg font-bold transition-all"
         />
+      </div>
+
+      {/* 증빙서류 (최대 5장) */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-bold text-zinc-500 ml-1">📋 증빙서류 <span className="text-zinc-300 font-medium">(선택, 최대 5장)</span></label>
+          {evidenceFiles.length < 5 && (
+            <label className="text-xs font-bold text-blue-600 cursor-pointer">
+              + 추가
+              <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleEvidenceChange} />
+            </label>
+          )}
+        </div>
+        {evidencePreviews.length > 0 ? (
+          <div className="grid grid-cols-3 gap-2">
+            {evidencePreviews.map((src, i) => (
+              <div key={i} className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-100">
+                <img src={src} alt={`증빙 ${i + 1}`} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveEvidence(i)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs font-black flex items-center justify-center hover:bg-red-600 transition-colors"
+                >✕</button>
+              </div>
+            ))}
+            {evidenceFiles.length < 5 && (
+              <label className="aspect-square rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-zinc-400 transition-colors">
+                <span className="text-2xl">📎</span>
+                <span className="text-xs text-zinc-400 font-bold">추가</span>
+                <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleEvidenceChange} />
+              </label>
+            )}
+          </div>
+        ) : (
+          <label className="flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 cursor-pointer hover:border-zinc-300 transition-colors active:scale-[0.98]">
+            <span className="text-2xl">📋</span>
+            <span className="text-sm font-bold text-zinc-500">증빙서류 선택 (최대 5장)</span>
+            <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleEvidenceChange} />
+          </label>
+        )}
       </div>
 
       {/* 제출 버튼 */}

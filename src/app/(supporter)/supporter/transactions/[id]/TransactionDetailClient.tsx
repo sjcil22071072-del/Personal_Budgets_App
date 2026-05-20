@@ -2,11 +2,17 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
-import { updateTransactionDetail, deleteTransactionWithBalance, updateTransactionImages } from '@/app/actions/transaction'
+import {
+  updateTransactionDetail,
+  deleteTransactionWithBalance,
+  updateTransactionImages,
+  addEvidenceImage,
+  removeEvidenceImage,
+} from '@/app/actions/transaction'
 
 interface Tx {
   id: string
@@ -19,6 +25,7 @@ interface Tx {
   status: 'pending' | 'confirmed'
   receipt_image_url: string | null
   activity_image_url: string | null
+  evidence_image_urls?: string[] | null
   funding_source_id: string | null
   participant_id: string | null
   participant: { name: string } | null
@@ -43,19 +50,23 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const [paymentMethod, setPaymentMethod] = useState(tx.payment_method || '')
   const [status, setStatus] = useState<'pending' | 'confirmed'>(tx.status)
 
-
   // 이미지
   const [receiptUrl, setReceiptUrl] = useState<string | null>(tx.receipt_image_url)
   const [activityUrl, setActivityUrl] = useState<string | null>(tx.activity_image_url)
+  const [evidenceUrls, setEvidenceUrls] = useState<string[]>(tx.evidence_image_urls || [])
   const [uploadingReceipt, setUploadingReceipt] = useState(false)
   const [uploadingActivity, setUploadingActivity] = useState(false)
+  const [uploadingEvidence, setUploadingEvidence] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const receiptInputRef = useRef<HTMLInputElement>(null)
   const activityInputRef = useRef<HTMLInputElement>(null)
-  // 현재 미리보기 탭 ('receipt' | 'activity')
-  const [viewTab, setViewTab] = useState<'receipt' | 'activity'>(() =>
+  const evidenceInputRef = useRef<HTMLInputElement>(null)
+
+  const [viewTab, setViewTab] = useState<'receipt' | 'activity' | 'evidence'>(() =>
     !tx.receipt_image_url && tx.activity_image_url ? 'activity' : 'receipt'
   )
+  const [evidenceIdx, setEvidenceIdx] = useState(0)
+  const [deletingEvidenceUrl, setDeletingEvidenceUrl] = useState<string | null>(null)
 
   const categories = ['식비', '교통비', '여가활동', '생활용품', '의료비', '교육', '기타']
 
@@ -66,11 +77,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     try {
       const fd = new FormData()
       fd.append(field, file)
-      const result = await updateTransactionImages(
-        tx.id,
-        tx.participant_id ?? '',
-        fd
-      )
+      const result = await updateTransactionImages(tx.id, tx.participant_id ?? '', fd)
       if (result.error) {
         setUploadError(result.error)
       } else {
@@ -86,6 +93,49 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
       setUploadError('업로드 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
+    }
+  }
+
+  async function handleEvidenceUpload(file: File) {
+    if (evidenceUrls.length >= 5) {
+      setUploadError('증빙서류는 최대 5장까지 첨부할 수 있습니다.')
+      return
+    }
+    setUploadingEvidence(true)
+    setUploadError('')
+    try {
+      const result = await addEvidenceImage(tx.id, tx.participant_id ?? '', file)
+      if (result.error) {
+        setUploadError(result.error)
+      } else if (result.url) {
+        const next = [...evidenceUrls, result.url]
+        setEvidenceUrls(next)
+        setEvidenceIdx(next.length - 1)
+        setViewTab('evidence')
+      }
+    } catch {
+      setUploadError('업로드 중 오류가 발생했습니다.')
+    } finally {
+      setUploadingEvidence(false)
+    }
+  }
+
+  async function handleEvidenceDelete(url: string) {
+    setDeletingEvidenceUrl(url)
+    setUploadError('')
+    try {
+      const result = await removeEvidenceImage(tx.id, url)
+      if (result.error) {
+        setUploadError(result.error)
+      } else {
+        const next = evidenceUrls.filter(u => u !== url)
+        setEvidenceUrls(next)
+        setEvidenceIdx(i => Math.max(0, i - 1))
+      }
+    } catch {
+      setUploadError('삭제 중 오류가 발생했습니다.')
+    } finally {
+      setDeletingEvidenceUrl(null)
     }
   }
 
@@ -132,6 +182,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
 
   const hasReceipt = !!receiptUrl
   const hasActivity = !!activityUrl
+  const hasEvidence = evidenceUrls.length > 0
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 text-foreground p-4 sm:p-8">
@@ -176,54 +227,46 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
               >
                 📷 활동사진{hasActivity && ' ✓'}
               </button>
+              <button
+                onClick={() => setViewTab('evidence')}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                  viewTab === 'evidence' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
+                }`}
+              >
+                📋 증빙서류{hasEvidence ? ` (${evidenceUrls.length}/5)` : ''}
+              </button>
             </div>
             {/* 업로드 버튼 */}
             <div className="flex gap-2">
-              <input
-                ref={receiptInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={e => {
-                  const f = e.target.files?.[0]
-                  if (f) handleImageUpload('receipt', f)
-                  e.target.value = ''
-                }}
-              />
-              <input
-                ref={activityInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={e => {
-                  const f = e.target.files?.[0]
-                  if (f) handleImageUpload('activity_image', f)
-                  e.target.value = ''
-                }}
-              />
-              {viewTab === 'receipt' ? (
-                <button
-                  type="button"
-                  onClick={() => receiptInputRef.current?.click()}
-                  disabled={uploadingReceipt}
-                  className="px-3 py-1.5 text-xs font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors disabled:opacity-50 flex items-center gap-1"
-                >
+              <input ref={receiptInputRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload('receipt', f); e.target.value = '' }} />
+              <input ref={activityInputRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload('activity_image', f); e.target.value = '' }} />
+              <input ref={evidenceInputRef} type="file" accept="image/*,application/pdf" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleEvidenceUpload(f); e.target.value = '' }} />
+
+              {viewTab === 'receipt' && (
+                <button type="button" onClick={() => receiptInputRef.current?.click()} disabled={uploadingReceipt}
+                  className="px-3 py-1.5 text-xs font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors disabled:opacity-50 flex items-center gap-1">
                   {uploadingReceipt
                     ? <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> 업로드 중...</>
-                    : <>{hasReceipt ? '🔄 교체' : '📎 첨부'}</>
-                  }
+                    : <>{hasReceipt ? '🔄 교체' : '📎 첨부'}</>}
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => activityInputRef.current?.click()}
-                  disabled={uploadingActivity}
-                  className="px-3 py-1.5 text-xs font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors disabled:opacity-50 flex items-center gap-1"
-                >
+              )}
+              {viewTab === 'activity' && (
+                <button type="button" onClick={() => activityInputRef.current?.click()} disabled={uploadingActivity}
+                  className="px-3 py-1.5 text-xs font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors disabled:opacity-50 flex items-center gap-1">
                   {uploadingActivity
                     ? <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> 업로드 중...</>
-                    : <>{hasActivity ? '🔄 교체' : '📎 첨부'}</>
-                  }
+                    : <>{hasActivity ? '🔄 교체' : '📎 첨부'}</>}
+                </button>
+              )}
+              {viewTab === 'evidence' && evidenceUrls.length < 5 && (
+                <button type="button" onClick={() => evidenceInputRef.current?.click()} disabled={uploadingEvidence}
+                  className="px-3 py-1.5 text-xs font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-1">
+                  {uploadingEvidence
+                    ? <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> 업로드 중...</>
+                    : <>📎 추가 ({evidenceUrls.length}/5)</>}
                 </button>
               )}
             </div>
@@ -242,28 +285,69 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                 <div className="text-zinc-400 flex flex-col items-center gap-3">
                   <span className="text-5xl">🧾</span>
                   <p className="font-medium text-sm">첨부된 영수증이 없습니다.</p>
-                  <button
-                    type="button"
-                    onClick={() => receiptInputRef.current?.click()}
-                    className="px-4 py-2 text-sm font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors"
-                  >
+                  <button type="button" onClick={() => receiptInputRef.current?.click()}
+                    className="px-4 py-2 text-sm font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors">
                     📎 영수증 첨부
                   </button>
                 </div>
               )
-            ) : (
+            ) : viewTab === 'activity' ? (
               activityUrl ? (
                 <img src={activityUrl} alt="활동사진" className="max-w-full max-h-[600px] object-contain rounded-lg" />
               ) : (
                 <div className="text-zinc-400 flex flex-col items-center gap-3">
                   <span className="text-5xl">📷</span>
                   <p className="font-medium text-sm">첨부된 활동사진이 없습니다.</p>
-                  <button
-                    type="button"
-                    onClick={() => activityInputRef.current?.click()}
-                    className="px-4 py-2 text-sm font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors"
-                  >
+                  <button type="button" onClick={() => activityInputRef.current?.click()}
+                    className="px-4 py-2 text-sm font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors">
                     📎 활동사진 첨부
+                  </button>
+                </div>
+              )
+            ) : (
+              /* 증빙서류 탭 */
+              evidenceUrls.length > 0 ? (
+                <div className="w-full flex flex-col gap-4">
+                  <div className="relative">
+                    <img
+                      src={evidenceUrls[evidenceIdx]}
+                      alt={`증빙서류 ${evidenceIdx + 1}`}
+                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block"
+                    />
+                    <button
+                      type="button"
+                      disabled={!!deletingEvidenceUrl}
+                      onClick={() => handleEvidenceDelete(evidenceUrls[evidenceIdx])}
+                      className="absolute top-2 right-2 px-2 py-1 text-xs font-bold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                    >
+                      {deletingEvidenceUrl === evidenceUrls[evidenceIdx] ? '삭제 중...' : '🗑️ 삭제'}
+                    </button>
+                  </div>
+                  {evidenceUrls.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {evidenceUrls.map((url, i) => (
+                        <button
+                          key={url}
+                          type="button"
+                          onClick={() => setEvidenceIdx(i)}
+                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all ${
+                            i === evidenceIdx ? 'ring-blue-500' : 'ring-zinc-200 hover:ring-zinc-400'
+                          }`}
+                        >
+                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-center text-xs text-zinc-400">{evidenceIdx + 1} / {evidenceUrls.length}장</p>
+                </div>
+              ) : (
+                <div className="text-zinc-400 flex flex-col items-center gap-3">
+                  <span className="text-5xl">📋</span>
+                  <p className="font-medium text-sm">첨부된 증빙서류가 없습니다.</p>
+                  <button type="button" onClick={() => evidenceInputRef.current?.click()}
+                    className="px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    📎 증빙서류 첨부 (최대 5장)
                   </button>
                 </div>
               )
@@ -312,7 +396,6 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                   className="p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none" required />
               </fieldset>
 
-
               <fieldset className="flex flex-col gap-2">
                 <label className="text-xs font-black text-zinc-500">분류</label>
                 <div className="flex flex-wrap gap-2">
@@ -342,8 +425,6 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                 <textarea value={memo} onChange={e => setMemo(e.target.value)} rows={2}
                   className="p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none resize-none" />
               </fieldset>
-
-              
 
               <div className="h-px bg-zinc-200 my-2" />
 

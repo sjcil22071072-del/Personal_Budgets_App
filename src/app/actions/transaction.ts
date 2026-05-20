@@ -68,10 +68,18 @@ export async function createTransaction(formData: FormData) {
   const place_lat = formData.get('place_lat') ? Number(formData.get('place_lat')) : null
   const place_lng = formData.get('place_lng') ? Number(formData.get('place_lng')) : null
 
+  // 증빙서류 파일 목록 (최대 5장)
+  const evidenceFiles: File[] = []
+  for (let i = 0; i < 5; i++) {
+    const f = formData.get(`evidence_${i}`) as File | null
+    if (f && f.size > 0) evidenceFiles.push(f)
+  }
+
   const amount = is_expense ? rawAmount : -Math.abs(rawAmount)
 
   let receipt_image_url = null
   let activity_image_url = null
+  const evidence_image_urls: string[] = []
 
   if (receiptFile && receiptFile.size > 0) {
     const fileExt = (receiptFile.name.split('.').pop() || 'jpg').toLowerCase()
@@ -103,6 +111,23 @@ export async function createTransaction(formData: FormData) {
     }
   }
 
+  // 증빙서류 업로드 (최대 5장)
+  for (const [idx, file] of evidenceFiles.entries()) {
+    const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+    const fileName = `${participant_id}/${Date.now()}-evidence-${idx}.${fileExt}`
+    const { error: uploadError } = await adminClient.storage
+      .from('evidence-documents')
+      .upload(fileName, file)
+    if (!uploadError) {
+      const { data: { publicUrl } } = adminClient.storage
+        .from('evidence-documents')
+        .getPublicUrl(fileName)
+      evidence_image_urls.push(publicUrl)
+    } else {
+      console.error('Evidence upload error:', uploadError)
+    }
+  }
+
   const { error } = await adminClient.from('transactions').insert({
     participant_id,
     creator_id,
@@ -115,6 +140,7 @@ export async function createTransaction(formData: FormData) {
     status,
     receipt_image_url,
     activity_image_url,
+    evidence_image_urls,
     payment_method,
     place_name,
     place_lat,
@@ -391,3 +417,91 @@ export async function updateTransactionImages(
   return { success: true, ...signedResult }
 }
 
+/**
+ * 증빙서류 이미지 1장을 추가로 업로드합니다 (최대 5장 제한).
+ */
+export async function addEvidenceImage(
+  transactionId: string,
+  participantId: string,
+  file: File
+): Promise<{ success?: boolean; error?: string; url?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const admin = createAdminClient()
+
+  // 현재 증빙서류 개수 확인
+  const { data: tx } = await admin
+    .from('transactions')
+    .select('evidence_image_urls')
+    .eq('id', transactionId)
+    .single()
+
+  const currentUrls: string[] = (tx?.evidence_image_urls as string[]) || []
+  if (currentUrls.length >= 5) {
+    return { error: '증빙서류는 최대 5장까지 첨부할 수 있습니다.' }
+  }
+
+  const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const fileName = `${participantId}/${Date.now()}-evidence.${fileExt}`
+  const { error: uploadError } = await admin.storage
+    .from('evidence-documents')
+    .upload(fileName, file, { upsert: false })
+
+  if (uploadError) return { error: `업로드 실패: ${uploadError.message}` }
+
+  const { data: { publicUrl } } = admin.storage.from('evidence-documents').getPublicUrl(fileName)
+  const newUrls = [...currentUrls, publicUrl]
+
+  const { error: dbError } = await admin
+    .from('transactions')
+    .update({ evidence_image_urls: newUrls })
+    .eq('id', transactionId)
+
+  if (dbError) return { error: `저장 실패: ${dbError.message}` }
+
+  revalidatePath(`/supporter/transactions/${transactionId}`)
+  return { success: true, url: publicUrl }
+}
+
+/**
+ * 증빙서류 이미지 1장을 삭제합니다.
+ */
+export async function removeEvidenceImage(
+  transactionId: string,
+  imageUrl: string
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const admin = createAdminClient()
+
+  const { data: tx } = await admin
+    .from('transactions')
+    .select('evidence_image_urls')
+    .eq('id', transactionId)
+    .single()
+
+  const currentUrls: string[] = (tx?.evidence_image_urls as string[]) || []
+  const newUrls = currentUrls.filter(u => u !== imageUrl)
+
+  // Storage에서 파일 삭제
+  const marker = '/object/public/evidence-documents/'
+  const idx = imageUrl.indexOf(marker)
+  if (idx !== -1) {
+    const path = imageUrl.slice(idx + marker.length)
+    await admin.storage.from('evidence-documents').remove([path])
+  }
+
+  const { error: dbError } = await admin
+    .from('transactions')
+    .update({ evidence_image_urls: newUrls })
+    .eq('id', transactionId)
+
+  if (dbError) return { error: `삭제 실패: ${dbError.message}` }
+
+  revalidatePath(`/supporter/transactions/${transactionId}`)
+  return { success: true }
+}

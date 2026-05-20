@@ -149,6 +149,7 @@ export interface Database {
           payment_method: string | null
           receipt_image_url: string | null
           activity_image_url?: string | null
+          evidence_image_urls: string[]
           status: 'pending' | 'confirmed'
           creator_id: string | null
           created_at: string
@@ -169,6 +170,7 @@ export interface Database {
           payment_method?: string | null
           receipt_image_url?: string | null
           activity_image_url?: string | null
+          evidence_image_urls?: string[]
           status?: 'pending' | 'confirmed'
           creator_id?: string | null
           created_at?: string
@@ -189,6 +191,7 @@ export interface Database {
           payment_method?: string | null
           receipt_image_url?: string | null
           activity_image_url?: string | null
+          evidence_image_urls?: string[]
           status?: 'pending' | 'confirmed'
           creator_id?: string | null
           created_at?: string
