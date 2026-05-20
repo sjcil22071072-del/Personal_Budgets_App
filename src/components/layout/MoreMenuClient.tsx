@@ -60,7 +60,6 @@ export default function MoreMenuClient({
   const supabase = createClient();
   const router = useRouter();
 
-  const [openMyRecord, setOpenMyRecord] = useState(true);
   const [openQuickNav, setOpenQuickNav] = useState(true);
   const [openDisplay, setOpenDisplay] = useState(
     initialOpenSection === "display",
@@ -75,38 +74,6 @@ export default function MoreMenuClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* 나의 기록 */}
-      <section className="flex flex-col">
-        <SectionToggle
-          title="나의 기록"
-          open={openMyRecord}
-          onToggle={() => setOpenMyRecord((v) => !v)}
-        />
-        {openMyRecord && (
-          <div className="flex flex-col gap-3">
-            <Link
-              href="/evaluations"
-              className="flex items-center justify-between p-5 rounded-[2rem] bg-zinc-900 text-white shadow-xl hover:bg-zinc-800 transition-all active:scale-[0.98] group"
-            >
-              <div className="flex items-center gap-4">
-                <span className="text-3xl group-hover:scale-110 transition-transform">
-                  💌
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-lg font-black">
-                    지원자 선생님의 편지
-                  </span>
-                  <span className="text-xs font-bold text-zinc-400">
-                    나의 한 달 활동 이야기 보기
-                  </span>
-                </div>
-              </div>
-              <span className="text-2xl">▸</span>
-            </Link>
-          </div>
-        )}
-      </section>
-
       {/* 빠른 이동 */}
       <section className="flex flex-col">
         <SectionToggle

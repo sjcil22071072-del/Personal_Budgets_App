@@ -3,7 +3,6 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantsList from '@/components/participants/ParticipantsList'
-import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { isAdminRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
@@ -97,7 +96,6 @@ export default async function AdminParticipantsPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="px-3 py-1 bg-red-50 rounded-full text-[10px] font-bold text-red-500">관리자</div>
-          <AdminHelpButton pageKey="participants" />
         </div>
       </header>
 

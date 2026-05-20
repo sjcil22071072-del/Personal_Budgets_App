@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/utils/budget-visuals";
 import TransactionTableClient from "@/components/transactions/TransactionTableClient";
-import AdminHelpButton from "@/components/help/AdminHelpButton";
 import { isStaffRole, isSupporterRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
 import { getSignedImageUrls } from "@/app/actions/storage";
@@ -148,7 +147,6 @@ export default async function TransactionsPage({
           거래 및 회계 관리 (장부)
         </h1>
         <div className="flex items-center gap-2 print:hidden">
-          <AdminHelpButton pageKey="transactions" />
           <Link
             href="/supporter/transactions/new"
             className="px-4 py-2 bg-zinc-900 text-white text-sm font-bold rounded-lg hover:bg-zinc-800 transition-colors"

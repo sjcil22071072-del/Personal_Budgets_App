@@ -177,6 +177,17 @@ export async function createParticipant(formData: {
     })
     const { supabase } = await verifyAdmin()
 
+    // 이메일 중복 검사
+    const { data: existing } = await supabase
+      .from('participants')
+      .select('id')
+      .eq('email', formData.email)
+      .maybeSingle()
+
+    if (existing) {
+      return { error: '이미 등록된 이메일(아이디)입니다.' }
+    }
+
     // 1. 당사자 등록 (profiles 불필요 — participants 자체 인적사항 보유)
     const { data: participant, error: participantError } = await supabase
       .from('participants')
@@ -265,7 +276,19 @@ export async function updateParticipant(participantId: string, formData: {
   try {
     const updateData: any = {}
     if (formData.name !== undefined) updateData.name = formData.name
-    if (formData.email !== undefined) updateData.email = formData.email
+    if (formData.email !== undefined) {
+      const { data: existing } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('email', formData.email)
+        .neq('id', participantId)
+        .maybeSingle()
+
+      if (existing) {
+        return { error: '이미 등록된 이메일(아이디)입니다.' }
+      }
+      updateData.email = formData.email
+    }
     if (formData.monthlyBudget !== undefined) updateData.monthly_budget_default = formData.monthlyBudget
     if (formData.yearlyBudget !== undefined) updateData.yearly_budget_default = formData.yearlyBudget
     if (formData.startDate !== undefined) updateData.budget_start_date = formData.startDate

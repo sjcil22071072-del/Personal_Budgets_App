@@ -447,14 +447,10 @@ export default function ParticipantDetailClient({
         {/* 빠른 이동 */}
         <section className="flex flex-col gap-3">
           <h2 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em] ml-1">빠른 이동</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Link href={`/supporter/transactions?participant=${participant.id}`} className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.97] group">
               <span className="text-2xl group-hover:scale-110 transition-transform">📒</span>
               <span className="text-xs font-black text-zinc-700 text-center">거래 장부</span>
-            </Link>
-            <Link href={`/supporter/evaluations?participant_id=${participant.id}`} className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.97] group">
-              <span className="text-2xl group-hover:scale-110 transition-transform">📝</span>
-              <span className="text-xs font-black text-zinc-700 text-center">당사자 평가</span>
             </Link>
             <Link href={`/supporter/documents?participant_id=${participant.id}`} className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.97] group">
               <span className="text-2xl group-hover:scale-110 transition-transform">📁</span>

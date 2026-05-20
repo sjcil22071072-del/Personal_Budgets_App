@@ -34,27 +34,12 @@ export default async function ParticipantsOverviewPage() {
     ascending: false,
   });
 
-  const participantIds = (participants || []).map((p: any) => p.id);
-  const evalMap: Record<string, string> = {};
-  if (participantIds.length > 0) {
-    const { data: recentEvals } = await adminClient
-      .from("evaluations")
-      .select("participant_id, month")
-      .in("participant_id", participantIds)
-      .order("month", { ascending: false });
-    for (const e of recentEvals || []) {
-      if (!(e as any).participant_id) continue;
-      const pid = (e as any).participant_id as string;
-      if (!evalMap[pid]) evalMap[pid] = (e as any).month;
-    }
-  }
-
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 p-4 sm:p-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-zinc-900">당사자 통합 현황</h1>
         <p className="text-zinc-500 mt-1 text-sm">
-          예산 현황과 최근 평가 상태를 한눈에 확인합니다.
+          예산 현황을 한눈에 확인합니다.
         </p>
       </header>
 
@@ -84,13 +69,6 @@ export default async function ParticipantsOverviewPage() {
                 totalBudget > 0
                   ? Math.min(100, Math.round((spent / totalBudget) * 100))
                   : 0;
-              const lastEval = evalMap[p.id];
-              const lastEvalDisplay = lastEval
-                ? (() => {
-                    const [y, mo] = lastEval.split("-").map(Number);
-                    return `${y}년 ${mo}월`;
-                  })()
-                : "없음";
 
               return (
                 <Link
@@ -130,15 +108,6 @@ export default async function ParticipantsOverviewPage() {
                       <span>{formatCurrency(spent)}원 사용</span>
                       <span>/ {formatCurrency(totalBudget)}원</span>
                     </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-zinc-100 flex justify-between text-xs text-zinc-400">
-                    <span>최근 평가</span>
-                    <span
-                      className={`font-semibold ${lastEval ? "text-zinc-600" : "text-zinc-300"}`}
-                    >
-                      {lastEvalDisplay}
-                    </span>
                   </div>
                 </Link>
               );

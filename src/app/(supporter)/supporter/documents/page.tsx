@@ -2,7 +2,6 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import DocumentManagerClient from '@/components/documents/DocumentManagerClient'
-import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
@@ -59,7 +58,6 @@ export default async function SupporterDocumentsPage({
           <h1 className="text-2xl font-bold text-zinc-900">증빙 및 서류 관리</h1>
           <p className="text-zinc-500 mt-1">당사자별 평가서, 참고자료, 증빙자료를 업로드하거나 링크를 공유합니다.</p>
         </div>
-        <AdminHelpButton pageKey="documents" />
       </header>
 
       <main className="max-w-6xl flex flex-col gap-8">

@@ -3,7 +3,6 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ReviewQueueClient from '@/components/transactions/ReviewQueueClient'
-import AdminHelpButton from '@/components/help/AdminHelpButton'
 import { getSignedImageUrls } from '@/app/actions/storage'
 import { isStaffRole, isSupporterRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
@@ -105,7 +104,6 @@ export default async function ReviewQueuePage() {
               {transactions.length}건 대기
             </span>
           )}
-          <AdminHelpButton pageKey="review" />
         </div>
       </header>
 

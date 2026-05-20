@@ -1,6 +1,5 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { getEvalTemplateSetting } from '@/app/actions/evalTemplates'
 import AdminSettingsClient from './AdminSettingsClient'
 import { isAdminRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
@@ -51,14 +50,11 @@ export default async function AdminSettingsPage() {
       }))),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-  const evalSetting = await getEvalTemplateSetting()
-
   return (
     <AdminSettingsClient
       currentUserId={user.id}
       currentUserEmail={user.email || ''}
       profiles={users}
-      evalSetting={evalSetting}
     />
   )
 }

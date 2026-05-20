@@ -213,25 +213,6 @@ export default async function Home() {
       })),
     });
   }
-  let latestEvaluation: {
-    month: string;
-    easy_summary: string | null;
-    next_step: string | null;
-  } | null = null;
-
-  if (effectivePrefs.enabled_blocks.includes("evaluation_letter")) {
-    const { data: evalData } = await supabase
-      .from("evaluations")
-      .select("month, easy_summary, next_step")
-      .eq("participant_id", participantId)
-      .not("published_at", "is", null)
-      .order("month", { ascending: false })
-      .limit(1)
-      .single();
-
-    latestEvaluation = evalData;
-  }
-
   return (
     <HomeDashboard
       participant={participant}
@@ -244,7 +225,6 @@ export default async function Home() {
       dailyTransactions={dailyTransactions || []}
       monthlyTrend={monthlyTrend}
       uiPreferences={uiPreferences}
-      latestEvaluation={latestEvaluation}
     />
   );
 }

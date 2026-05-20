@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import AlertPanel from "@/components/admin/AlertPanel";
-import AdminHelpButton from "@/components/help/AdminHelpButton";
 import AdminParticipantBoard from "@/components/admin/AdminParticipantBoard";
 import { isAdminRole, isSupporterRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
@@ -39,7 +38,6 @@ export default async function AdminDashboardPage() {
           >
             전체 목록
           </Link>
-          <AdminHelpButton pageKey="dashboard" />
         </div>
       </header>
 

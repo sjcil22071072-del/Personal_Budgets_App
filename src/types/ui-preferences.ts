@@ -3,7 +3,6 @@ export type BlockId =
   | 'monthly_trend'
   | 'recent_transactions'
   | 'calendar_shortcut'
-  | 'evaluation_letter'
   | 'weekly_chart'
   | 'source_view'
   | 'activity_gallery'
@@ -19,7 +18,6 @@ export const OPTIONAL_BLOCKS: BlockId[] = [
   'monthly_trend',
   'recent_transactions',
   'calendar_shortcut',
-  'evaluation_letter',
   'weekly_chart',
   'source_view',
   'activity_gallery',
@@ -30,7 +28,6 @@ export const BLOCK_METADATA: Record<BlockId, { icon: string; label: string; desc
   monthly_trend:       { icon: '📈', label: '달마다 쓴 돈',    description: '최근 6달 동안 쓴 돈 그림' },
   recent_transactions: { icon: '🕐', label: '최근에 쓴 돈',    description: '최근 3번 쓴 돈 목록' },
   calendar_shortcut:   { icon: '📅', label: '달력 바로가기',   description: '이번 달 활동을 달력에서 확인' },
-  evaluation_letter:   { icon: '💌', label: '선생님 편지',     description: '선생님이 이번 달에 써준 편지' },
   weekly_chart:        { icon: '📉', label: '이번 주 쓴 돈',   description: '최근 7일 하루마다 쓴 돈' },
   source_view:         { icon: '💳', label: '돈 종류별 보기',  description: '돈 종류별 남은 돈' },
   activity_gallery:    { icon: '🖼️', label: '활동 사진',       description: '활동 사진 모아보기' },
@@ -41,7 +38,7 @@ export const DEFAULT_PREFERENCES: UIPreferences = {
     'yearly_balance',
     'monthly_trend',
     'recent_transactions',
-    'evaluation_letter',
     'weekly_chart',
   ],
 }
+

@@ -3,10 +3,7 @@
 import { useState, useTransition } from 'react'
 import { updateUserRole } from '@/app/actions/admin'
 import Link from 'next/link'
-import AdminHelpButton from '@/components/help/AdminHelpButton'
 import type { UserRole } from '@/types/database'
-import type { OrgEvalSetting } from '@/types/eval-templates'
-import EvalTemplateSettings from '@/components/admin/EvalTemplateSettings'
 
 interface Profile {
   id: string
@@ -21,7 +18,6 @@ interface AdminSettingsClientProps {
   currentUserId: string
   currentUserEmail: string
   profiles: Profile[]
-  evalSetting: OrgEvalSetting
 }
 
 const ROLE_OPTIONS: { value: UserRole; label: string; desc: string }[] = [
@@ -46,7 +42,6 @@ export default function AdminSettingsClient({
   currentUserId,
   currentUserEmail,
   profiles,
-  evalSetting,
 }: AdminSettingsClientProps) {
   const [isPending, startTransition] = useTransition()
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -72,7 +67,6 @@ export default function AdminSettingsClient({
         </div>
         <div className="flex items-center gap-2">
           <div className="px-3 py-1 bg-red-50 rounded-full text-[10px] font-bold text-red-500 ring-1 ring-red-200">관리자</div>
-          <AdminHelpButton pageKey="settings" />
         </div>
       </header>
 
@@ -205,19 +199,6 @@ export default function AdminSettingsClient({
             </div>
           )}
         </section>
-
-        <div className="h-px bg-zinc-200" />
-
-        <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-50 border border-blue-100">
-          <div>
-            <p className="text-sm font-bold text-blue-800">평가 양식은 각 평가 작성 시에도 변경할 수 있습니다</p>
-            <p className="text-xs text-blue-600 mt-1 leading-relaxed">
-              아래에서 설정하는 양식은 새 평가 작성 화면의 기본값으로 적용됩니다.
-            </p>
-          </div>
-        </div>
-
-        <EvalTemplateSettings initialSetting={evalSetting} />
       </main>
     </div>
   )
