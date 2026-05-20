@@ -24,16 +24,20 @@ export default async function SupporterDocumentsPage({
   }
 
   // 담당 당사자 목록 조회
-  const participantsQuery = adminClient
+  let participantsQuery = adminClient
     .from('participants')
     .select('id, name')
-    .eq('assigned_supporter_id', user.id)
+
+  if (authProfile.role === 'supporter') {
+    participantsQuery = participantsQuery.eq('assigned_supporter_id', user.id)
+  }
 
   const { data: participants } = await participantsQuery.order('name', { ascending: true })
   const participantIds = (participants || []).map((participant) => participant.id)
 
   // 기존 등록된 모든 서류 조회
   let documents: any[] = []
+  let cardRegistrations: any[] = []
   try {
     if (participantIds.length > 0) {
       const { data: docsData } = await adminClient
@@ -46,6 +50,19 @@ export default async function SupporterDocumentsPage({
   } catch {
     // file_links 테이블이 없거나 쿼리 실패 시 빈 배열
     documents = []
+  }
+
+  try {
+    if (participantIds.length > 0) {
+      const { data: cardData } = await adminClient
+        .from('card_registrations')
+        .select('*, participant:participants ( name )')
+        .in('participant_id', participantIds)
+        .order('created_at', { ascending: false })
+      cardRegistrations = cardData || []
+    }
+  } catch {
+    cardRegistrations = []
   }
 
   // SIS-A 평가 목록 조회 (migration 실행 전이면 빈 배열)
@@ -69,6 +86,7 @@ export default async function SupporterDocumentsPage({
         <DocumentManagerClient
           participants={(participants || []) as any}
           initialDocuments={documents as any}
+          initialCardRegistrations={cardRegistrations as any}
           sisAssessments={sisAssessments as any}
           initialParticipantId={params.participant_id}
         />

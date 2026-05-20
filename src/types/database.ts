@@ -84,6 +84,26 @@ export interface Database {
           created_at?: string
         }
       }
+      card_registrations: {
+        Row: {
+          id: string
+          participant_id: string
+          image_urls: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          participant_id: string
+          image_urls: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string
+          image_urls?: string[]
+          created_at?: string
+        }
+      }
       funding_sources: {
         Row: {
           id: string

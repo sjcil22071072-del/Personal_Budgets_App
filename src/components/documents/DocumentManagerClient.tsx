@@ -21,19 +21,30 @@ interface Document {
   participant?: { name?: string } | null
 }
 
+interface CardRegistration {
+  id: string
+  participant_id: string
+  image_urls: string[]
+  created_at: string
+  participant?: { name?: string } | null
+}
+
 export default function DocumentManagerClient({
   participants,
   initialDocuments,
+  initialCardRegistrations = [],
   sisAssessments = [],
   initialParticipantId,
 }: {
   participants: Participant[]
   initialDocuments: Document[]
+  initialCardRegistrations?: CardRegistration[]
   sisAssessments?: SisAssessmentRow[]
   initialParticipantId?: string
 }) {
   const [loading, setLoading] = useState(false)
   const [documents, setDocuments] = useState(initialDocuments)
+  const [cardRegistrations] = useState(initialCardRegistrations)
   const [fileError, setFileError] = useState('')
   const [filterParticipantId, setFilterParticipantId] = useState(initialParticipantId || '')
 
@@ -118,6 +129,57 @@ export default function DocumentManagerClient({
           <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold">원점수 입력 → 표준점수 자동 변환</span>
         </div>
         <SisASection participants={participants} initialAssessments={sisAssessments} />
+      </section>
+
+      <div className="h-px bg-zinc-200" />
+
+      <section>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-zinc-900">카드 등록 보기</h2>
+            <p className="text-sm text-zinc-500 mt-1">당사자가 등록한 실물 카드 앞뒷면 사진입니다. 승인은 필요하지 않습니다.</p>
+          </div>
+        </div>
+        {cardRegistrations.filter(item => !filterParticipantId || item.participant_id === filterParticipantId).length === 0 ? (
+          <div className="bg-white rounded-2xl ring-1 ring-zinc-200 p-8 text-center text-sm font-bold text-zinc-400">
+            등록된 카드 사진이 없습니다.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {cardRegistrations
+              .filter(item => !filterParticipantId || item.participant_id === filterParticipantId)
+              .map((item) => (
+                <article key={item.id} className="bg-white rounded-2xl ring-1 ring-zinc-200 shadow-sm p-4">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                      <p className="font-black text-zinc-900">{item.participant?.name || '알 수 없음'}</p>
+                      <p className="text-xs font-bold text-zinc-400">{item.created_at.slice(0, 10)}</p>
+                    </div>
+                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-500">
+                      {item.image_urls.length}장
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {item.image_urls.map((url, index) => (
+                      <a
+                        key={`${item.id}-${index}`}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block aspect-[4/3] overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
+                      >
+                        <img
+                          src={url}
+                          alt={`카드 ${index === 0 ? '앞면' : index === 1 ? '뒷면' : `${index + 1}번째 사진`}`}
+                          className="h-full w-full object-cover transition-transform hover:scale-105"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </article>
+              ))}
+          </div>
+        )}
       </section>
 
       <div className="h-px bg-zinc-200" />

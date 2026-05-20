@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/utils/budget-visuals'
 import { createTransaction } from '@/app/actions/transaction'
+import { createCardRegistration } from '@/app/actions/cardRegistration'
 import { EasyTerm } from '@/components/ui/EasyTerm'
 import { speak } from '@/utils/tts'
 import {
@@ -16,6 +17,7 @@ import CashViz from './BalanceCashViz'
 import MonthlyPlanMiniProgress from './MonthlyPlanMiniProgress'
 
 type WidgetStyle = 'pie' | 'water' | 'emoji' | 'text' | 'cash'
+type UploadMode = 'receipt' | 'activity' | 'card'
 
 const DEFAULT_EMOJI_FAVORITES = ['🍎', '🍪', '⭐', '🐥', '🌸', '🎈', '🍋', '🍩', '🦊', '🎀']
 
@@ -657,7 +659,7 @@ export default function BalanceVisualWidget({
   const activityInputRef = useRef<HTMLInputElement>(null)
   const secondFileRef = useRef<HTMLInputElement>(null)  // 두 번째 파일 (추가 사진)
   const [showPhotoMenu, setShowPhotoMenu] = useState(false)
-  const [uploadMode, setUploadMode] = useState<'receipt' | 'activity' | null>(null)
+  const [uploadMode, setUploadMode] = useState<UploadMode | null>(null)
   const [uploadPreview, setUploadPreview] = useState<string | null>(null)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadDescription, setUploadDescription] = useState('')
@@ -694,7 +696,7 @@ export default function BalanceVisualWidget({
   // ── 인라인 업로드 핸들러 ──────────────────────────────────────
   const handleInlineUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    mode: 'receipt' | 'activity'
+    mode: Extract<UploadMode, 'receipt' | 'activity'>
   ) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -732,6 +734,18 @@ export default function BalanceVisualWidget({
     const reader = new FileReader()
     reader.onloadend = () => {
       setSecondPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const handlePrimaryFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setUploadPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
     e.target.value = ''
@@ -777,13 +791,38 @@ export default function BalanceVisualWidget({
 
   const handleInlineSubmit = async () => {
     if (!participantId || !uploadFile) return
+    if (uploadMode === 'card' && !secondFile) {
+      setUploadToast('실물 카드의 앞뒷면을 모두 등록해주세요.')
+      return
+    }
     setUploadSubmitting(true)
     const amountNum = parseFloat(uploadAmount) || 0
-    if (amountNum > 0) setPendingDeduction(prev => prev + amountNum)
+    if (uploadMode !== 'card' && amountNum > 0) setPendingDeduction(prev => prev + amountNum)
     try {
       // 순차 압축 (병렬 시 모바일에서 canvas 메모리 초과 가능)
       const mainCompressed   = await compressImage(uploadFile)
       const secondCompressed = secondFile ? await compressImage(secondFile) : null
+
+      if (uploadMode === 'card') {
+        if (!secondCompressed) {
+          setUploadToast('실물 카드의 앞뒷면을 모두 등록해주세요.')
+          return
+        }
+        const formData = new FormData()
+        formData.append('card_images', mainCompressed)
+        formData.append('card_images', secondCompressed)
+        const result = await createCardRegistration(formData)
+        if (result.success) {
+          setUploadToast('카드 사진이 등록되었습니다.')
+          setTimeout(() => {
+            closeUploadSheet()
+            router.refresh()
+          }, 1200)
+        } else {
+          setUploadToast(result.error || '카드 등록에 실패했습니다. 다시 시도해주세요.')
+        }
+        return
+      }
 
       const formData = new FormData()
       formData.set('participant_id', participantId)
@@ -1027,6 +1066,13 @@ export default function BalanceVisualWidget({
                 >
                   <span className="text-xl">🖼️</span> 활동사진 찍기
                 </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowPhotoMenu(false); setUploadMode('card'); setUploadToast(null) }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-zinc-900 text-white font-black text-sm shadow-lg whitespace-nowrap"
+                >
+                  <span className="text-xl">💳</span> 카드 등록하기
+                </button>
               </div>
             </>
           )}
@@ -1044,11 +1090,43 @@ export default function BalanceVisualWidget({
                   <div className="px-5 pb-8 pt-5">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-lg font-black text-zinc-900">
-                        {uploadMode === 'receipt' ? '🧾 영수증 기록하기' : '📸 활동 기록'}
+                        {uploadMode === 'card' ? '💳 카드 등록하기' : uploadMode === 'receipt' ? '🧾 영수증 기록하기' : '📸 활동 기록'}
                       </h2>
                       <button onClick={closeUploadSheet} className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-base font-black transition-colors">✕</button>
                     </div>
 
+                    {uploadMode === 'card' && (
+                      <div className="mb-4">
+                        <p className="mb-3 rounded-2xl bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-700">
+                          실물 카드의 앞뒷면을 모두 등록해주세요.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <label className="block cursor-pointer">
+                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePrimaryFile} />
+                            <div className="aspect-square rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 overflow-hidden flex items-center justify-center text-sm font-black text-zinc-500">
+                              {uploadPreview ? (
+                                <img src={uploadPreview} alt="카드 앞면" className="w-full h-full object-cover" />
+                              ) : (
+                                <span>카드 앞면 등록</span>
+                              )}
+                            </div>
+                          </label>
+                          <label className="block cursor-pointer">
+                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleSecondFile} />
+                            <div className="aspect-square rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 overflow-hidden flex items-center justify-center text-sm font-black text-zinc-500">
+                              {secondPreview ? (
+                                <img src={secondPreview} alt="카드 뒷면" className="w-full h-full object-cover" />
+                              ) : (
+                                <span>카드 뒷면 등록</span>
+                              )}
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {uploadMode !== 'card' && (
+                      <>
                     {/* 사진 미리보기 */}
                     {uploadPreview && (
                       <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 ring-1 ring-zinc-200">
@@ -1112,6 +1190,8 @@ export default function BalanceVisualWidget({
                         className="w-full p-4 rounded-2xl bg-zinc-50 ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-base font-bold transition-all"
                       />
                     </div>
+                      </>
+                    )}
 
                     {uploadToast && (
                       <div className={`mt-3 p-3 rounded-xl text-sm font-bold animate-fade-in-up ${uploadToast.includes('안') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
@@ -1121,16 +1201,18 @@ export default function BalanceVisualWidget({
 
                     <button
                       type="button"
-                      disabled={uploadSubmitting || !uploadDescription || !uploadAmount}
+                      disabled={uploadSubmitting || (uploadMode === 'card' ? (!uploadFile || !secondFile) : (!uploadDescription || !uploadAmount))}
                       onClick={handleInlineSubmit}
                       className="w-full mt-4 py-4 rounded-2xl bg-green-600 text-white font-black text-base active:scale-[0.98] transition-all disabled:bg-zinc-300"
                     >
-                      {uploadSubmitting ? '기록하는 중...' : '활동 기록하기'}
+                      {uploadSubmitting ? '기록하는 중...' : uploadMode === 'card' ? '카드 등록하기' : '활동 기록하기'}
                     </button>
 
-                    <p className="text-center text-zinc-400 text-xs font-medium mt-2">
-                      지원자 선생님이 확인하면 예산에 반영해요.
-                    </p>
+                    {uploadMode !== 'card' && (
+                      <p className="text-center text-zinc-400 text-xs font-medium mt-2">
+                        지원자 선생님이 확인하면 예산에 반영해요.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
