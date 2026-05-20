@@ -5,8 +5,6 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
-import type { UserRole } from '@/types/database'
 
 type NavItem = {
   href: string
@@ -28,8 +26,6 @@ const NAV_ITEMS: NavItem[] = [
     label: '더보기',
     subs: [
       { href: '/evaluations',          icon: '💌', label: '지원자 선생님의 편지' },
-      { href: '/card-registration',     icon: '💳', label: '카드 등록하기' },
-      { href: '/family-registration',   icon: '📋', label: '가족관계증명서 등록' },
       { href: '/more?open=display',    icon: '🌗', label: '화면 설정' },
       { href: '/more?open=files',      icon: '📁', label: '내 서류함' },
     ],
@@ -40,28 +36,8 @@ export default function NavDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
-  const { user, supabase } = useAuth()
-  const [role, setRole] = useState<UserRole>('participant')
 
   useEffect(() => { setMounted(true) }, [])
-
-  useEffect(() => {
-    if (!user) return
-
-    async function fetchRole() {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user!.id)
-        .single()
-
-      if (profile?.role) {
-        setRole(profile.role as UserRole)
-      }
-    }
-
-    fetchRole()
-  }, [user, supabase])
 
   // 페이지 이동 시 자동 닫기
   useEffect(() => {
@@ -73,25 +49,6 @@ export default function NavDropdown() {
     document.body.style.overflow = isOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
-
-  // 역할에 따른 메뉴 노출 필터링
-  const filteredNavItems = NAV_ITEMS.map((item) => {
-    const isParticipant = role === 'participant'
-    if (isParticipant) {
-      if (item.href === '/card-registration' || item.href === '/family-registration') {
-        return null
-      }
-      if (item.subs) {
-        return {
-          ...item,
-          subs: item.subs.filter(
-            (sub) => sub.href !== '/card-registration' && sub.href !== '/family-registration'
-          )
-        }
-      }
-    }
-    return item
-  }).filter(Boolean) as NavItem[]
 
   const drawer = mounted && isOpen ? createPortal(
     <>
@@ -124,7 +81,7 @@ export default function NavDropdown() {
 
         {/* 메뉴 목록 */}
         <nav className="flex-1 overflow-y-auto py-2">
-          {filteredNavItems.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== '/' && pathname.startsWith(item.href))
