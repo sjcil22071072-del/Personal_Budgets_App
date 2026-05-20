@@ -160,8 +160,6 @@ export async function updateTransactionStatus(transactionId: string, newStatus: 
 }
 
 export async function deleteTransaction(transactionId: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('데모 모드에서는 삭제할 수 없습니다.')
-
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
@@ -251,8 +249,6 @@ export async function updateTransactionDetail(
 }
 
 export async function deleteTransactionWithBalance(transactionId: string) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') throw new Error('데모 모드에서는 삭제할 수 없습니다.')
-
   const supabase = await createClient()
   const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
