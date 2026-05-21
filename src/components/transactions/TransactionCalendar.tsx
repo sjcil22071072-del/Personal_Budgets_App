@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { formatCurrency } from '@/utils/budget-visuals'
 import { EasyTerm } from '@/components/ui/EasyTerm'
 import { speak } from '@/utils/tts'
-import SelfCheckFeedback from '@/components/ui/SelfCheckFeedback'
 import ImageLightbox from '@/components/ui/ImageLightbox'
 
 interface Transaction {
@@ -238,13 +237,6 @@ export default function TransactionCalendar({ transactions }: Props) {
               </div>
             ))}
             
-            <div className="mt-6 pt-6 border-t border-zinc-100">
-              <SelfCheckFeedback
-                question="내역을 확인하기 쉬웠나요?"
-                compact={true}
-                context="calendar"
-              />
-            </div>
           </div>
         )}
       </div>
