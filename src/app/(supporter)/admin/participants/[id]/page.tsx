@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ParticipantDetailClient from './ParticipantDetailClient'
 import { isAdminRole, isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
+import { ensureMonthlyBudgetRollover } from '@/app/actions/budgetRollover'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -24,6 +25,7 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
   }
 
   const isAdmin = isAdminRole(authProfile.role)
+  await ensureMonthlyBudgetRollover(id)
 
   const [
     { data: participant },

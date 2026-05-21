@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
 import { isStaffRole, isSupporterRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
+import { ensureMonthlyBudgetRollover } from '@/app/actions/budgetRollover'
 
 export default async function SupporterPage() {
   const supabase = await createClient()
@@ -16,6 +17,8 @@ export default async function SupporterPage() {
   if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect('/')
   }
+
+  await ensureMonthlyBudgetRollover()
 
   // 담당 당사자 조회 (관리자는 전체)
   let query = supabase

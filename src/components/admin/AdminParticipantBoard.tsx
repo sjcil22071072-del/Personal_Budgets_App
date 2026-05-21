@@ -2,9 +2,11 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import { formatCurrency } from '@/utils/budget-visuals'
 import Link from 'next/link'
+import { ensureMonthlyBudgetRollover } from '@/app/actions/budgetRollover'
 
 export default async function AdminParticipantBoard() {
   const adminClient = createAdminClient()
+  await ensureMonthlyBudgetRollover()
 
   const now = new Date()
   const year = now.getFullYear()

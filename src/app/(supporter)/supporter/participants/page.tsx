@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/utils/budget-visuals";
 import { isStaffRole, isSupporterRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
+import { ensureMonthlyBudgetRollover } from "@/app/actions/budgetRollover";
 
 export default async function ParticipantsOverviewPage() {
   const supabase = await createClient();
@@ -19,6 +20,8 @@ export default async function ParticipantsOverviewPage() {
   if (!authProfile || !isStaffRole(authProfile.role)) {
     redirect("/");
   }
+
+  await ensureMonthlyBudgetRollover();
 
   let query = adminClient
     .from("participants")

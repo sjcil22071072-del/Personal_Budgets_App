@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ParticipantsList from '@/components/participants/ParticipantsList'
 import { isAdminRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
+import { ensureMonthlyBudgetRollover } from '@/app/actions/budgetRollover'
 
 export default async function AdminParticipantsPage() {
   const supabase = await createClient()
@@ -17,6 +18,8 @@ export default async function AdminParticipantsPage() {
   if (!authProfile || !isAdminRole(authProfile.role)) {
     redirect('/')
   }
+
+  await ensureMonthlyBudgetRollover()
 
   let participantsLoadError = ''
 

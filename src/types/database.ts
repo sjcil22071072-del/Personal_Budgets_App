@@ -136,6 +136,7 @@ export interface Database {
           yearly_budget: number
           current_month_balance: number
           current_year_balance: number
+          last_rollover_month: string | null
           created_at: string
         }
         Insert: {
@@ -146,6 +147,7 @@ export interface Database {
           yearly_budget: number
           current_month_balance: number
           current_year_balance: number
+          last_rollover_month?: string | null
           created_at?: string
         }
         Update: {
@@ -156,6 +158,7 @@ export interface Database {
           yearly_budget?: number
           current_month_balance?: number
           current_year_balance?: number
+          last_rollover_month?: string | null
           created_at?: string
         }
       }

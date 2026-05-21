@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import HomeDashboard from "@/components/home/HomeDashboard";
 import { UIPreferences, DEFAULT_PREFERENCES } from "@/types/ui-preferences";
 import { getSignedImageUrls } from "@/app/actions/storage";
+import { ensureMonthlyBudgetRollover } from "@/app/actions/budgetRollover";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -57,8 +58,20 @@ export default async function Home() {
       .maybeSingle();
   }
 
-  const participant = participantData.data;
+  let participant = participantData.data;
   const participantId = participant?.id ?? user.id;
+
+  if (participant) {
+    const rollover = await ensureMonthlyBudgetRollover(participant.id);
+    if (rollover.updated > 0) {
+      const refreshedParticipantData = await adminClient
+        .from("participants")
+        .select("*, funding_sources(*)")
+        .eq("id", participant.id)
+        .maybeSingle();
+      participant = refreshedParticipantData.data ?? participant;
+    }
+  }
 
   // 날짜 계산
   const now = new Date();
