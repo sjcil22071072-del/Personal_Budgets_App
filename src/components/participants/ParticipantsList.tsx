@@ -75,12 +75,6 @@ export default function ParticipantsList({ participants }: ParticipantsListProps
 
             <div className="mt-5 flex gap-2 border-t border-zinc-50 pt-4">
               <Link
-                href={`/admin/participants/${p.id}/preview`}
-                className="flex flex-1 items-center justify-center rounded-xl bg-amber-100 px-4 py-3 text-center text-sm font-black text-amber-700 shadow-sm transition-all hover:bg-amber-200"
-              >
-                미리보기
-              </Link>
-              <Link
                 href={`/admin/participants/${p.id}`}
                 className="rounded-xl bg-zinc-100 px-4 py-3 text-center text-xs font-black text-zinc-600 transition-all hover:bg-zinc-200"
               >
