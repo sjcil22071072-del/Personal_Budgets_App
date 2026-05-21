@@ -38,10 +38,3 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DELETE FROM public.profiles p
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM public.user_invitations ui
-  WHERE lower(ui.email) = lower(p.email)
-);

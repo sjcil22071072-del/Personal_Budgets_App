@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 
-type Invitation = {
+type AdminRegistration = {
   id: string
   role: 'admin' | 'participant'
   used_at: string | null
+}
+
+type ParticipantRegistration = {
+  id: string
+  name: string | null
+}
+
+type ExistingProfile = {
+  id: string
+  role: 'admin' | 'participant' | 'superadmin' | 'super_admin'
+  created_at: string | null
 }
 
 export async function GET(request: Request) {
@@ -40,19 +51,15 @@ export async function GET(request: Request) {
 
   const email = user.email?.trim().toLowerCase() ?? ''
   const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL ?? '').trim().toLowerCase()
-  const allowedDomains = (
-    process.env.ALLOWED_EMAIL_DOMAINS ??
-    process.env.ALLOWED_EMAIL_DOMAIN ??
-    ''
-  )
-    .split(',')
-    .map((d) => d.trim().toLowerCase())
-    .filter(Boolean)
-
   const isSuperAdmin = !!superAdminEmail && email === superAdminEmail
-  const isAllowedDomain = allowedDomains.some((domain) => email.endsWith(`@${domain}`))
 
-  const { data: invitation } = await adminClient
+  const { data: existingProfile } = await adminClient
+    .from('profiles')
+    .select('id, role, created_at')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const { data: adminRegistration } = await adminClient
     .from('user_invitations')
     .select('id, role, used_at')
     .eq('email', email)
@@ -60,32 +67,63 @@ export async function GET(request: Request) {
     .limit(1)
     .maybeSingle()
 
-  if (!isSuperAdmin && !isAllowedDomain && !invitation) {
+  const { data: participantRegistration } = await adminClient
+    .from('participants')
+    .select('id, name')
+    .eq('email', email)
+    .maybeSingle()
+
+  const typedExistingProfile = existingProfile as ExistingProfile | null
+  const typedAdminRegistration = adminRegistration as AdminRegistration | null
+  const typedParticipantRegistration = participantRegistration as ParticipantRegistration | null
+  const isRegisteredUser = !!typedAdminRegistration || !!typedParticipantRegistration
+  const profileCreatedAt = typedExistingProfile?.created_at
+    ? new Date(typedExistingProfile.created_at).getTime()
+    : 0
+  const isFreshAutoProfile =
+    !!typedExistingProfile &&
+    Date.now() - profileCreatedAt < 5 * 60 * 1000 &&
+    !isRegisteredUser
+  const isExistingAssignedUser = !!typedExistingProfile && !isFreshAutoProfile
+
+  if (!isSuperAdmin && !isRegisteredUser && !isExistingAssignedUser) {
     await adminClient.from('profiles').delete().eq('id', user.id)
     await supabase.auth.signOut()
     return NextResponse.redirect(`${baseUrl}/login?error=InvalidDomain`)
   }
 
-  const typedInvitation = invitation as Invitation | null
   const resolvedRole =
-    isSuperAdmin || typedInvitation?.role === 'admin'
+    isSuperAdmin || typedAdminRegistration?.role === 'admin'
       ? 'admin'
-      : 'participant'
+      : typedExistingProfile?.role ?? 'participant'
   const displayName =
+    typedParticipantRegistration?.name ??
     user.user_metadata?.full_name ??
     user.user_metadata?.name ??
     user.email ??
     null
 
-  const { error: profileError } = await adminClient
-    .from('profiles')
-    .upsert({
-      id: user.id,
-      email,
-      name: displayName,
-      full_name: displayName,
-      role: resolvedRole,
-    }, { onConflict: 'id' })
+  const profilePayload = {
+    id: user.id,
+    email,
+    name: displayName,
+    full_name: displayName,
+    role: resolvedRole,
+  }
+
+  const { error: profileError } = typedExistingProfile
+    ? await adminClient
+        .from('profiles')
+        .update({
+          email,
+          name: displayName,
+          full_name: displayName,
+          role: resolvedRole,
+        })
+        .eq('id', user.id)
+    : await adminClient
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'id' })
 
   if (profileError) {
     console.error('Profile upsert failed:', profileError)
@@ -93,11 +131,11 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${baseUrl}/login?error=ProfileFailed`)
   }
 
-  if (typedInvitation && !typedInvitation.used_at) {
+  if (typedAdminRegistration && !typedAdminRegistration.used_at) {
     await adminClient
       .from('user_invitations')
       .update({ used_at: new Date().toISOString() })
-      .eq('id', typedInvitation.id)
+      .eq('id', typedAdminRegistration.id)
   }
 
   const destination =
