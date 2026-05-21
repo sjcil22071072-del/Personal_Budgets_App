@@ -5,6 +5,9 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createTransaction } from "@/app/actions/transaction";
 import { EasyTerm } from "@/components/ui/EasyTerm";
+import ActivityCategoryPicker, {
+  getActivityMajor,
+} from "@/components/transactions/ActivityCategoryPicker";
 
 interface FundingSource {
   id: string;
@@ -114,6 +117,7 @@ export default function ReceiptUploadForm({
       formData.set("participant_id", participantId);
       formData.set("date", date);
       formData.set("description", description);
+      formData.set("category", getActivityMajor(description));
       formData.set("amount", amount);
 
       // 파일들 주입
@@ -381,13 +385,10 @@ export default function ReceiptUploadForm({
         <label className="text-sm font-bold text-zinc-500 ml-1">
           📝 무엇을 했나요?
         </label>
-        <input
-          type="text"
+        <input type="hidden" name="description" value={description} required />
+        <ActivityCategoryPicker
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="예: 편의점 간식, 영화 티켓"
-          className="w-full p-4 rounded-2xl bg-white ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-lg font-bold transition-all"
-          required
+          onChange={setDescription}
         />
       </div>
 

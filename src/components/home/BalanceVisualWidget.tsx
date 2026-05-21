@@ -8,6 +8,9 @@ import { createTransaction } from "@/app/actions/transaction";
 import { createCardRegistration } from "@/app/actions/cardRegistration";
 import { EasyTerm } from "@/components/ui/EasyTerm";
 import { speak } from "@/utils/tts";
+import ActivityCategoryPicker, {
+  getActivityMajor,
+} from "@/components/transactions/ActivityCategoryPicker";
 
 type WidgetStyle = "pie" | "water" | "text";
 type UploadMode = "receipt" | "activity" | "card";
@@ -660,6 +663,7 @@ export default function BalanceVisualWidget({
       formData.set("participant_id", participantId);
       formData.set("date", uploadDate);
       formData.set("description", uploadDescription);
+      formData.set("category", getActivityMajor(uploadDescription));
       formData.set("amount", uploadAmount);
       if (fundingSources.length > 0) {
         formData.set("funding_source_id", fundingSources[0].id);
@@ -1021,15 +1025,9 @@ export default function BalanceVisualWidget({
                           </div>
 
                           <div className="flex flex-col gap-3">
-                            <input
-                              type="text"
+                            <ActivityCategoryPicker
                               value={uploadDescription}
-                              onChange={(e) =>
-                                setUploadDescription(e.target.value)
-                              }
-                              placeholder="무엇을 했나요? 편의점 간식처럼 적어 주세요"
-                              className="w-full p-4 rounded-2xl bg-zinc-50 ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-base font-bold transition-all"
-                              required
+                              onChange={setUploadDescription}
                             />
                             <div className="relative">
                               <input
