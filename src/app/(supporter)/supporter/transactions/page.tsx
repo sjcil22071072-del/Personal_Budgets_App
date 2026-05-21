@@ -69,8 +69,9 @@ export default async function TransactionsPage({
     txQuery = txQuery.eq("participant_id", params.participant);
   if (params.status) txQuery = txQuery.eq("status", params.status);
   if (params.category) txQuery = txQuery.eq("category", params.category);
-  if (params.paymentMethod)
-    txQuery = txQuery.eq("payment_method", params.paymentMethod);
+  if (params.paymentMethod === "계좌이체") {
+    txQuery = txQuery.eq("payment_method", "계좌이체");
+  }
   if (params.dateFrom) txQuery = txQuery.gte("date", params.dateFrom);
   if (params.dateTo) txQuery = txQuery.lte("date", params.dateTo);
   if (params.keyword)
@@ -116,11 +117,14 @@ export default async function TransactionsPage({
     })),
   );
 
-  const transactions = (rawTransactions || []).map((t: any) => ({
-    ...t,
-    receipt_image_url: signedUrls[t.id]?.receipt ?? t.receipt_image_url,
-    activity_image_url: signedUrls[t.id]?.activity ?? t.activity_image_url,
-  }));
+  const transactions = (rawTransactions || [])
+    .map((t: any) => ({
+      ...t,
+      payment_method: t.payment_method === "계좌이체" ? "계좌이체" : "카드",
+      receipt_image_url: signedUrls[t.id]?.receipt ?? t.receipt_image_url,
+      activity_image_url: signedUrls[t.id]?.activity ?? t.activity_image_url,
+    }))
+    .filter((t: any) => !params.paymentMethod || t.payment_method === params.paymentMethod);
 
   const totalCount = transactions?.length || 0;
   const pendingCount =
@@ -134,11 +138,7 @@ export default async function TransactionsPage({
   const categories = Array.from(
     new Set((transactions || []).map((t: any) => t.category).filter(Boolean)),
   ) as string[];
-  const paymentMethods = Array.from(
-    new Set(
-      (transactions || []).map((t: any) => t.payment_method).filter(Boolean),
-    ),
-  ) as string[];
+  const paymentMethods = ["카드", "계좌이체"];
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 text-foreground p-4 sm:p-8">

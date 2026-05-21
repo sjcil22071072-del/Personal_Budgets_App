@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { createTransaction, getParticipantsWithFundingSources } from '@/app/actions/transaction'
 import type { ParticipantWithFundingSources } from '@/app/actions/transaction'
 
+const PAYMENT_METHODS = ['카드', '계좌이체'] as const
+
 export default function NewTransactionPage() {
   const router = useRouter()
 
@@ -22,7 +24,7 @@ export default function NewTransactionPage() {
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
   const [memo, setMemo] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('체크카드')
+  const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>('카드')
   const [status, setStatus] = useState<'pending' | 'confirmed'>('confirmed')
   const [isExpense, setIsExpense] = useState(true) // 지출/수입 토글
   const [receiptFile, setReceiptFile] = useState<File | null>(null)
@@ -249,7 +251,7 @@ export default function NewTransactionPage() {
             <fieldset className="flex flex-col gap-3">
               <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">결제 방법</label>
               <div className="flex gap-2">
-                {['체크카드', '현금', '계좌이체'].map(method => (
+                {PAYMENT_METHODS.map(method => (
                   <button
                     key={method}
                     type="button"

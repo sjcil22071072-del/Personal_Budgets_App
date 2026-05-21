@@ -58,7 +58,8 @@ export async function createTransaction(formData: FormData) {
   const memo = formData.get('memo') as string
   const status = (formData.get('status') as 'pending' | 'confirmed') || 'pending'
   const is_expense = formData.get('is_expense') !== 'false'
-  const payment_method = (formData.get('payment_method') as string) || '체크카드'
+  const rawPaymentMethod = formData.get('payment_method') as string | null
+  const payment_method = rawPaymentMethod === '계좌이체' ? '계좌이체' : '카드'
   const place_name = (formData.get('place_name') as string) || null
   const place_lat = formData.get('place_lat') ? Number(formData.get('place_lat')) : null
   const place_lng = formData.get('place_lng') ? Number(formData.get('place_lng')) : null

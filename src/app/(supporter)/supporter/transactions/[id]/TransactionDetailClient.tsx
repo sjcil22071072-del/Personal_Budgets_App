@@ -18,6 +18,8 @@ import {
   removeEvidenceImage,
 } from '@/app/actions/transaction'
 
+const PAYMENT_METHODS = ['카드', '계좌이체'] as const
+
 interface Tx {
   id: string
   activity_name: string
@@ -51,7 +53,9 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const [category, setCategory] = useState(tx.category || '')
   const [memo, setMemo] = useState(tx.memo || '')
   const [date, setDate] = useState(tx.date)
-  const [paymentMethod, setPaymentMethod] = useState(tx.payment_method || '')
+  const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>(
+    tx.payment_method === '계좌이체' ? '계좌이체' : '카드'
+  )
   const [status, setStatus] = useState<'pending' | 'confirmed'>(tx.status)
 
   // 이미지 상태 (최대 5장씩)
@@ -222,7 +226,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
           date,
           category: category || null,
           memo: memo || null,
-          payment_method: paymentMethod || null,
+          payment_method: paymentMethod,
           status,
         },
         tx.status,
@@ -540,7 +544,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
               <fieldset className="flex flex-col gap-2">
                 <label className="text-xs font-black text-zinc-500">결제 수단</label>
                 <div className="flex gap-2">
-                  {['체크카드', '현금', '계좌이체'].map(method => (
+                  {PAYMENT_METHODS.map(method => (
                     <button key={method} type="button" onClick={() => setPaymentMethod(method)}
                       className={`px-3 py-1.5 rounded-md text-sm font-bold transition-colors flex-1 ${
                         paymentMethod === method ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'

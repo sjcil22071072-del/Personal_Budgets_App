@@ -91,44 +91,6 @@ export default async function AdminDashboardPage() {
           <AdminParticipantBoard />
         </Suspense>
 
-        <section className="flex flex-col gap-3">
-          <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">
-            빠른 실행
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <Link
-              href="/admin/participants/new"
-              className="group flex flex-col items-center justify-center p-5 rounded-3xl bg-white border border-zinc-200/80 hover:border-zinc-350 hover:bg-zinc-50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] active:scale-[0.98]"
-            >
-              <span className="text-3xl mb-2.5 group-hover:scale-105 transition-transform">
-                👤➕
-              </span>
-              <span className="text-sm font-black text-zinc-700">
-                당사자 등록
-              </span>
-            </Link>
-            <Link
-              href="/admin/participants"
-              className="group flex flex-col items-center justify-center p-5 rounded-3xl bg-white border border-zinc-200/80 hover:border-zinc-350 hover:bg-zinc-50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] active:scale-[0.98]"
-            >
-              <span className="text-3xl mb-2.5 group-hover:scale-105 transition-transform">
-                👥
-              </span>
-              <span className="text-sm font-black text-zinc-700">
-                당사자 관리
-              </span>
-            </Link>
-            <Link
-              href="/admin/settings"
-              className="group flex flex-col items-center justify-center p-5 rounded-3xl bg-white border border-zinc-200/80 hover:border-zinc-350 hover:bg-zinc-50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] active:scale-[0.98]"
-            >
-              <span className="text-3xl mb-2.5 group-hover:scale-105 transition-transform">
-                ⚙️
-              </span>
-              <span className="text-sm font-black text-zinc-700">설정</span>
-            </Link>
-          </div>
-        </section>
       </main>
     </div>
   );

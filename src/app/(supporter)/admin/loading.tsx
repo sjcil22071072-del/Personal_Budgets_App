@@ -95,18 +95,6 @@ export default function AdminDashboardLoading() {
           </div>
         </section>
 
-        {/* 빠른 실행 skeleton */}
-        <section className="flex flex-col gap-3">
-          <div className="h-3 w-16 bg-zinc-200 rounded animate-pulse ml-1" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {[0, 1, 2].map(i => (
-              <div key={i} className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white ring-1 ring-zinc-200 animate-pulse">
-                <div className="w-10 h-10 rounded-full bg-zinc-200 mb-3" />
-                <div className="h-5 w-20 bg-zinc-200 rounded" />
-              </div>
-            ))}
-          </div>
-        </section>
       </main>
     </div>
   )
