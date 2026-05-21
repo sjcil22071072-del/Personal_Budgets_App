@@ -1,4 +1,5 @@
-import { createClient, createAdminClient } from '@/utils/supabase/server'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createClient } from '@/utils/supabase/server'
 import { formatCurrency } from '@/utils/budget-visuals'
 
 interface ParticipantStat {
@@ -12,7 +13,6 @@ interface ParticipantStat {
 
 export default async function AdminDashboardStats() {
   const supabase = await createClient()
-  const adminClient = createAdminClient()
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth() + 1

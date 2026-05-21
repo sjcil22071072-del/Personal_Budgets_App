@@ -16,10 +16,11 @@ export default async function CardRegistrationPage() {
     redirect('/login')
   }
 
-  const { data: participant } = await supabase
+  // user.id 또는 email로 participants 조회
+  const { data: participant } = await adminClient
     .from('participants')
     .select('id')
-    .eq('id', user.id)
+    .or(`id.eq.${user.id},email.eq.${user.email}`)
     .maybeSingle()
 
   if (!participant) {
@@ -42,7 +43,7 @@ export default async function CardRegistrationPage() {
   const { data: cardData } = await adminClient
     .from('card_registrations')
     .select('id, participant_id, image_urls, created_at')
-    .eq('participant_id', user.id)
+    .eq('participant_id', participant.id)
     .order('created_at', { ascending: false })
 
   const cardRegistrations = await Promise.all((cardData || []).map(async (item) => {
