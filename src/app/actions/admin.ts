@@ -290,6 +290,11 @@ export async function updateParticipant(participantId: string, formData: {
       return { error: `업데이트 실패: ${error.message}` }
     }
 
+    if (formData.startDate !== undefined) {
+      const { ensureMonthlyBudgetRollover } = await import('./budgetRollover')
+      await ensureMonthlyBudgetRollover(participantId, true)
+    }
+
     revalidatePath('/admin/participants')
     revalidatePath(`/admin/participants/${participantId}`)
     revalidatePath(`/admin/participants/${participantId}/preview`)
@@ -335,14 +340,8 @@ export async function updateFundingSource(fundingSourceId: string, formData: {
   try {
     const updateData: any = {}
     if (formData.name !== undefined) updateData.name = formData.name
-    if (formData.monthlyBudget !== undefined) {
-      updateData.monthly_budget = formData.monthlyBudget
-      updateData.current_month_balance = formData.monthlyBudget
-    }
-    if (formData.yearlyBudget !== undefined) {
-      updateData.yearly_budget = formData.yearlyBudget
-      updateData.current_year_balance = formData.yearlyBudget
-    }
+    if (formData.monthlyBudget !== undefined) updateData.monthly_budget = formData.monthlyBudget
+    if (formData.yearlyBudget !== undefined) updateData.yearly_budget = formData.yearlyBudget
 
     const { error } = await supabase
       .from('funding_sources')
@@ -351,6 +350,17 @@ export async function updateFundingSource(fundingSourceId: string, formData: {
 
     if (error) {
       return { error: `재원 업데이트 실패: ${error.message}` }
+    }
+
+    const { data: fsData } = await supabase
+      .from('funding_sources')
+      .select('participant_id')
+      .eq('id', fundingSourceId)
+      .single()
+
+    if (fsData?.participant_id) {
+      const { ensureMonthlyBudgetRollover } = await import('./budgetRollover')
+      await ensureMonthlyBudgetRollover(fsData.participant_id, true)
     }
 
     revalidatePath('/admin/participants')

@@ -234,43 +234,13 @@ export async function updateTransactionDetail(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  // Balance is updated automatically by the database trigger calculate_funding_source_balance
   const { error } = await adminClient
     .from('transactions')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', transactionId)
   if (error) throw new Error('Failed to update transaction')
 
-  if (fundingSourceId) {
-    const { data: fs } = await adminClient
-      .from('funding_sources')
-      .select('current_month_balance, current_year_balance')
-      .eq('id', fundingSourceId)
-      .single()
-
-    if (fs) {
-      let monthAdj = 0
-      let yearAdj = 0
-      if (oldStatus === 'confirmed' && updates.status === 'confirmed') {
-        monthAdj = oldAmount - updates.amount
-        yearAdj = oldAmount - updates.amount
-      } else if (oldStatus === 'pending' && updates.status === 'confirmed') {
-        monthAdj = -updates.amount
-        yearAdj = -updates.amount
-      } else if (oldStatus === 'confirmed' && updates.status === 'pending') {
-        monthAdj = oldAmount
-        yearAdj = oldAmount
-      }
-      if (monthAdj !== 0 || yearAdj !== 0) {
-        await adminClient
-          .from('funding_sources')
-          .update({
-            current_month_balance: Number(fs.current_month_balance) + monthAdj,
-            current_year_balance: Number(fs.current_year_balance) + yearAdj,
-          })
-          .eq('id', fundingSourceId)
-      }
-    }
-  }
 
   revalidatePath('/supporter/transactions')
   revalidatePath('/')
@@ -283,28 +253,7 @@ export async function deleteTransactionWithBalance(transactionId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: tx } = await adminClient
-    .from('transactions')
-    .select('status, amount, funding_source_id')
-    .eq('id', transactionId)
-    .single()
-
-  if (tx?.status === 'confirmed' && tx.funding_source_id) {
-    const { data: fs } = await adminClient
-      .from('funding_sources')
-      .select('current_month_balance, current_year_balance')
-      .eq('id', tx.funding_source_id)
-      .single()
-    if (fs) {
-      await adminClient
-        .from('funding_sources')
-        .update({
-          current_month_balance: Number(fs.current_month_balance) + Number(tx.amount),
-          current_year_balance: Number(fs.current_year_balance) + Number(tx.amount),
-        })
-        .eq('id', tx.funding_source_id)
-    }
-  }
+  // Balance is updated automatically by the database trigger calculate_funding_source_balance
 
   const { error } = await adminClient.from('transactions').delete().eq('id', transactionId)
   if (error) throw new Error('Failed to delete transaction')
