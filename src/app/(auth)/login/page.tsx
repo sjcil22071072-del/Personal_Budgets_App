@@ -19,38 +19,40 @@ function GoogleLoginContent() {
 
   return (
     <>
-      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50">
-        <div className="absolute top-20 right-20 text-8xl opacity-10 rotate-12 pointer-events-none select-none hidden md:block">
-          💰
-        </div>
-        <div className="absolute bottom-20 left-20 text-6xl opacity-10 -rotate-12 pointer-events-none select-none hidden md:block">
-          📊
-        </div>
-
-        <div className="flex w-full max-w-md flex-col gap-8 rounded-3xl bg-white p-8 md:p-12 shadow-xl ring-1 ring-zinc-200">
+      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-slate-50">
+        <div className="flex w-full max-w-md flex-col gap-8 rounded-3xl bg-white p-8 md:p-10 shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-zinc-200/80">
           {/* 로고 */}
-          <div className="flex flex-col items-center gap-4 text-center">
-            <button
-              className="w-24 h-24 rounded-3xl overflow-hidden flex items-center justify-center shadow-lg hover:scale-105 transition-transform focus:outline-none"
-              aria-label="로고"
-            >
-              <img
-                src="https://pbs.twimg.com/profile_images/1588913576349401089/GkEk9byS_400x400.jpg"
-                alt="로고"
-                className="w-full h-full object-cover"
-              />
-            </button>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-              중랑구청 개인예산제
-            </h2>
-            <p className="text-base text-muted-foreground leading-relaxed">
-              관리자 선생님과 개인예산제 이용자 분들을 위한 앱
-            </p>
+          <div className="flex flex-col items-center gap-5 text-center">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-3xl bg-zinc-100/50 blur-xl"></div>
+              <button
+                className="relative w-20 h-20 rounded-[1.5rem] overflow-hidden flex items-center justify-center border border-zinc-200/60 shadow-md hover:scale-105 active:scale-95 transition-all focus:outline-none"
+                aria-label="로고"
+              >
+                <img
+                  src="https://pbs.twimg.com/profile_images/1588913576349401089/GkEk9byS_400x400.jpg"
+                  alt="로고"
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black text-zinc-500 bg-zinc-100 border border-zinc-200/40 px-2.5 py-0.5 rounded-full tracking-wider uppercase">
+                중랑구청
+              </span>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight text-zinc-800">
+                개인예산제
+              </h2>
+              <p className="text-xs text-zinc-400 font-semibold leading-relaxed max-w-[280px] mt-0.5">
+                관리자 선생님과 개인예산제 이용자 분들을 위한 앱
+              </p>
+            </div>
           </div>
 
           {/* 오류 메시지 */}
           {error && (
-            <div className="rounded-2xl bg-red-50 border border-red-200 p-4 text-sm text-red-800 leading-relaxed">
+            <div className="rounded-2xl bg-red-50/60 border border-red-100 p-4 text-xs text-red-800 leading-relaxed shadow-sm">
               <p className="font-bold mb-1">
                 이 앱에 들어올 수 없는 이메일이에요.
               </p>
@@ -62,7 +64,7 @@ function GoogleLoginContent() {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="flex items-center justify-center gap-3 w-full py-4 px-6 rounded-2xl border-2 border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all font-bold text-zinc-800 text-base shadow-sm disabled:opacity-60 disabled:cursor-not-allowed min-h-[56px]"
+            className="flex items-center justify-center gap-3 w-full py-4 px-6 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 active:scale-[0.99] transition-all font-bold text-zinc-800 text-base shadow-sm disabled:opacity-60 disabled:cursor-not-allowed min-h-[54px]"
           >
             {loading ? (
               <span className="text-sm text-zinc-500">로그인 중...</span>
@@ -96,10 +98,9 @@ function GoogleLoginContent() {
           </button>
 
           {/* 안내 문구 */}
-          <div className="text-center text-sm text-zinc-500 leading-relaxed space-y-1">
+          <div className="text-center text-xs text-zinc-400 font-bold leading-relaxed space-y-1">
             <p>
-              로그인이 안된다면 카카오톡 오픈 채팅방이나 아래 연락처로 문의
-              주세요!
+              로그인이 안된다면 카카오톡 오픈 채팅방이나 아래 연락처로 문의 주세요!
             </p>
             <p>기관 이메일: sjcil22071072@gmail.com</p>
             <p>전화번호: 02-2094-2486</p>
