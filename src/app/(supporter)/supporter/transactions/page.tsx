@@ -14,6 +14,7 @@ export default async function TransactionsPage({
   searchParams: Promise<{
     participant?: string;
     status?: string;
+    categoryMajor?: string;
     category?: string;
     paymentMethod?: string;
     dateFrom?: string;
@@ -68,7 +69,11 @@ export default async function TransactionsPage({
   if (params.participant)
     txQuery = txQuery.eq("participant_id", params.participant);
   if (params.status) txQuery = txQuery.eq("status", params.status);
-  if (params.category) txQuery = txQuery.eq("category", params.category);
+  if (params.category) {
+    txQuery = txQuery.eq("category", params.category);
+  } else if (params.categoryMajor) {
+    txQuery = txQuery.ilike("category", `${params.categoryMajor} - %`);
+  }
   if (params.paymentMethod === "계좌이체") {
     txQuery = txQuery.eq("payment_method", "계좌이체");
   }
@@ -135,9 +140,6 @@ export default async function TransactionsPage({
     transactions?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) ||
     0;
 
-  const categories = Array.from(
-    new Set((transactions || []).map((t: any) => t.category).filter(Boolean)),
-  ) as string[];
   const paymentMethods = ["카드", "계좌이체"];
 
   return (
@@ -203,7 +205,6 @@ export default async function TransactionsPage({
             name: p.name || "이름없음",
           }))}
           participantFundingSources={participantFundingSources}
-          categories={categories}
           paymentMethods={paymentMethods}
           currentFilters={params}
         />

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { updateTransactionStatus, deleteTransaction } from '@/app/actions/transaction'
+import { ACTIVITY_CATEGORY_GROUPS } from '@/components/transactions/ActivityCategoryPicker'
 import * as XLSX from 'xlsx'
 
 interface Transaction {
@@ -26,10 +27,9 @@ interface TransactionTableClientProps {
   transactions: Transaction[]
   participants: Participant[]
   participantFundingSources?: Record<string, { id: string; name: string }[]>
-  categories: string[]
   paymentMethods: string[]
   currentFilters: {
-    participant?: string; status?: string; category?: string
+    participant?: string; status?: string; categoryMajor?: string; category?: string
     paymentMethod?: string; dateFrom?: string; dateTo?: string
     sort?: string; keyword?: string
   }
@@ -50,15 +50,30 @@ function parseSortParam(sort: string): { field: SortField; dir: SortDir } {
   return { field: 'date', dir: 'desc' }
 }
 
+function parseCategoryLabel(category?: string) {
+  const [major, ...minorParts] = (category || '').split(' - ')
+  return {
+    major: major || '',
+    minor: minorParts.join(' - '),
+  }
+}
+
+function formatCategoryLabel(category?: string) {
+  const { major, minor } = parseCategoryLabel(category)
+  if (!major) return '-'
+  return minor ? `${major} / ${minor}` : major
+}
+
 export default function TransactionTableClient({
   transactions, participants, participantFundingSources = {},
-  categories, paymentMethods, currentFilters,
+  paymentMethods, currentFilters,
 }: TransactionTableClientProps) {
   const router = useRouter()
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [filters, setFilters] = useState({
     participant: currentFilters.participant || '',
     status: currentFilters.status || '',
+    categoryMajor: currentFilters.categoryMajor || parseCategoryLabel(currentFilters.category).major,
     category: currentFilters.category || '',
     paymentMethod: currentFilters.paymentMethod || '',
     dateFrom: currentFilters.dateFrom || '',
@@ -70,6 +85,7 @@ export default function TransactionTableClient({
   const [bulkLoading, setBulkLoading] = useState(false)
 
   const currentSort = parseSortParam(filters.sort)
+  const selectedCategoryGroup = ACTIVITY_CATEGORY_GROUPS.find(group => group.major === filters.categoryMajor)
 
   // ── 필터/정렬 ──
   const applyFilters = () => {
@@ -79,7 +95,7 @@ export default function TransactionTableClient({
   }
 
   const clearFilters = () => {
-    setFilters({ participant: '', status: '', category: '', paymentMethod: '', dateFrom: '', dateTo: '', sort: '', keyword: '' })
+    setFilters({ participant: '', status: '', categoryMajor: '', category: '', paymentMethod: '', dateFrom: '', dateTo: '', sort: '', keyword: '' })
     router.push('/supporter/transactions')
   }
 
@@ -166,7 +182,7 @@ export default function TransactionTableClient({
       ...rows.map(t => [
         t.date,
         t.participant?.name || '',
-        t.category || '',
+        formatCategoryLabel(t.category),
         t.activity_name,
         t.amount,
         t.status === 'confirmed' ? '확정' : '대기',
@@ -189,7 +205,7 @@ export default function TransactionTableClient({
       <tr>
         <td>${t.date}</td>
         <td>${t.participant?.name || ''}</td>
-        <td>${t.category || '-'}</td>
+        <td>${formatCategoryLabel(t.category)}</td>
         <td>${t.activity_name}${t.memo ? `<br/><small>${t.memo}</small>` : ''}</td>
         <td style="text-align:right">${t.amount.toLocaleString()}원</td>
         <td>${t.status === 'confirmed' ? '확정' : '대기'}</td>
@@ -273,7 +289,6 @@ export default function TransactionTableClient({
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-4">
                   {[
                     { label: '당사자', key: 'participant', type: 'select', opts: participants.map(p => ({ value: p.id, label: p.name })) },
-                    { label: '분류',   key: 'category',    type: 'select', opts: categories.map(c => ({ value: c, label: c })) },
                     { label: '결제수단', key: 'paymentMethod', type: 'select', opts: paymentMethods.map(p => ({ value: p, label: p })) },
                   ].map(({ label, key, opts }) => (
                     <div key={key}>
@@ -288,6 +303,34 @@ export default function TransactionTableClient({
                       </select>
                     </div>
                   ))}
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-500 mb-1">대분류</label>
+                    <select
+                      value={filters.categoryMajor}
+                      onChange={e => setFilters({ ...filters, categoryMajor: e.target.value, category: '' })}
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">전체</option>
+                      {ACTIVITY_CATEGORY_GROUPS.map(group => (
+                        <option key={group.major} value={group.major}>{group.major}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-500 mb-1">중분류</label>
+                    <select
+                      value={filters.category}
+                      onChange={e => setFilters({ ...filters, category: e.target.value })}
+                      disabled={!selectedCategoryGroup}
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-zinc-100 disabled:text-zinc-400"
+                    >
+                      <option value="">전체</option>
+                      {selectedCategoryGroup?.items.map(item => {
+                        const value = `${selectedCategoryGroup.major} - ${item}`
+                        return <option key={item} value={value}>{item}</option>
+                      })}
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-xs font-bold text-zinc-500 mb-1">정렬</label>
                     <select value={filters.sort} onChange={e => setFilters({ ...filters, sort: e.target.value })}
@@ -477,7 +520,17 @@ export default function TransactionTableClient({
                           </td>
                           <td className="px-4 py-3 text-zinc-600">{tx.date}</td>
                           <td className="px-4 py-3 font-medium text-zinc-900">{tx.participant?.name || '알 수 없음'}</td>
-                          <td className="px-4 py-3 text-zinc-500">{tx.category || '-'}</td>
+                          <td className="px-4 py-3 text-zinc-500">
+                            {tx.category ? (() => {
+                              const parsed = parseCategoryLabel(tx.category)
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-bold text-zinc-700">{parsed.major}</span>
+                                  {parsed.minor && <span className="text-xs text-zinc-400">{parsed.minor}</span>}
+                                </div>
+                              )
+                            })() : '-'}
+                          </td>
                           <td className="px-4 py-3 font-bold text-zinc-900">
                             <div>
                               {tx.activity_name}
