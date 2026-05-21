@@ -1,6 +1,5 @@
 -- Repair profiles removed by the overly broad cleanup in migration 39.
--- Source of truth:
--- auth.users still contains the real signed-in accounts; rebuild missing public profiles from it.
+-- Only rebuild accounts that are explicitly registered as admins/participants.
 
 INSERT INTO public.profiles (id, name, email, role)
 SELECT
@@ -17,4 +16,13 @@ LEFT JOIN public.user_invitations ui ON lower(ui.email) = lower(u.email)
 LEFT JOIN public.participants pt ON lower(pt.email) = lower(u.email)
 LEFT JOIN public.profiles p ON p.id = u.id
 WHERE p.id IS NULL
+  AND (
+    ui.id IS NOT NULL
+    OR pt.id IS NOT NULL
+    OR u.raw_user_meta_data->>'role' IN ('admin', 'superadmin', 'super_admin')
+  )
+  AND u.email IS NOT NULL
+  AND u.email !~* '(dummy|demo|test|sample|example)'
+  AND COALESCE(u.raw_user_meta_data->>'full_name', '') !~* '(dummy|demo|test|sample|example)'
+  AND COALESCE(u.raw_user_meta_data->>'name', '') !~* '(dummy|demo|test|sample|example)'
 ON CONFLICT (id) DO NOTHING;

@@ -15,7 +15,23 @@ type ParticipantRegistration = {
 type ExistingProfile = {
   id: string
   role: 'admin' | 'participant' | 'superadmin' | 'super_admin'
+  name: string | null
+  email: string | null
   created_at: string | null
+}
+
+function isLikelySeedAccount(value: string | null | undefined) {
+  const normalized = value?.trim().toLowerCase() ?? ''
+
+  return (
+    normalized.includes('dummy') ||
+    normalized.includes('demo') ||
+    normalized.includes('test') ||
+    normalized.includes('sample') ||
+    normalized.includes('example') ||
+    normalized.includes('더미') ||
+    normalized.includes('테스트')
+  )
 }
 
 export async function GET(request: Request) {
@@ -55,7 +71,7 @@ export async function GET(request: Request) {
 
   const { data: existingProfile } = await adminClient
     .from('profiles')
-    .select('id, role, created_at')
+    .select('id, role, name, email, created_at')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -86,14 +102,24 @@ export async function GET(request: Request) {
     !isRegisteredUser
   const isExistingAssignedUser = !!typedExistingProfile && !isFreshAutoProfile
 
-  if (!isSuperAdmin && !isRegisteredUser && !isExistingAssignedUser) {
+  const shouldRecoverAdminFromAuthUser =
+    !!typedExistingProfile &&
+    !typedAdminRegistration &&
+    !typedParticipantRegistration &&
+    !!email &&
+    !isLikelySeedAccount(email) &&
+    !isLikelySeedAccount(typedExistingProfile.name) &&
+    !isLikelySeedAccount(user.user_metadata?.full_name) &&
+    !isLikelySeedAccount(user.user_metadata?.name)
+
+  if (!isSuperAdmin && !isRegisteredUser && !isExistingAssignedUser && !shouldRecoverAdminFromAuthUser) {
     await adminClient.from('profiles').delete().eq('id', user.id)
     await supabase.auth.signOut()
     return NextResponse.redirect(`${baseUrl}/login?error=InvalidDomain`)
   }
 
   const resolvedRole =
-    isSuperAdmin || typedAdminRegistration?.role === 'admin'
+    isSuperAdmin || shouldRecoverAdminFromAuthUser || typedAdminRegistration?.role === 'admin'
       ? 'admin'
       : typedExistingProfile?.role ?? 'participant'
   const displayName =
