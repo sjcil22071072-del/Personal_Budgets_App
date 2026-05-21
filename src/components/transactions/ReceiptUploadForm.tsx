@@ -292,7 +292,7 @@ export default function ReceiptUploadForm({
         </div>
       </div>
 
-      {/* 재원 선택 (1개이면 자동선택 숨김) */}
+      {/* 재원 선택 */}
       {fundingSources.length <= 1 ? (
         <input type="hidden" name="funding_source_id" value={fundingSources[0]?.id ?? ''} />
       ) : (
@@ -330,17 +330,12 @@ export default function ReceiptUploadForm({
         {loading ? '등록 중...' : '활동 기록하기'}
       </button>
 
-      <p className="text-center text-zinc-400 text-sm font-medium">
-        사진은 선택사항이에요.<br/>관리자가 확인하면 예산에 반영해요.
-      </p>
-
-      {/* 성공 알림 + 자기결정 피드백 — Portal로 화면 중앙 오버레이 */}
+      {/* 성공 오버레이 */}
       {showFeedback && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
           <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl flex flex-col items-center gap-2 animate-fade-in-up">
             <span className="text-5xl">✅</span>
             <p className="text-xl font-black text-zinc-900">활동을 기록했어요!</p>
-            <p className="text-sm text-zinc-500 font-medium text-center">관리자가 확인하면 예산에 반영해요.</p>
             <div className="w-full h-px bg-zinc-100 my-2" />
             <SelfCheckFeedback
               question="활동을 기록하기 쉬웠나요?"
