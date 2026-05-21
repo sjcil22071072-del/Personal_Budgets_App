@@ -18,7 +18,6 @@ export default async function AdminParticipantBoard() {
   const [
     { data: participants },
     { data: transactions },
-    { data: evaluations },
     { data: files },
   ] = await Promise.all([
     adminClient
@@ -30,10 +29,6 @@ export default async function AdminParticipantBoard() {
       .select('participant_id, status')
       .gte('date', firstDay)
       .lt('date', nextMonth),
-    adminClient
-      .from('evaluations')
-      .select('participant_id, published_at')
-      .eq('month', currentMonth),
     adminClient
       .from('file_links')
       .select('participant_id')
@@ -53,7 +48,6 @@ export default async function AdminParticipantBoard() {
     const pendingCount = ptxs.filter((t: any) => t.status === 'pending').length
     const totalTxCount = ptxs.length
 
-    const evaluation = (evaluations || []).find((e: any) => e.participant_id === p.id)
     const fileCount = (files || []).filter((f: any) => f.participant_id === p.id).length
 
     const barColor = pct < 20 ? '#ef4444' : pct < 40 ? '#f97316' : '#22c55e'
@@ -68,8 +62,6 @@ export default async function AdminParticipantBoard() {
       barColor,
       pendingCount,
       totalTxCount,
-      hasEvaluation: !!evaluation,
-      isPublished: !!evaluation?.published_at,
       fileCount,
     }
   })
@@ -81,7 +73,7 @@ export default async function AdminParticipantBoard() {
   const totalBudget = rows.reduce((a, r) => a + r.budget, 0)
   const totalSpent = rows.reduce((a, r) => a + r.spent, 0)
   const overallPct = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0
-  const allSettled = rows.every(r => r.pendingCount === 0 && r.isPublished)
+  const allSettled = rows.every(r => r.pendingCount === 0)
 
   return (
     <section className="flex flex-col gap-4">
@@ -129,10 +121,9 @@ export default async function AdminParticipantBoard() {
       </div>
 
       <div className="rounded-2xl bg-white ring-1 ring-zinc-200 overflow-hidden">
-        <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_100px_90px_64px_32px] px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 gap-2 items-center">
+        <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_100px_64px_32px] px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 gap-2 items-center">
           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">당사자 · 잔액</span>
           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center hidden sm:block">영수증</span>
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center hidden sm:block">평가</span>
           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center hidden sm:block">서류</span>
           <span className="hidden sm:block" />
         </div>
@@ -142,7 +133,7 @@ export default async function AdminParticipantBoard() {
             <Link
               key={r.id}
               href={`/admin/participants/${r.id}`}
-              className="grid grid-cols-1 sm:grid-cols-[1fr_100px_90px_64px_32px] px-4 py-3.5 gap-2 items-center hover:bg-zinc-50 transition-colors"
+              className="grid grid-cols-1 sm:grid-cols-[1fr_100px_64px_32px] px-4 py-3.5 gap-2 items-center hover:bg-zinc-50 transition-colors"
             >
               <div className="flex flex-col gap-1.5 min-w-0">
                 <div className="flex items-center justify-between gap-2">
@@ -175,13 +166,6 @@ export default async function AdminParticipantBoard() {
                   ) : (
                     <span className="text-[10px] text-zinc-300">영수증 없음</span>
                   )}
-                  {!r.hasEvaluation ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">평가 미작성</span>
-                  ) : !r.isPublished ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-600">미발행</span>
-                  ) : (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">평가 완료</span>
-                  )}
                   {r.fileCount > 0 && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">서류 {r.fileCount}건</span>
                   )}
@@ -198,15 +182,7 @@ export default async function AdminParticipantBoard() {
                 )}
               </div>
 
-              <div className="text-center hidden sm:block">
-                {!r.hasEvaluation ? (
-                  <span className="text-[11px] font-black text-red-400">미작성</span>
-                ) : !r.isPublished ? (
-                  <span className="text-[11px] font-black text-yellow-500">미발행</span>
-                ) : (
-                  <span className="text-[11px] font-black text-green-600">발행완료</span>
-                )}
-              </div>
+
 
               <div className="text-center hidden sm:block">
                 <span className={`text-[11px] font-black ${r.fileCount > 0 ? 'text-zinc-700' : 'text-zinc-300'}`}>
@@ -228,7 +204,7 @@ export default async function AdminParticipantBoard() {
         <div className={`px-5 py-3 border-t border-zinc-100 flex items-center gap-2 ${allSettled ? 'bg-green-50' : 'bg-zinc-50'}`}>
           <span className="text-sm">{allSettled ? '✅' : '⏳'}</span>
           <span className={`text-xs font-bold ${allSettled ? 'text-green-700' : 'text-zinc-500'}`}>
-            {allSettled ? `${month}월 모든 당사자 정산 완료` : `${month}월 정산 처리 중`}
+            {allSettled ? `${month}월 모든 영수증 승인 완료` : `${month}월 영수증 검토 중`}
           </span>
           <Link href="/supporter/transactions" className="ml-auto text-[10px] font-bold text-zinc-400 hover:text-zinc-600 transition-colors">
             거래장부 →

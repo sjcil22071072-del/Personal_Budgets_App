@@ -117,8 +117,6 @@ export async function saveFamilyRegistration(formData: FormData) {
 
   revalidatePath('/')
   revalidatePath('/family-registration')
-  revalidatePath('/supporter/evaluations')
-  revalidatePath('/supporter/documents')
 
   return { success: true }
 }

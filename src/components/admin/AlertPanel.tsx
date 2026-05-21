@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
 
 interface Alert {
-  type: 'low_balance' | 'pending_receipt' | 'missing_evaluation'
+  type: 'low_balance' | 'pending_receipt'
   participantId: string
   participantName: string
   message: string
@@ -14,16 +14,13 @@ export default async function AlertPanel() {
   const adminClient = createAdminClient()
   const alerts: Alert[] = []
 
-  // 3개 독립 쿼리 병렬 실행 (순차 대기 → 동시 대기)
-  const currentMonth = new Date().toISOString().slice(0, 7)
+  // 2개 독립 쿼리 병렬 실행 (순차 대기 → 동시 대기)
   const [
     { data: participants },
     { data: pendingTxs },
-    { data: evaluations },
   ] = await Promise.all([
     adminClient.from('participants').select('id, name, alert_threshold, funding_sources(monthly_budget, current_month_balance)'),
     adminClient.from('transactions').select('participant_id, participants!transactions_participant_id_fkey(name)').eq('status', 'pending'),
-    adminClient.from('evaluations').select('participant_id').eq('month', currentMonth),
   ])
 
   // 1. 잔액 경고 — current_month_balance / monthly_budget < alert_threshold
@@ -64,31 +61,15 @@ export default async function AlertPanel() {
     })
   }
 
-  // 3. 이번 달 평가 미작성
-  const evaluatedIds = new Set((evaluations ?? []).map((e: any) => e.participant_id))
-
-  for (const p of participants ?? []) {
-    if (!evaluatedIds.has(p.id)) {
-      alerts.push({
-        type: 'missing_evaluation',
-        participantId: p.id,
-        participantName: (p as any).name,
-        message: '이번 달 평가 미작성',
-      })
-    }
-  }
-
   if (alerts.length === 0) return null
 
   const iconMap: Record<Alert['type'], string> = {
     low_balance: '💰',
     pending_receipt: '🧾',
-    missing_evaluation: '📝',
   }
   const colorMap: Record<Alert['type'], string> = {
     low_balance: 'text-red-700 bg-red-50 border-red-200',
     pending_receipt: 'text-orange-700 bg-orange-50 border-orange-200',
-    missing_evaluation: 'text-yellow-700 bg-yellow-50 border-yellow-200',
   }
 
   const pendingTotal = Array.from(pendingMap.values()).reduce((s, v) => s + v.count, 0)
@@ -117,8 +98,6 @@ export default async function AlertPanel() {
             href={
               alert.type === 'pending_receipt'
                 ? '/supporter/review'
-                : alert.type === 'missing_evaluation'
-                ? `/supporter/evaluations/${alert.participantId}/${currentMonth}`
                 : `/admin/participants/${alert.participantId}`
             }
             className={`flex items-center gap-3 px-5 py-3 transition-colors hover:brightness-95 ${colorMap[alert.type]}`}

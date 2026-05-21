@@ -20,15 +20,13 @@ export default async function SettlementSummary() {
 
   const ids = participants.map(p => p.id)
 
-  // 3개 독립 쿼리 병렬 실행 (순차 대기 → 동시 대기)
+  // 2개 독립 쿼리 병렬 실행 (순차 대기 → 동시 대기)
   // file_links는 테이블이 없을 수 있으므로 .catch()로 개별 처리
   const [
     { data: transactions },
-    { data: evaluations },
     { data: files },
   ] = await Promise.all([
     adminClient.from('transactions').select('participant_id, status').in('participant_id', ids).gte('date', firstDay).lt('date', nextMonthFirst),
-    adminClient.from('evaluations').select('participant_id, published_at').in('participant_id', ids).eq('month', currentMonth),
     adminClient.from('file_links').select('participant_id').in('participant_id', ids).then(r => r, () => ({ data: null as any[] | null })),
   ])
 
@@ -36,12 +34,11 @@ export default async function SettlementSummary() {
     const ptxs = (transactions || []).filter((t: any) => t.participant_id === p.id)
     const pendingCount = ptxs.filter((t: any) => t.status === 'pending').length
     const totalTxCount = ptxs.length
-    const evaluation = (evaluations || []).find((e: any) => e.participant_id === p.id)
     const fileCount = (files || []).filter((f: any) => f.participant_id === p.id).length
-    return { ...p, pendingCount, totalTxCount, hasEvaluation: !!evaluation, isPublished: !!evaluation?.published_at, fileCount }
+    return { ...p, pendingCount, totalTxCount, fileCount }
   })
 
-  const allDone = summary.every(p => p.pendingCount === 0 && p.isPublished)
+  const allDone = summary.every(p => p.pendingCount === 0)
 
   return (
     <section className="flex flex-col gap-4">
@@ -62,10 +59,9 @@ export default async function SettlementSummary() {
 
       <div className="bg-white rounded-2xl ring-1 ring-zinc-200 shadow-sm overflow-hidden">
         {/* 컬럼 헤더 */}
-        <div className="grid grid-cols-[1fr_140px_100px_80px] px-5 py-3 bg-zinc-50 border-b border-zinc-200">
+        <div className="grid grid-cols-[1fr_140px_80px] px-5 py-3 bg-zinc-50 border-b border-zinc-200">
           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">당사자</span>
           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">영수증</span>
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">평가</span>
           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">서류</span>
         </div>
 
@@ -73,7 +69,7 @@ export default async function SettlementSummary() {
           <Link
             key={p.id}
             href={`/admin/participants/${p.id}`}
-            className="grid grid-cols-[1fr_140px_100px_80px] px-5 py-3.5 border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors items-center"
+            className="grid grid-cols-[1fr_140px_80px] px-5 py-3.5 border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors items-center"
           >
             <span className="font-bold text-sm text-zinc-800">{p.name}</span>
 
@@ -92,16 +88,7 @@ export default async function SettlementSummary() {
               )}
             </div>
 
-            {/* 평가 */}
-            <div className="text-center">
-              {!p.hasEvaluation ? (
-                <span className="text-[11px] font-black text-red-400">미작성</span>
-              ) : !p.isPublished ? (
-                <span className="text-[11px] font-black text-yellow-500">미발행</span>
-              ) : (
-                <span className="text-[11px] font-black text-green-600">발행완료</span>
-              )}
-            </div>
+
 
             {/* 서류 */}
             <div className="text-center">
