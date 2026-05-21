@@ -64,10 +64,10 @@ export default function BudgetTrendChart({ monthlyData }: Props) {
 
   return (
     <section className="flex flex-col gap-3">
-      <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em] ml-1">
+      <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] ml-2">
         <EasyTerm formal="월별 지출 추이" easy="달마다 쓴 돈" />
       </h3>
-      <div className="bg-white rounded-[2rem] p-5 ring-1 ring-zinc-200 shadow-sm">
+      <div className="bg-white rounded-3xl p-5 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
         {/* 범례 */}
         <div className="flex items-center gap-4 mb-4 text-[11px] font-bold text-zinc-500">
           <span className="flex items-center gap-1.5">

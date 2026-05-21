@@ -60,10 +60,10 @@ export default function WeeklyChartBlock({ dailyTransactions, themeColor }: Prop
     : []
 
   return (
-    <section className="rounded-[2rem] bg-white ring-1 ring-zinc-100 shadow-sm overflow-hidden">
+    <section className="rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)] overflow-hidden">
       {/* 헤더 */}
       <div className="px-5 pt-5 pb-3">
-        <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em]">
+        <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">
           <EasyTerm formal="이번 주 지출" easy="이번 주에 쓴 돈" />
         </h3>
       </div>

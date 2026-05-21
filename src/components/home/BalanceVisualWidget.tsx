@@ -98,11 +98,11 @@ function SimulationSection({
 
   if (!open) {
     return (
-      <div className="px-5 pb-3 pt-1">
+      <div className="px-5 pb-4 pt-1">
         <button
           onClick={() => setOpen(true)}
-          className="w-full py-3 rounded-2xl bg-zinc-50 ring-1 ring-zinc-100
-            text-sm font-bold text-zinc-400 hover:bg-zinc-100 transition-all
+          className="w-full py-2.5 rounded-2xl bg-zinc-50 border border-zinc-200/60
+            text-sm font-bold text-zinc-500 hover:bg-zinc-100 hover:border-zinc-300 transition-all
             flex items-center justify-center gap-2 active:scale-[0.98]"
         >
           🛍️ 이만큼 사면 얼마 남을까?
@@ -112,37 +112,19 @@ function SimulationSection({
   }
 
   return (
-    <div className="px-5 pb-4 pt-2 flex flex-col gap-3">
+    <div className="px-5 pb-5 pt-2 flex flex-col gap-3">
       {/* 프리셋 버튼 */}
       <div className="flex gap-2">
         {SIM_PRESETS.map((amount) => {
-          const colors: Record<number, { base: string; active: string }> = {
-            10000: {
-              base: "bg-green-50 text-green-700 hover:bg-green-100 ring-1 ring-green-200",
-              active: "bg-green-600 text-white shadow-md ring-1 ring-green-600",
-            },
-            30000: {
-              base: "bg-blue-50 text-blue-700 hover:bg-blue-100 ring-1 ring-blue-200",
-              active: "bg-blue-600 text-white shadow-md ring-1 ring-blue-600",
-            },
-            50000: {
-              base: "bg-yellow-50 text-yellow-700 hover:bg-yellow-100 ring-1 ring-yellow-200",
-              active:
-                "bg-yellow-500 text-white shadow-md ring-1 ring-yellow-500",
-            },
-          };
-          const c = colors[amount] || {
-            base: "bg-zinc-100 text-zinc-600",
-            active: "bg-zinc-900 text-white",
-          };
           const isActive = simValue === amount;
-
           return (
             <button
               key={amount}
               onClick={() => setSimAmount(isActive ? "" : String(amount))}
-              className={`flex-1 py-3 rounded-xl font-black text-sm transition-all active:scale-95 ${
-                isActive ? c.active : c.base
+              className={`flex-1 py-2.5 rounded-xl font-black text-sm transition-all active:scale-95 border ${
+                isActive 
+                  ? "bg-zinc-800 text-white border-zinc-800 shadow-sm" 
+                  : "bg-zinc-50 text-zinc-650 hover:bg-zinc-100 hover:border-zinc-300 border-zinc-200"
               }`}
             >
               {formatCurrency(amount)}원
@@ -153,11 +135,11 @@ function SimulationSection({
 
       {/* 직접 입력 */}
       <details className="text-xs">
-        <summary className="text-zinc-400 cursor-pointer font-bold">
+        <summary className="text-zinc-400 hover:text-zinc-600 cursor-pointer font-bold select-none ml-1">
           다른 금액 직접 적기
         </summary>
-        <div className="mt-2 flex items-center gap-3 px-4 py-3 rounded-2xl ring-1 ring-zinc-100 bg-zinc-50">
-          <span className="text-lg shrink-0">🛍️</span>
+        <div className="mt-2 flex items-center gap-3 px-4 py-3 rounded-2xl border border-zinc-200/80 bg-zinc-50">
+          <span className="text-base shrink-0">🛍️</span>
           <input
             type="number"
             inputMode="numeric"
@@ -174,7 +156,7 @@ function SimulationSection({
       {/* 결과 표시 */}
       {simValue > 0 && (
         <div
-          className={`p-4 rounded-2xl flex items-center justify-between ${isSimOver ? "bg-red-50" : "bg-zinc-50"}`}
+          className={`p-4 rounded-2xl flex items-center justify-between border ${isSimOver ? "bg-red-50 border-red-100" : "bg-zinc-50 border-zinc-200/60"}`}
         >
           <span className="text-xs text-zinc-400 font-bold">
             <EasyTerm formal="구매 후 잔액" easy="사고 남는 돈" />
@@ -193,7 +175,7 @@ function SimulationSection({
           setOpen(false);
           setSimAmount("");
         }}
-        className="w-full py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-sm font-black text-zinc-600 transition-colors active:scale-[0.98]"
+        className="w-full py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200/80 text-xs font-bold text-zinc-550 border border-zinc-200/30 transition-colors active:scale-[0.98]"
       >
         닫기
       </button>
@@ -719,11 +701,11 @@ export default function BalanceVisualWidget({
   ];
 
   return (
-    <section className="rounded-[2.5rem] bg-white ring-1 ring-zinc-100 shadow-lg overflow-hidden">
+    <section className="rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_25px_rgba(0,0,0,0.02)] overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-start justify-between px-5 pt-5 pb-2">
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-black text-zinc-300 uppercase tracking-[0.2em]">
+          <p className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">
             <EasyTerm formal="잔액 요약" easy="남은 돈" />
           </p>
           <div className="flex items-center gap-2 mt-1">

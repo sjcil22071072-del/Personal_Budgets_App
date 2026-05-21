@@ -118,7 +118,7 @@ export default function HomeDashboard({
         if (fundingSources.length === 0) return null
         return (
           <section className="flex flex-col gap-3">
-            <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em] ml-1">
+            <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] ml-2">
               <EasyTerm formal="재원별 잔액" easy="돈 종류별 남은 돈" />
             </h3>
             {fundingSources.map((fs) => {
@@ -129,10 +129,10 @@ export default function HomeDashboard({
                 Number(fs.current_month_balance), Number(fs.monthly_budget), remainingDays, totalDaysInMonth
               )
               return (
-                <div key={fs.id} className={`p-5 rounded-3xl ring-1 shadow-sm transition-all ${
-                  fsVisual.status === 'critical' ? 'bg-red-50 ring-red-200' :
-                  fsVisual.status === 'warning'  ? 'bg-orange-50 ring-orange-200' :
-                  'bg-white ring-zinc-100'
+                <div key={fs.id} className={`p-5 rounded-3xl border transition-all ${
+                  fsVisual.status === 'critical' ? 'bg-red-50/55 border-red-100 shadow-[0_4px_20px_rgba(239,68,68,0.01)]' :
+                  fsVisual.status === 'warning'  ? 'bg-orange-50/55 border-orange-100 shadow-[0_4px_20px_rgba(249,115,22,0.01)]' :
+                  'bg-white border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)]'
                 }`}>
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -164,9 +164,9 @@ export default function HomeDashboard({
 
       case 'yearly_balance':
         return (
-          <section className="p-6 rounded-[2rem] bg-white ring-1 ring-zinc-100 flex justify-between items-center shadow-sm">
+          <section className="p-6 rounded-3xl bg-white border border-zinc-200/80 flex justify-between items-center shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em]">
+              <span className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">
                 <EasyTerm formal="올해 전체 잔액" easy="올해 남은 돈" />
               </span>
               <span className="text-2xl font-black text-zinc-800 hc-amount">{formatCurrency(totalYearBalance)}원</span>
@@ -198,10 +198,10 @@ export default function HomeDashboard({
         return (
           <Link
             href="/calendar"
-            className="group flex items-center gap-4 p-5 rounded-2xl bg-white ring-1 ring-zinc-200 hover:ring-zinc-900 hover:bg-zinc-50 transition-all shadow-sm active:scale-[0.98]"
+            className="group flex items-center gap-4 p-5 rounded-3xl bg-white border border-zinc-200/80 hover:border-zinc-350 hover:bg-zinc-50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] active:scale-[0.99]"
           >
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-              <span className="text-3xl">📅</span>
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <span className="text-2xl">📅</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-black text-zinc-800 text-base">달력 보기</p>
@@ -214,9 +214,9 @@ export default function HomeDashboard({
       case 'recent_transactions':
         return (
           <section className="flex flex-col gap-3">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center px-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em] ml-1">
+                <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">
                   <EasyTerm formal="최근 사용 내역" easy="최근에 쓴 돈" />
                 </h3>
                 {recentTransactions.length > 0 && (
@@ -227,7 +227,7 @@ export default function HomeDashboard({
                         .join(', ')
                       speak(`최근 사용 내역입니다. ${txText}`)
                     }}
-                    className="w-6 h-6 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-xs active:scale-95"
+                    className="w-6 h-6 rounded-full bg-zinc-150 hover:bg-zinc-200 flex items-center justify-center text-xs active:scale-95"
                     aria-label="최근 내역 음성으로 듣기"
                   >🔊</button>
                 )}
@@ -238,16 +238,16 @@ export default function HomeDashboard({
             </div>
 
             {recentTransactions.length === 0 ? (
-              <div className="p-5 rounded-2xl bg-zinc-50 border border-zinc-200 text-center text-zinc-400 text-sm font-medium">
+              <div className="p-5 rounded-2xl bg-zinc-50 border border-zinc-200 text-center text-zinc-450 text-sm font-medium">
                 아직 쓴 적이 없어요.
               </div>
             ) : (
               recentTransactions.map((tx: any) => (
-                <div key={tx.id} className="p-4 rounded-xl bg-white ring-1 ring-zinc-200 flex justify-between items-center">
+                <div key={tx.id} className="p-4 rounded-2xl bg-white border border-zinc-200/80 flex justify-between items-center shadow-[0_2px_12px_rgba(0,0,0,0.01)]">
                   <div className="flex items-center gap-3">
                     {tx.receipt_image_url ? (
                       <button
-                        className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 ring-1 ring-zinc-200 cursor-zoom-in"
+                        className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-zinc-200 cursor-zoom-in"
                         onClick={() => setLightboxSrc(tx.receipt_image_url)}
                       >
                         <Image src={tx.receipt_image_url} alt="영수증" fill sizes="40px" className="object-cover" />
@@ -255,12 +255,12 @@ export default function HomeDashboard({
                     ) : (
                       <div className="flex items-center gap-1.5">
                         <div className={`w-2 h-2 rounded-full ${tx.status === 'confirmed' ? 'bg-green-500' : 'bg-orange-400'}`} />
-                        <span className="text-xs font-bold text-zinc-500">{tx.status === 'confirmed' ? '✓' : '⏳'}</span>
+                        <span className="text-xs font-bold text-zinc-550">{tx.status === 'confirmed' ? '✓' : '⏳'}</span>
                       </div>
                     )}
                     <div>
                       <p className="font-bold text-zinc-800 text-sm">{tx.activity_name}</p>
-                      <p className="text-xs text-zinc-400">{tx.date} · {tx.category || '종류 없음'}</p>
+                      <p className="text-xs text-zinc-450">{tx.date} · {tx.category || '종류 없음'}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -282,10 +282,10 @@ export default function HomeDashboard({
         return (
           <Link
             href="/gallery"
-            className="group flex items-center gap-4 p-5 rounded-2xl bg-white ring-1 ring-zinc-200 hover:ring-zinc-900 hover:bg-zinc-50 transition-all shadow-sm active:scale-[0.98]"
+            className="group flex items-center gap-4 p-5 rounded-3xl bg-white border border-zinc-200/80 hover:border-zinc-350 hover:bg-zinc-50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] active:scale-[0.99]"
           >
-            <div className="w-14 h-14 rounded-2xl bg-pink-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-              <span className="text-3xl">🖼️</span>
+            <div className="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <span className="text-2xl">🖼️</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-black text-zinc-800 text-base">활동 사진</p>
@@ -304,25 +304,25 @@ export default function HomeDashboard({
   return (
     <div className="flex flex-col min-h-dvh easy-read-bg text-foreground participant-view pb-10">
       <HelpAutoTrigger sectionKey="home" />
-      <header className="flex h-14 items-center justify-between px-4 z-10 sticky top-0 bg-background/90 backdrop-blur-md border-b border-border">
-        <Link href="/" className="text-lg font-bold tracking-tight text-foreground hover:opacity-70 transition-opacity">중랑구청</Link>
+      <header className="flex h-14 items-center justify-between px-4 z-10 sticky top-0 bg-white/80 backdrop-blur-md border-b border-zinc-150/80">
+        <Link href="/" className="text-base font-black tracking-tight text-zinc-800 hover:opacity-70 transition-opacity">중랑구청</Link>
         <div className="flex items-center gap-1">
           {/* 도움말, 궁금한 점, 꾸미기 — 같은 색, 아이콘으로 구분 */}
-          <div className="flex items-center bg-zinc-100 rounded-full p-1 gap-0.5">
+          <div className="flex items-center bg-zinc-100/80 border border-zinc-200/20 rounded-full p-0.5 gap-0.5">
             <HelpButton
               sectionKey="home"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-600 hover:bg-white hover:shadow-sm transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-650 hover:bg-white hover:shadow-sm transition-all active:scale-95"
               text={<span className="text-xs font-bold">📖 사용법</span>}
             />
-            <div className="w-px h-4 bg-zinc-300" aria-hidden="true" />
+            <div className="w-px h-3 bg-zinc-300" aria-hidden="true" />
             <FaqButton
               variant="inline"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-600 hover:bg-white hover:shadow-sm transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-650 hover:bg-white hover:shadow-sm transition-all active:scale-95"
             />
-            <div className="w-px h-4 bg-zinc-300" aria-hidden="true" />
+            <div className="w-px h-3 bg-zinc-300" aria-hidden="true" />
             <button
               onClick={() => setIsSheetOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-600 hover:bg-white hover:shadow-sm transition-all active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-650 hover:bg-white hover:shadow-sm transition-all active:scale-95"
               aria-label="화면 꾸미기"
               title="화면 구성 편집"
             >
@@ -337,7 +337,7 @@ export default function HomeDashboard({
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-2xl mx-auto p-4 flex flex-col gap-4">
+      <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
         {/* [필수] 잔액 시각화 위젯 */}
         <div className="stagger-item" style={{ animationDelay: '0s' }}>
           <BalanceVisualWidget
