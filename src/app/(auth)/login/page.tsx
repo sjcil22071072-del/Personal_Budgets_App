@@ -101,6 +101,8 @@ function GoogleLoginContent() {
           <div className="text-center text-xs text-zinc-400 font-bold leading-relaxed space-y-1">
             <p>로그인이 안된다면 카카오톡 오픈 채팅방이나</p>
             <p>아래 연락처로 문의 주세요!</p>
+          </div>
+          <div className="text-center text-xs text-black font-bold leading-relaxed space-y-1">
             <p>✉️기관 이메일: sjcil22071072@gmail.com</p>
             <p>📞전화번호: 02-2094-2486</p>
           </div>
