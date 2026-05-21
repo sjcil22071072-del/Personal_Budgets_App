@@ -20,10 +20,11 @@ export async function createCardRegistration(formData: FormData) {
 
   if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
+  // user.id 또는 email로 participants 조회
   const { data: participant } = await admin
     .from('participants')
     .select('id')
-    .eq('id', user.id)
+    .or(`id.eq.${user.id},email.eq.${user.email}`)
     .maybeSingle()
 
   if (!participant) {
@@ -46,7 +47,7 @@ export async function createCardRegistration(formData: FormData) {
     }
 
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const path = `${user.id}/${Date.now()}-${index}.${ext}`
+    const path = `${participant.id}/${Date.now()}-${index}.${ext}`
     const { error: uploadError } = await admin.storage
       .from(CARD_IMAGE_BUCKET)
       .upload(path, file, { contentType: file.type, upsert: false })
@@ -65,7 +66,7 @@ export async function createCardRegistration(formData: FormData) {
   const { error } = await admin
     .from('card_registrations')
     .insert({
-      participant_id: user.id,
+      participant_id: participant.id,
       image_urls: imageUrls,
     })
 

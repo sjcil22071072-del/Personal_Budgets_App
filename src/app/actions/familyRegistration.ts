@@ -13,9 +13,6 @@ export interface FamilyRegistration {
   updated_at: string
 }
 
-/**
- * 로그인한 당사자의 가족관계증명서 등록 내역을 조회합니다.
- */
 export async function getFamilyRegistration() {
   const supabase = await createClient()
   const admin = createAdminClient()
@@ -23,10 +20,19 @@ export async function getFamilyRegistration() {
 
   if (!user) return null
 
+  // user.id 또는 email로 participant 조회
+  const { data: participant } = await admin
+    .from('participants')
+    .select('id')
+    .or(`id.eq.${user.id},email.eq.${user.email}`)
+    .maybeSingle()
+
+  if (!participant) return null
+
   const { data, error } = await admin
     .from('family_registrations')
     .select('*')
-    .eq('participant_id', user.id)
+    .eq('participant_id', participant.id)
     .maybeSingle()
 
   if (error) {
@@ -37,9 +43,6 @@ export async function getFamilyRegistration() {
   return data as FamilyRegistration | null
 }
 
-/**
- * 가족관계증명서를 등록하거나 수정(업데이트)합니다.
- */
 export async function saveFamilyRegistration(formData: FormData) {
   const supabase = await createClient()
   const admin = createAdminClient()
@@ -47,10 +50,11 @@ export async function saveFamilyRegistration(formData: FormData) {
 
   if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
+  // user.id 또는 email로 participant 조회
   const { data: participant } = await admin
     .from('participants')
     .select('id')
-    .eq('id', user.id)
+    .or(`id.eq.${user.id},email.eq.${user.email}`)
     .maybeSingle()
 
   if (!participant) {
@@ -66,16 +70,14 @@ export async function saveFamilyRegistration(formData: FormData) {
     return { success: false, error: '이미지 파일만 등록할 수 있습니다.' }
   }
 
-  // 1. 기존 데이터가 있는지 확인 (기존 파일 삭제 목적)
   const { data: existing } = await admin
     .from('family_registrations')
     .select('image_url')
-    .eq('participant_id', user.id)
+    .eq('participant_id', participant.id)
     .maybeSingle()
 
-  // 2. 새 이미지 업로드
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-  const path = `${user.id}/${Date.now()}-family-relation.${ext}`
+  const path = `${participant.id}/${Date.now()}-family-relation.${ext}`
   const { error: uploadError } = await admin.storage
     .from(BUCKET_NAME)
     .upload(path, file, { contentType: file.type, upsert: false })
@@ -89,23 +91,20 @@ export async function saveFamilyRegistration(formData: FormData) {
     .from(BUCKET_NAME)
     .getPublicUrl(path)
 
-  // 3. DB upsert
   const { error: dbError } = await admin
     .from('family_registrations')
     .upsert({
-      participant_id: user.id,
+      participant_id: participant.id,
       image_url: publicUrl,
       updated_at: new Date().toISOString()
     }, { onConflict: 'participant_id' })
 
   if (dbError) {
     console.error('Family registration save error:', dbError)
-    // 업로드한 파일 롤백 삭제
     await admin.storage.from(BUCKET_NAME).remove([path])
     return { success: false, error: '증명서 저장에 실패했습니다.' }
   }
 
-  // 4. 기존 파일이 존재했을 경우 스토리지에서 구 파일 삭제
   if (existing?.image_url) {
     const marker = `/object/public/${BUCKET_NAME}/`
     const idx = existing.image_url.indexOf(marker)
