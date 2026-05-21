@@ -56,10 +56,10 @@ interface Props {
 }
 
 export default function ActivityCategoryPicker({ value, onChange, className = "" }: Props) {
-  const valueMajor =
-    ACTIVITY_CATEGORY_GROUPS.find((group) =>
-      group.items.some((item) => `${group.major} - ${item}` === value),
-    )?.major ?? ACTIVITY_CATEGORY_GROUPS[0].major;
+  const majorFromValue = getActivityMajor(value);
+  const valueMajor = ACTIVITY_CATEGORY_GROUPS.some((group) => group.major === majorFromValue)
+    ? majorFromValue
+    : ACTIVITY_CATEGORY_GROUPS[0].major;
   const [selectedMajor, setSelectedMajor] = useState(valueMajor);
 
   useEffect(() => {

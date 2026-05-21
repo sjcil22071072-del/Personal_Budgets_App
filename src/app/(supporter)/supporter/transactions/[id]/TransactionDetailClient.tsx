@@ -6,7 +6,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
-import { ACTIVITY_CATEGORY_GROUPS } from '@/components/transactions/ActivityCategoryPicker'
+import ActivityCategoryPicker from '@/components/transactions/ActivityCategoryPicker'
 import {
   updateTransactionDetail,
   deleteTransactionWithBalance,
@@ -79,11 +79,6 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const [viewTab, setViewTab] = useState<'receipt' | 'activity' | 'evidence'>(() =>
     receiptUrls.length === 0 && activityUrls.length > 0 ? 'activity' : 'receipt'
   )
-
-  const categories = Array.from(new Set([
-    ...ACTIVITY_CATEGORY_GROUPS.map(group => group.major),
-    ...(tx.category ? [tx.category] : []),
-  ]))
 
   async function handleReceiptUpload(file: File) {
     if (receiptUrls.length >= 5) {
@@ -539,14 +534,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
 
               <fieldset className="flex flex-col gap-2">
                 <label className="text-xs font-black text-zinc-500">분류</label>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map(cat => (
-                    <button key={cat} type="button" onClick={() => setCategory(category === cat ? '' : cat)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-bold transition-colors ${
-                        category === cat ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                      }`}>{cat}</button>
-                  ))}
-                </div>
+                <ActivityCategoryPicker value={category} onChange={setCategory} />
               </fieldset>
 
               <fieldset className="flex flex-col gap-2">
