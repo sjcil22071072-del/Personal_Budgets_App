@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -48,7 +47,9 @@ function GoogleLoginContent() {
           {/* 오류 메시지 */}
           {error && (
             <div className="rounded-2xl bg-red-50 border border-red-200 p-4 text-sm text-red-800 leading-relaxed">
-              <p className="font-bold mb-1">이 앱에 들어올 수 없는 이메일이에요.</p>
+              <p className="font-bold mb-1">
+                이 앱에 들어올 수 없는 이메일이에요.
+              </p>
               <p>담당 선생님께 문의해주세요.</p>
             </div>
           )}
@@ -63,7 +64,11 @@ function GoogleLoginContent() {
               <span className="text-sm text-zinc-500">로그인 중...</span>
             ) : (
               <>
-                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                <svg
+                  className="w-5 h-5 shrink-0"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                     fill="#4285F4"
@@ -98,11 +103,13 @@ function GoogleLoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-zinc-400">로딩 중...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-zinc-400">로딩 중...</div>
+        </div>
+      }
+    >
       <GoogleLoginContent />
     </Suspense>
   );
