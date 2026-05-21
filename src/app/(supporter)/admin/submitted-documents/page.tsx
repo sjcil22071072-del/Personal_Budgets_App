@@ -46,18 +46,15 @@ export default async function SubmittedDocumentsPage() {
           .createSignedUrl(path, SIGNED_URL_EXPIRES)
         signedUrl = data?.signedUrl ?? null
       }
-      // path 추출 실패 시 raw URL 자체 사용
       if (!signedUrl) signedUrl = rawUrl
     }
     familyMap.set(pid, { imageUrl: signedUrl, createdAt: (fr as any).created_at })
   }
 
-  // 카드 등록 이미지 signed URL 생성 (당사자당 최신 1건만)
-  const cardMap = new Map<string, { imageUrls: string[]; createdAt: string | null }>()
+  // 카드 등록 이미지 signed URL 생성 (당사자당 복수 건 지원)
+  const cardMap = new Map<string, { imageUrls: string[]; createdAt: string | null }[]>()
   for (const cr of cardRegs ?? []) {
     const pid = (cr as any).participant_id
-    if (cardMap.has(pid)) continue // 최신 1건만
-
     const rawUrls: string[] = (cr as any).image_urls ?? []
     const signedUrls: string[] = []
     for (const rawUrl of rawUrls) {
@@ -71,13 +68,15 @@ export default async function SubmittedDocumentsPage() {
         signedUrls.push(rawUrl)
       }
     }
-    cardMap.set(pid, { imageUrls: signedUrls, createdAt: (cr as any).created_at })
+    const list = cardMap.get(pid) ?? []
+    list.push({ imageUrls: signedUrls, createdAt: (cr as any).created_at })
+    cardMap.set(pid, list)
   }
 
   // 클라이언트에 전달할 데이터 조합
   const initialData = (participants ?? []).map((p: any) => {
     const family = familyMap.get(p.id)
-    const card = cardMap.get(p.id)
+    const cards = cardMap.get(p.id) ?? []
     return {
       id: p.id,
       name: p.name ?? '이름 없음',
@@ -86,16 +85,15 @@ export default async function SubmittedDocumentsPage() {
         imageUrl: family?.imageUrl ?? null,
         createdAt: family?.createdAt ?? null,
       },
-      cardRegistration: {
-        registered: !!card,
-        imageUrls: card?.imageUrls ?? [],
-        createdAt: card?.createdAt ?? null,
-      },
+      cardRegistrations: cards.map(c => ({
+        imageUrls: c.imageUrls,
+        createdAt: c.createdAt,
+      })),
     }
   })
 
   const familyCount = initialData.filter(d => d.familyRelation.registered).length
-  const cardCount = initialData.filter(d => d.cardRegistration.registered).length
+  const cardCount = initialData.filter(d => d.cardRegistrations.length > 0).length
 
   return (
     <div className="flex min-h-screen flex-col bg-background pb-20 text-foreground">
