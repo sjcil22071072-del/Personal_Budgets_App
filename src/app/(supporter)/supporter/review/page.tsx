@@ -3,7 +3,6 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ReviewQueueClient from '@/components/transactions/ReviewQueueClient'
-import { getSignedImageUrls } from '@/app/actions/storage'
 import { isStaffRole, isSupporterRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 
@@ -21,7 +20,7 @@ export default async function ReviewQueuePage() {
 
   let participantsQuery = adminClient
     .from('participants')
-    .select('id, name, funding_sources(id, name)')
+    .select('id')
 
   if (isSupporterRole(authProfile.role)) {
     participantsQuery = participantsQuery.eq('assigned_supporter_id', user.id)
@@ -30,29 +29,13 @@ export default async function ReviewQueuePage() {
   const { data: participants } = await participantsQuery
   const participantIds = (participants ?? []).map((p: any) => p.id)
 
-  const allFundingSources: Record<string, { id: string; name: string }[]> = {}
-  for (const p of participants ?? []) {
-    allFundingSources[(p as any).id] = ((p as any).funding_sources ?? []).map((fs: any) => ({
-      id: fs.id,
-      name: fs.name,
-    }))
-  }
-
   let txQuery = adminClient
     .from('transactions')
     .select(`
       id,
       participant_id,
-      activity_name,
-      amount,
       date,
       category,
-      payment_method,
-      receipt_image_url,
-      funding_source_id,
-      place_name,
-      place_lat,
-      place_lng,
       participants!transactions_participant_id_fkey ( name ),
       funding_sources!transactions_funding_source_id_fkey ( name )
     `)
@@ -67,27 +50,10 @@ export default async function ReviewQueuePage() {
 
   const transactions = (rawTx ?? []).map((t: any) => ({
     id: t.id,
-    participant_id: t.participant_id,
     participant_name: t.participants?.name ?? '알 수 없음',
-    activity_name: t.activity_name,
-    amount: Number(t.amount),
     date: t.date,
     category: t.category ?? '기타',
-    payment_method: t.payment_method ?? '',
-    receipt_image_url: t.receipt_image_url ?? null,
-    funding_source_id: t.funding_source_id ?? null,
     funding_source_name: t.funding_sources?.name ?? null,
-    place_name: t.place_name ?? null,
-    place_lat: t.place_lat ?? null,
-    place_lng: t.place_lng ?? null,
-  }))
-
-  const signedUrls = await getSignedImageUrls(
-    transactions.map(t => ({ id: t.id, receiptUrl: t.receipt_image_url, activityUrl: null }))
-  )
-  const transactionsWithSignedUrls = transactions.map(t => ({
-    ...t,
-    receipt_image_url: signedUrls[t.id]?.receipt ?? t.receipt_image_url,
   }))
 
   return (
@@ -96,7 +62,7 @@ export default async function ReviewQueuePage() {
         <Link href="/supporter/transactions" className="text-zinc-400 hover:text-zinc-600 transition-colors text-xl">←</Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">영수증 검토 대기열</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">당사자가 올린 영수증을 확인하고 잔액에 반영해요</p>
+          <p className="text-sm text-zinc-500 mt-0.5">대상자를 누르면 거래 상세에서 사진을 확인하고 승인할 수 있어요</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {transactions.length > 0 && (
@@ -108,10 +74,7 @@ export default async function ReviewQueuePage() {
       </header>
 
       <main className="w-full max-w-2xl flex flex-col gap-4">
-        <ReviewQueueClient
-          transactions={transactionsWithSignedUrls}
-          allFundingSources={allFundingSources}
-        />
+        <ReviewQueueClient transactions={transactions} />
       </main>
     </div>
   )

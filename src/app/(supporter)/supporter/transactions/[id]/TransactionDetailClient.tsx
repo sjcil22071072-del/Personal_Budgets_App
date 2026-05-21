@@ -6,6 +6,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
+import { ACTIVITY_CATEGORY_GROUPS } from '@/components/transactions/ActivityCategoryPicker'
 import {
   updateTransactionDetail,
   deleteTransactionWithBalance,
@@ -79,7 +80,10 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     receiptUrls.length === 0 && activityUrls.length > 0 ? 'activity' : 'receipt'
   )
 
-  const categories = ['식비', '교통비', '여가활동', '생활용품', '의료비', '교육', '기타']
+  const categories = Array.from(new Set([
+    ...ACTIVITY_CATEGORY_GROUPS.map(group => group.major),
+    ...(tx.category ? [tx.category] : []),
+  ]))
 
   async function handleReceiptUpload(file: File) {
     if (receiptUrls.length >= 5) {
