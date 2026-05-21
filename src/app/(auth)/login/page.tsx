@@ -36,9 +36,9 @@ function GoogleLoginContent() {
             >
               💰
             </button>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
               중랑구청 개인예산제
-            </h1>
+            </h2>
             <p className="text-base text-muted-foreground leading-relaxed">
               관리자 선생님과 개인예산제 이용자 분들을 위한 앱이에요
             </p>
@@ -93,7 +93,7 @@ function GoogleLoginContent() {
 
           {/* 안내 문구 */}
           <div className="text-center text-sm text-zinc-500 leading-relaxed space-y-1">
-            <p>담당 선생님께 문의해주세요</p>
+            <p>로그인이 안된다면 담당 선생님께 문의해주세요!</p>
           </div>
         </div>
       </div>

@@ -41,25 +41,10 @@ async function verifyAdmin() {
  * 사용자 역할 변경
  */
 export async function updateUserRole(userId: string, newRole: UserRole) {
-  const { user, supabase } = await verifyAdmin()
-
-  // 자기 자신의 역할 변경 방지
-  if (userId === user.id) {
-    return { error: '자신의 역할은 변경할 수 없습니다.' }
-  }
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({ role: newRole })
-    .eq('id', userId)
-
-  if (error) {
-    return { error: `역할 변경 실패: ${error.message}` }
-  }
-
-  revalidatePath('/admin/settings')
-  revalidatePath('/admin')
-  return { success: true }
+  await verifyAdmin()
+  void userId
+  void newRole
+  return { error: '??? ?? ?? ? ??? ? ????. ?? ???? ???? ???? ??? ?? ??? ??????.' }
 }
 
 /**
@@ -477,6 +462,11 @@ export async function registerStaffUser(formData: {
   }
 
   if (existingProfile?.id) {
+    const currentRole = String((existingProfile as { role?: string }).role ?? '').trim().toLowerCase()
+    if (currentRole !== 'participant' && currentRole !== 'admin') {
+      return { error: '?? ?? ??? ??? ?????.' }
+    }
+
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ role: formData.role, name })
@@ -492,18 +482,29 @@ export async function registerStaffUser(formData: {
     return { success: true, mode: 'updated' }
   }
 
+  const { data: existingInvitation, error: invitationLookupError } = await supabase
+    .from('user_invitations')
+    .select('id, role, used_at')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (invitationLookupError) {
+    return { error: `?? ?? ??: ${invitationLookupError.message}` }
+  }
+
+  if (existingInvitation) {
+    return { error: '?? ??? ??? ??????. ?? ? ?? ??? ?? ??? ? ????.' }
+  }
+
   const { error: invitationError } = await supabase
     .from('user_invitations')
-    .upsert(
-      {
-        email,
-        role: formData.role,
-        note: note || name,
-        invited_by: user.id,
-        used_at: null,
-      },
-      { onConflict: 'email' }
-    )
+    .insert({
+      email,
+      role: formData.role,
+      note: note || name,
+      invited_by: user.id,
+      used_at: null,
+    })
 
   if (invitationError) {
     return { error: `등록 실패: ${invitationError.message}` }

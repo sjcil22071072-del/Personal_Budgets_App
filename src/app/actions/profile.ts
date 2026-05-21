@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function updateProfile(formData: FormData) {
@@ -11,21 +11,11 @@ export async function updateProfile(formData: FormData) {
 
   const name = formData.get('name') as string
   const bio = formData.get('bio') as string
-  const role = formData.get('role') as string
-
-  // Prevent changing to admin via form
-  const ADMIN_EMAILS = ['swjoong@nowondaycare.org']
-  const normalizedRole = role === 'admin' ? 'admin' : 'participant'
-  const allowedRole = ADMIN_EMAILS.includes(user.email || '')
-    ? normalizedRole
-    : 'participant'
-
   const { error } = await supabase
     .from('profiles')
     .update({
       name: name?.trim() || null,
       bio: bio?.trim() || null,
-      role: allowedRole,
     })
     .eq('id', user.id)
 
