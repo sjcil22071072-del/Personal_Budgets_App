@@ -99,8 +99,10 @@ function GoogleLoginContent() {
 
           {/* 안내 문구 */}
           <div className="text-center text-xs text-zinc-400 font-bold leading-relaxed space-y-1">
-            <p>로그인이 안된다면 카카오톡 오픈 채팅방이나</p>
-            <p>아래 연락처로 문의 주세요!</p>
+            <p>
+              로그인이 안된다면 카카오톡 플러스친구 신세계중랑 개인예산사업으로
+              채팅주세요! 혹은 아래로 연락주셔도 됩니다.
+            </p>
           </div>
           <div className="text-center text-xs text-black font-bold leading-relaxed space-y-1">
             <p>✉️기관 이메일: sjcil22071072@gmail.com</p>
