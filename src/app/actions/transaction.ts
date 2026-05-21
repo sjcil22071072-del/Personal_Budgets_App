@@ -26,10 +26,6 @@ export async function getParticipantsWithFundingSources(): Promise<ParticipantWi
     .from('participants')
     .select('id, name, funding_sources ( id, name )')
 
-  if (profile?.role === 'supporter') {
-    query = query.eq('assigned_supporter_id', user.id)
-  }
-
   const { data } = await query
   return (data || []).map((p: any) => ({
     id: p.id,

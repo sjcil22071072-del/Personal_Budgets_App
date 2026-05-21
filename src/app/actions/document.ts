@@ -22,18 +22,8 @@ export async function getDocumentUploadUrl(
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+  if (!profile || profile.role !== 'admin') {
     return { error: '권한이 없습니다.' }
-  }
-
-  if (profile.role === 'supporter') {
-    const { data: assigned } = await supabase
-      .from('participants')
-      .select('id')
-      .eq('id', participantId)
-      .eq('assigned_supporter_id', user.id)
-      .single()
-    if (!assigned) return { error: '해당 참여자에 대한 접근 권한이 없습니다.' }
   }
 
   const admin = createAdminClient()

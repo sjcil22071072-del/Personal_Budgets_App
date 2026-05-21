@@ -17,7 +17,7 @@ export default async function SupporterPage() {
     redirect('/')
   }
 
-  // 담당 당사자 조회 (지원자는 자기에게 배정된 당사자만, 관리자는 전체)
+  // 담당 당사자 조회 (관리자는 전체)
   let query = supabase
     .from('participants')
     .select(`
@@ -48,7 +48,7 @@ export default async function SupporterPage() {
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">통합 대시보드</h1>
         <div className="px-4 py-2 bg-zinc-200 rounded-lg text-sm font-bold text-zinc-700">
-          {authProfile.name || '지원자'} 담당
+          {authProfile.name || '관리자'} 담당
         </div>
       </header>
 

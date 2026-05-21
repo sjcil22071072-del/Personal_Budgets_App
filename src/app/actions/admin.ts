@@ -91,7 +91,7 @@ export async function getSupporters() {
 const { data, error } = await adminClient
   .from('profiles')
   .select('id, name, role')
-  .in('role', ['supporter', 'admin'])
+  .eq('role', 'admin')
   .order('name', { ascending: true })
  
     if (error) {
@@ -102,7 +102,7 @@ const { data, error } = await adminClient
     return { supporters: data || [] }
   } catch (e: any) {
     console.error('[admin.getSupporters] exception:', e)
-    return { supporters: [], error: e?.message || '지원자 목록을 불러오지 못했습니다.' }
+    return { supporters: [], error: e?.message || '관리자 목록을 불러오지 못했습니다.' }
   }
 }
 /**
@@ -436,8 +436,8 @@ export async function deleteFundingSource(fundingSourceId: string) {
 // 사용자 초대 관리 (user_invitations 테이블)
 // ──────────────────────────────────────────
 
-export type InvitationRole = 'admin' | 'supporter' | 'participant'
-export type StaffRole = 'admin' | 'supporter'
+export type InvitationRole = 'admin' | 'participant'
+export type StaffRole = 'admin'
 
 export interface Invitation {
   id: string
@@ -462,8 +462,8 @@ export async function registerStaffUser(formData: {
 
   if (!name) return { error: '이름을 입력해주세요.' }
   if (!email) return { error: '이메일을 입력해주세요.' }
-  if (!['admin', 'supporter'].includes(formData.role)) {
-    return { error: '관리자 또는 지원자만 등록할 수 있습니다.' }
+  if (formData.role !== 'admin') {
+    return { error: '???? ??? ? ????.' }
   }
 
   const { data: existingProfile, error: profileLookupError } = await supabase
@@ -538,6 +538,10 @@ export async function createInvitation(formData: {
   note?: string
 }): Promise<{ success?: boolean; error?: string }> {
   const { supabase, user } = await verifyAdmin()
+
+  if (formData.role !== 'admin' && formData.role !== 'participant') {
+    return { error: '??? ?? ???? ??? ? ????.' }
+  }
 
   const { error } = await supabase
     .from('user_invitations')

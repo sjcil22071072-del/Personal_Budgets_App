@@ -12,8 +12,6 @@ function GoogleLoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const [loading, setLoading] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
-  const [easterEggOpen, setEasterEggOpen] = useState(false);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -34,17 +32,16 @@ function GoogleLoginContent() {
           {/* 로고 */}
           <div className="flex flex-col items-center gap-4 text-center">
             <button
-              onClick={() => setEasterEggOpen(true)}
               className="w-24 h-24 rounded-3xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-5xl shadow-lg hover:scale-105 transition-transform focus:outline-none"
               aria-label="로고"
             >
               💰
             </button>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-              중랑구청
+              중랑구청 개인예산제
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              중랑구청 선생님과 이용자를 위한 앱이에요
+              관리자 선생님과 개인예산제 이용자 분들을 위한 앱이에요
             </p>
           </div>
 
@@ -52,8 +49,7 @@ function GoogleLoginContent() {
           {error && (
             <div className="rounded-2xl bg-red-50 border border-red-200 p-4 text-sm text-red-800 leading-relaxed">
               <p className="font-bold mb-1">이 앱에 들어올 수 없는 이메일이에요.</p>
-              <p>중랑구청 선생님이라면 기관 이메일로 로그인해주세요.</p>
-              <p>이용자라면 담당 선생님께 문의해주세요.</p>
+              <p>담당 선생님께 문의해주세요.</p>
             </div>
           )}
 
@@ -92,115 +88,10 @@ function GoogleLoginContent() {
 
           {/* 안내 문구 */}
           <div className="text-center text-sm text-zinc-500 leading-relaxed space-y-1">
-            <p>선생님: 기관 이메일(sower031@gmail.com)로 로그인해주세요</p>
-            <p>이용자: 담당 선생님께 문의해주세요</p>
-          </div>
-
-          {/* 더 알아보기 */}
-          <div className="rounded-2xl border border-zinc-200 overflow-hidden">
-            <button
-              onClick={() => setInfoOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-5 py-3.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
-            >
-              <span className="flex items-center gap-2">
-                <span>📖</span>
-                <span>이 앱에 대해 더 알아보기</span>
-              </span>
-              <span className={`transition-transform duration-200 ${infoOpen ? "rotate-180" : ""}`}>
-                ▼
-              </span>
-            </button>
-
-            {infoOpen && (
-              <div className="px-5 pb-5 pt-1 text-sm text-zinc-700 space-y-5 border-t border-zinc-100">
-                <div>
-                  <h3 className="font-bold text-zinc-800 mb-1.5">📋 프로젝트 개요</h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed">
-                    발달장애인 당사자가 자신의 예산을 시각적으로 쉽게 이해하고 관리할 수 있도록 돕는 웹 앱입니다.
-                    <strong> 쉬운 정보(Easy Read)</strong> 원칙을 적용해 당사자·지원자·관리자 세 역할을 지원합니다.
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-zinc-800 mb-1.5">✨ 주요 기능</h3>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-zinc-600">
-                    <span>• SVG 주머니·지폐 잔액 시각화</span>
-                    <span>• 영수증 사진으로 활동 기록</span>
-                    <span>• 지원목표 · 4+1 평가</span>
-                    <span>• SIS-A 지원필요도 사정</span>
-                    <span>• 활동 지도 (카카오맵)</span>
-                    <span>• TTS 음성 읽기</span>
-                    <span>• AI 쉬운 요약</span>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-zinc-800 mb-1.5">🏗️ 기술 스택</h3>
-                  <div className="flex flex-wrap gap-1.5 text-xs">
-                    {["Next.js 15", "React 19", "TypeScript", "Tailwind CSS 4", "Supabase", "GPT-4o", "Kakao Maps", "Vercel"].map((t) => (
-                      <span key={t} className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">{t}</span>
-                    ))}
-                  </div>
-                </div>
-
-                <a
-                  href="https://github.com/SWJoong/Personal_Budgets_App"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                  </svg>
-                  GitHub 저장소 보기
-                </a>
-              </div>
-            )}
+            <p>담당 선생님께 문의해주세요</p>
           </div>
         </div>
       </div>
-
-      {/* 이스터에그 */}
-      {easterEggOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
-          onClick={() => setEasterEggOpen(false)}
-        >
-          <div
-            className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-2xl mb-4 text-center">💬</p>
-            <p className="text-sm text-slate-700 leading-relaxed mb-1">
-              "훌륭한 삶이란 사랑으로 힘을 얻고 지식으로 길잡이를 삼는 삶이다."
-            </p>
-            <p className="text-xs text-slate-400 text-right mb-4">— 버트런드 러셀</p>
-            <p className="text-xs text-slate-500 italic leading-relaxed mb-1">
-              "The good life is one inspired by love and guided by knowledge."
-            </p>
-            <p className="text-xs text-slate-400 text-right mb-5">— Bertrand Russell</p>
-            <div className="h-px bg-slate-100 mb-4" />
-            <p className="text-xs text-slate-500 leading-relaxed mb-1">
-              "행복의 비결은 이것이다: 당신의 관심사를 가능한 한 넓게 키우고,
-              당신의 관심사에 반응하는 것들에 대해 가능한 한 우호적으로 반응하라."
-            </p>
-            <p className="text-xs text-slate-400 text-right mb-5">— 버트런드 러셀, 《행복의 정복》</p>
-            <div className="w-full rounded-xl overflow-hidden mb-5">
-              <img
-                src="/images/26oJy.jpg"
-                alt="이스터에그 이미지"
-                className="w-full object-contain max-h-48"
-              />
-            </div>
-            <button
-              onClick={() => setEasterEggOpen(false)}
-              className="w-full py-2 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-700 transition-colors"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

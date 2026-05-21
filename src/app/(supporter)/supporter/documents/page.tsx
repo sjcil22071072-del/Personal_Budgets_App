@@ -26,10 +26,6 @@ export default async function SupporterDocumentsPage({
     .from('participants')
     .select('id, name')
 
-  if (authProfile.role === 'supporter') {
-    participantsQuery = participantsQuery.eq('assigned_supporter_id', user.id)
-  }
-
   const { data: participants } = await participantsQuery.order('name', { ascending: true })
   const participantIds = (participants || []).map((participant) => participant.id)
 

@@ -15,9 +15,10 @@ export async function updateProfile(formData: FormData) {
 
   // Prevent changing to admin via form
   const ADMIN_EMAILS = ['swjoong@nowondaycare.org']
+  const normalizedRole = role === 'admin' ? 'admin' : 'participant'
   const allowedRole = ADMIN_EMAILS.includes(user.email || '')
-    ? role
-    : (role === 'admin' ? 'participant' : role)
+    ? normalizedRole
+    : 'participant'
 
   const { error } = await supabase
     .from('profiles')

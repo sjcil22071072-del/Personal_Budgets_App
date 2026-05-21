@@ -27,17 +27,16 @@ export default async function NewStaffUserPage() {
           ←
         </Link>
         <div>
-          <h1 className="text-xl font-bold tracking-tight">관리자/지원자 등록</h1>
+          <h1 className="text-xl font-bold tracking-tight">관리자 등록</h1>
           <p className="text-xs font-medium text-zinc-500">
-            로그인할 이메일과 역할을 미리 등록합니다.
+            로그인할 이메일을 미리 등록합니다.
           </p>
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 p-4 sm:p-6">
         <div className="rounded-2xl bg-blue-50 p-4 text-sm leading-relaxed text-blue-700 ring-1 ring-blue-100">
-          이미 가입한 이메일이면 즉시 역할이 바뀝니다. 아직 가입 전이면 해당 이메일로 Google 로그인할 때
-          선택한 역할이 자동 적용됩니다.
+          등록된 이메일로 Google 로그인하면 관리자 권한이 적용됩니다.
         </div>
 
         <StaffRegistrationClient />

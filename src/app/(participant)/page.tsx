@@ -35,10 +35,6 @@ export default async function Home() {
     redirect("/admin");
   }
 
-  if (role === "supporter") {
-    redirect("/supporter");
-  }
-
   // 당사자 예산 정보 조회
   const profileEmail =
     typeof profile?.email === "string" && profile.email.trim()
@@ -87,7 +83,7 @@ export default async function Home() {
             <p className="text-zinc-500 font-medium leading-relaxed">
               아직 예산 정보가 없어요.
               <br />
-              지원자 선생님에게 말씀해 주세요.
+              관리자에게 말씀해 주세요.
             </p>
           </div>
 

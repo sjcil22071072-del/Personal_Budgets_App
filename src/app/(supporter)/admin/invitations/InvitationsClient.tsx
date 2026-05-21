@@ -5,13 +5,11 @@ import { createInvitation, deleteInvitation, type Invitation, type InvitationRol
 
 const ROLE_LABELS: Record<InvitationRole, string> = {
   admin: "관리자",
-  supporter: "실무자",
   participant: "당사자",
 }
 
 const ROLE_COLORS: Record<InvitationRole, string> = {
   admin: "bg-purple-100 text-purple-700",
-  supporter: "bg-blue-100 text-blue-700",
   participant: "bg-sky-100 text-sky-700",
 }
 
@@ -61,11 +59,10 @@ export default function InvitationsClient({ invitations }: Props) {
 
   return (
     <div className="space-y-8">
-      {/* 새 초대 등록 폼 */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-base font-bold text-zinc-800 mb-5">새 사용자 초대</h2>
+        <h2 className="mb-5 text-base font-bold text-zinc-800">사용자 초대</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-zinc-700">이메일 *</label>
               <input
@@ -82,11 +79,10 @@ export default function InvitationsClient({ invitations }: Props) {
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as InvitationRole)}
-                className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="participant">당사자</option>
                 <option value="admin">관리자</option>
-                <option value="supporter">실무자</option>
               </select>
             </div>
           </div>
@@ -96,33 +92,28 @@ export default function InvitationsClient({ invitations }: Props) {
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="예: 김지수 (당사자 이름)"
+              placeholder="당사자 이름 또는 참고사항"
               className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {formError && (
-            <p className="text-sm text-red-600 font-medium">{formError}</p>
-          )}
-          {formSuccess && (
-            <p className="text-sm text-green-600 font-medium">초대가 등록되었습니다.</p>
-          )}
+          {formError && <p className="text-sm font-medium text-red-600">{formError}</p>}
+          {formSuccess && <p className="text-sm font-medium text-green-600">초대가 등록되었습니다.</p>}
 
           <button
             type="submit"
             disabled={isPending}
-            className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-60"
+            className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
           >
             {isPending ? "등록 중..." : "초대 등록"}
           </button>
         </form>
       </div>
 
-      {/* 초대 목록 */}
-      <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
-        <div className="px-6 py-4 border-b border-zinc-100">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="border-b border-zinc-100 px-6 py-4">
           <h2 className="text-base font-bold text-zinc-800">초대 목록</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">@nowondaycare.org 실무자는 도메인으로 자동 등록됩니다. 별도 초대 불필요.</p>
+          <p className="mt-0.5 text-xs text-zinc-500">관리자와 당사자 계정만 초대할 수 있습니다.</p>
         </div>
 
         {invitations.length === 0 ? (
@@ -132,26 +123,26 @@ export default function InvitationsClient({ invitations }: Props) {
         ) : (
           <div className="divide-y divide-zinc-100">
             {invitations.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between px-6 py-4 hover:bg-zinc-50 transition-colors">
-                <div className="flex items-center gap-4 min-w-0">
-                  <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-bold ${ROLE_COLORS[inv.role as InvitationRole]}`}>
-                    {ROLE_LABELS[inv.role as InvitationRole]}
+              <div key={inv.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-zinc-50">
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${ROLE_COLORS[inv.role as InvitationRole]}`}>
+                    {ROLE_LABELS[inv.role as InvitationRole] || inv.role}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-zinc-800 truncate">{inv.email}</p>
-                    {inv.note && <p className="text-xs text-zinc-400 truncate">{inv.note}</p>}
+                    <p className="truncate text-sm font-medium text-zinc-800">{inv.email}</p>
+                    {inv.note && <p className="truncate text-xs text-zinc-400">{inv.note}</p>}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0 ml-4">
+                <div className="ml-4 flex shrink-0 items-center gap-3">
                   {inv.used_at ? (
-                    <span className="text-xs text-green-600 font-medium">로그인 완료</span>
+                    <span className="text-xs font-medium text-green-600">로그인 완료</span>
                   ) : (
                     <>
                       <span className="text-xs text-zinc-400">미사용</span>
                       <button
                         onClick={() => handleDelete(inv.id)}
                         disabled={isPending && deletingId === inv.id}
-                        className="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-50"
+                        className="text-xs font-medium text-red-500 hover:text-red-700 disabled:opacity-50"
                       >
                         삭제
                       </button>

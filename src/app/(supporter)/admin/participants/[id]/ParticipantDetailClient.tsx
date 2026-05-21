@@ -24,7 +24,7 @@ interface ParticipantDetailClientProps {
   totalMonthlyBudget: number
   backUrl: string
   isAdmin: boolean
-  // 서버에서 미리 조회해서 넘겨주는 지원자 목록
+  // 서버에서 미리 조회해서 넘겨주는 관리자 목록
   supporters?: { id: string; name: string | null; role: string }[]
 }
 
@@ -57,7 +57,7 @@ export default function ParticipantDetailClient({
   })
   const [isSavingInfo, setIsSavingInfo] = useState(false)
 
-  // 지원자 목록: 서버 props 우선, 없으면 편집 모드 진입 시 fetch
+  // 관리자 목록: 서버 props 우선, 없으면 편집 모드 진입 시 fetch
   const [supporters, setSupporters] = useState(initialSupporters)
   const [supportersLoading, setSupportersLoading] = useState(false)
 
@@ -262,9 +262,9 @@ export default function ParticipantDetailClient({
                     className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                 </div>
 
-                {/* ── 담당 지원자 선택 드롭다운 ── */}
+                {/* ── 담당 관리자 선택 드롭다운 ── */}
                 <div className="sm:col-span-2">
-                  <label className="text-zinc-400 text-xs font-medium block mb-1">담당 지원자</label>
+                  <label className="text-zinc-400 text-xs font-medium block mb-1">담당 관리자</label>
                   <select
                     value={formData.supporterId}
                     onChange={e => setFormData({ ...formData, supporterId: e.target.value })}
@@ -276,9 +276,9 @@ export default function ParticipantDetailClient({
                       <option key={s.id} value={s.id}>{s.name || s.id.slice(0, 8)}</option>
                     ))}
                   </select>
-                  {supportersLoading && <p className="text-[11px] text-zinc-400 mt-0.5">지원자 목록 불러오는 중...</p>}
+                  {supportersLoading && <p className="text-[11px] text-zinc-400 mt-0.5">관리자 목록 불러오는 중...</p>}
                   {!supportersLoading && supporters.length === 0 && (
-                    <p className="text-[11px] text-amber-600 mt-0.5">등록된 지원자가 없습니다.</p>
+                    <p className="text-[11px] text-amber-600 mt-0.5">등록된 관리자가 없습니다.</p>
                   )}
                 </div>
 
@@ -312,7 +312,7 @@ export default function ParticipantDetailClient({
                   <p className="font-bold text-zinc-800">{participant.budget_start_date} ~ {participant.budget_end_date}</p>
                 </div>
                 <div>
-                  <span className="text-zinc-400 text-xs font-medium">담당 지원자</span>
+                  <span className="text-zinc-400 text-xs font-medium">담당 관리자</span>
                   <p className="font-bold text-zinc-800">{participant.supporter?.name || '미지정'}</p>
                 </div>
                 <div>

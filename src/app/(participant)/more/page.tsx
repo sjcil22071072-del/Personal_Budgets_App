@@ -58,7 +58,7 @@ export default async function MorePage({
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-black text-zinc-900">{profile?.name} 님</span>
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{profile?.role === 'participant' ? '당사자' : profile?.role === 'supporter' ? '지원자' : profile?.role}</span>
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{profile?.role === 'admin' ? '관리자' : '당사자'}</span>
           </div>
         </section>
 

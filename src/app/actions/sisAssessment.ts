@@ -38,7 +38,7 @@ export async function saveSisAssessment(
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+  if (!profile || profile.role !== 'admin') {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -117,7 +117,7 @@ export async function deleteSisAssessment(id: string): Promise<{ success: boolea
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+  if (!profile || profile.role !== 'admin') {
     return { success: false, error: '권한이 없습니다.' }
   }
 

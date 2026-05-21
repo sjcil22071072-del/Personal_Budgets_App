@@ -33,7 +33,7 @@ export default async function CardRegistrationPage() {
         </header>
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
           <span className="text-6xl">💳</span>
-          <p className="font-bold text-zinc-500">아직 당사자 정보가 없어요.<br />지원자 선생님에게 말씀해 주세요!</p>
+          <p className="font-bold text-zinc-500">아직 당사자 정보가 없어요.<br />관리자에게 말씀해 주세요!</p>
         </div>
       </div>
     )

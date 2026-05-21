@@ -18,7 +18,7 @@ export async function saveUIPreferences(participantId: string, preferences: UIPr
       .select('role')
       .eq('id', user.id)
       .single()
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'supporter')) {
+    if (!profile || profile.role !== 'admin') {
       throw new Error('Forbidden')
     }
   }

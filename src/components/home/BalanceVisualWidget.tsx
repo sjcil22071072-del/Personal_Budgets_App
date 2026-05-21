@@ -861,7 +861,7 @@ export default function BalanceVisualWidget({
 
                     {uploadMode !== 'card' && (
                       <p className="text-center text-zinc-400 text-xs font-medium mt-2">
-                        지원자 선생님이 확인하면 예산에 반영해요.
+                        관리자가 확인하면 예산에 반영해요.
                       </p>
                     )}
                   </div>

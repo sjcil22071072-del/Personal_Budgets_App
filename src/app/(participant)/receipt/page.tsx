@@ -22,7 +22,7 @@ export default async function ReceiptPage() {
     .eq('id', user.id)
     .single()
 
-  // 데이터가 없는 경우 (지원자가 아직 등록하지 않음)
+  // 데이터가 없는 경우 (관리자가 아직 등록하지 않음)
   if (!participant) {
     return (
       <div className="flex flex-col min-h-dvh bg-background text-foreground p-4">
@@ -34,7 +34,7 @@ export default async function ReceiptPage() {
         </header>
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
           <span className="text-6xl">📋</span>
-          <p className="text-zinc-500 font-bold">아직 예산 정보가 없어요.<br/>지원자 선생님에게 말씀해 주세요!</p>
+          <p className="text-zinc-500 font-bold">아직 예산 정보가 없어요.<br/>관리자에게 말씀해 주세요!</p>
         </div>
       </div>
     )

@@ -106,7 +106,7 @@ export default function TransactionForm({
     }
   }
 
-  // 매핑용 카테고리 (지원자 실무 기준)
+  // 매핑용 카테고리 (관리자 실무 기준)
   const categories = [
     '식비', '간식/음료', '교통비', '여가활동', '물품구입', '의료/건강', '기타'
   ]
