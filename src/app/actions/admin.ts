@@ -44,7 +44,7 @@ export async function updateUserRole(userId: string, newRole: UserRole) {
   await verifyAdmin()
   void userId
   void newRole
-  return { error: '??? ?? ?? ? ??? ? ????. ?? ???? ???? ???? ??? ?? ??? ??????.' }
+  return { error: '역할은 최초 지정 후 수정할 수 없습니다. 기존 당사자를 관리자로 바꾸려면 관리자 등록 화면을 사용해주세요.' }
 }
 
 /**
@@ -448,12 +448,12 @@ export async function registerStaffUser(formData: {
   if (!name) return { error: '이름을 입력해주세요.' }
   if (!email) return { error: '이메일을 입력해주세요.' }
   if (formData.role !== 'admin') {
-    return { error: '???? ??? ? ????.' }
+    return { error: '관리자만 등록할 수 있습니다.' }
   }
 
   const { data: existingProfile, error: profileLookupError } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, role')
     .eq('email', email)
     .maybeSingle()
 
@@ -464,7 +464,7 @@ export async function registerStaffUser(formData: {
   if (existingProfile?.id) {
     const currentRole = String((existingProfile as { role?: string }).role ?? '').trim().toLowerCase()
     if (currentRole !== 'participant' && currentRole !== 'admin') {
-      return { error: '?? ?? ??? ??? ?????.' }
+      return { error: '이미 다른 역할로 등록된 계정입니다.' }
     }
 
     const { error: updateError } = await supabase
@@ -489,11 +489,11 @@ export async function registerStaffUser(formData: {
     .maybeSingle()
 
   if (invitationLookupError) {
-    return { error: `?? ?? ??: ${invitationLookupError.message}` }
+    return { error: `초대 확인 실패: ${invitationLookupError.message}` }
   }
 
   if (existingInvitation) {
-    return { error: '?? ??? ??? ??????. ?? ? ?? ??? ?? ??? ? ????.' }
+    return { error: '이미 역할이 지정된 이메일입니다. 가입 전 초대 역할도 다시 수정할 수 없습니다.' }
   }
 
   const { error: invitationError } = await supabase

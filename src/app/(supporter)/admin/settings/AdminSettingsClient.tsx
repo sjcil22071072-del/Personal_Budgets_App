@@ -160,24 +160,9 @@ export default function AdminSettingsClient({
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          {isCurrentUser || isParticipantRecord ? (
-                            <span className={`inline-flex rounded-lg px-3 py-1 text-xs font-bold ring-1 ${ROLE_COLORS[profile.role]}`}>
-                              {ROLE_LABELS[profile.role] || profile.role}
-                            </span>
-                          ) : (
-                            <select
-                              value={profile.role}
-                              onChange={(e) => handleRoleChange(profile.id, e.target.value as UserRole)}
-                              disabled={isPending}
-                              className="cursor-pointer rounded-lg bg-white px-3 py-1 text-xs font-bold ring-1 ring-zinc-200 transition-all hover:ring-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                            >
-                              {ROLE_OPTIONS.map((role) => (
-                                <option key={role.value} value={role.value}>
-                                  {role.label}
-                                </option>
-                              ))}
-                            </select>
-                          )}
+                          <span className={`inline-flex rounded-lg px-3 py-1 text-xs font-bold ring-1 ${ROLE_COLORS[profile.role]}`}>
+                            {ROLE_LABELS[profile.role] || profile.role}
+                          </span>
                         </td>
                       </tr>
                     )
