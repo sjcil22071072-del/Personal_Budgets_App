@@ -77,7 +77,7 @@ export async function getSignedImageUrls(
  */
 export async function getSignedImageUrl(
   url: string | null,
-  bucket: 'receipts' | 'activity-photos'
+  bucket: 'receipts' | 'activity-photos' | 'documents' | 'evidence-documents'
 ): Promise<string | null> {
   if (!url) return null
 

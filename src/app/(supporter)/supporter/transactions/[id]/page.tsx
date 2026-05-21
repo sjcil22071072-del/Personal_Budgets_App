@@ -37,7 +37,7 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     .eq("id", id)
     .single();
 
-  const [signedReceiptUrls, signedActivityUrls] = await Promise.all([
+  const [signedReceiptUrls, signedActivityUrls, signedEvidenceUrls] = await Promise.all([
     Promise.all(
       (tx?.receipt_image_urls || []).map((url: string) =>
         getSignedImageUrl(url, "receipts")
@@ -48,6 +48,11 @@ export default async function TransactionDetailPage({ params }: PageProps) {
         getSignedImageUrl(url, "activity-photos")
       )
     ),
+    Promise.all(
+      (tx?.evidence_image_urls || []).map((url: string) =>
+        getSignedImageUrl(url, "evidence-documents")
+      )
+    ),
   ]);
 
   if (tx) {
@@ -56,6 +61,9 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     );
     tx.activity_image_urls = (tx.activity_image_urls || []).map(
       (url: string, idx: number) => signedActivityUrls[idx] ?? url
+    );
+    tx.evidence_image_urls = (tx.evidence_image_urls || []).map(
+      (url: string, idx: number) => signedEvidenceUrls[idx] ?? url
     );
   }
 

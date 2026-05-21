@@ -3,6 +3,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getSignedImageUrl } from './storage'
 
 export interface ParticipantWithFundingSources {
   id: string
@@ -418,7 +419,8 @@ export async function addEvidenceImage(
   if (dbError) return { error: `저장 실패: ${dbError.message}` }
 
   revalidatePath(`/supporter/transactions/${transactionId}`)
-  return { success: true, url: publicUrl }
+  const signedUrl = await getSignedImageUrl(publicUrl, 'evidence-documents')
+  return { success: true, url: signedUrl ?? publicUrl }
 }
 
 /**
@@ -506,7 +508,8 @@ export async function addReceiptImage(
   if (dbError) return { error: `저장 실패: ${dbError.message}` }
 
   revalidatePath(`/supporter/transactions/${transactionId}`)
-  return { success: true, url: publicUrl }
+  const signedUrl = await getSignedImageUrl(publicUrl, 'receipts')
+  return { success: true, url: signedUrl ?? publicUrl }
 }
 
 /**
@@ -593,7 +596,8 @@ export async function addActivityImage(
   if (dbError) return { error: `저장 실패: ${dbError.message}` }
 
   revalidatePath(`/supporter/transactions/${transactionId}`)
-  return { success: true, url: publicUrl }
+  const signedUrl = await getSignedImageUrl(publicUrl, 'activity-photos')
+  return { success: true, url: signedUrl ?? publicUrl }
 }
 
 /**

@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import MoreMenuClient from '@/components/layout/MoreMenuClient'
+import { getSignedImageUrl } from '@/app/actions/storage'
 import NavDropdown from '@/components/layout/NavDropdown'
 import HelpButton from '@/components/help/HelpButton'
 import HelpAutoTrigger from '@/components/help/HelpAutoTrigger'
@@ -31,6 +32,16 @@ export default async function MorePage({
     .select('*')
     .eq('participant_id', user.id)
     .order('created_at', { ascending: false })
+
+  const signedFileLinks = fileLinks ? await Promise.all(
+    fileLinks.map(async (doc) => {
+      if (doc.url) {
+        const signed = await getSignedImageUrl(doc.url, 'documents')
+        return { ...doc, url: signed ?? doc.url }
+      }
+      return doc
+    })
+  ) : []
 
   return (
     <div className="flex flex-col min-h-dvh bg-zinc-50 text-foreground pb-10">
@@ -63,7 +74,7 @@ export default async function MorePage({
         </section>
 
         {/* 클라이언트 컴포넌트 (설정 및 로그아웃 핸들링) */}
-        <MoreMenuClient fileLinks={fileLinks || []} initialOpenSection={open} />
+        <MoreMenuClient fileLinks={signedFileLinks} initialOpenSection={open} />
         
         <div className="text-center py-4">
           <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.3em]">중랑구청 개인예산</p>

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import DocumentManagerClient from '@/components/documents/DocumentManagerClient'
 import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
+import { getSignedImageUrl } from '@/app/actions/storage'
 
 export default async function SupporterDocumentsPage({
   searchParams,
@@ -39,6 +40,17 @@ export default async function SupporterDocumentsPage({
         .in('participant_id', participantIds)
         .order('created_at', { ascending: false })
       documents = docsData || []
+      
+      // Supabase Storage에 있는 문서 파일인 경우 signed URL 발급
+      documents = await Promise.all(
+        documents.map(async (doc) => {
+          if (doc.url) {
+            const signed = await getSignedImageUrl(doc.url, 'documents')
+            return { ...doc, url: signed ?? doc.url }
+          }
+          return doc
+        })
+      )
     }
   } catch {
     // file_links 테이블이 없거나 쿼리 실패 시 빈 배열
