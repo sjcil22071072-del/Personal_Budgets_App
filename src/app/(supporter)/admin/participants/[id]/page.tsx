@@ -5,7 +5,6 @@ import Link from 'next/link'
 import ParticipantDetailClient from './ParticipantDetailClient'
 import { isAdminRole, isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
-import { getSupporters } from '@/app/actions/admin'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -29,13 +28,11 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
   const [
     { data: participant },
     { data: recentTransactions },
-    supportersResult,
   ] = await Promise.all([
     adminClient
       .from('participants')
       .select(`
         *,
-        supporter:profiles!participants_assigned_supporter_id_fkey ( id, name ),
         funding_sources ( * )
       `)
       .eq('id', id)
@@ -46,7 +43,6 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
       .eq('participant_id', id)
       .order('date', { ascending: false })
       .limit(5),
-    isAdmin ? getSupporters() : Promise.resolve({ supporters: [], error: null }),
   ])
 
   if (!participant) {
@@ -82,7 +78,6 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
       totalMonthlyBudget={totalMonthlyBudget}
       backUrl={backUrl}
       isAdmin={isAdmin}
-      supporters={(supportersResult.supporters || []) as { id: string; name: string | null; role: string }[]}
     />
   )
 }

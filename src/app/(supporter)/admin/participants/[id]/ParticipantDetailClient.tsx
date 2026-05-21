@@ -10,7 +10,6 @@ import {
   updateFundingSource,
   deleteFundingSource,
   createFundingSource,
-  getSupporters,
 } from '@/app/actions/admin'
 import { formatCurrency } from '@/utils/budget-visuals'
 
@@ -24,8 +23,6 @@ interface ParticipantDetailClientProps {
   totalMonthlyBudget: number
   backUrl: string
   isAdmin: boolean
-  // 서버에서 미리 조회해서 넘겨주는 관리자 목록
-  supporters?: { id: string; name: string | null; role: string }[]
 }
 
 export default function ParticipantDetailClient({
@@ -38,7 +35,6 @@ export default function ParticipantDetailClient({
   totalMonthlyBudget,
   backUrl,
   isAdmin,
-  supporters: initialSupporters = [],
 }: ParticipantDetailClientProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
@@ -53,27 +49,8 @@ export default function ParticipantDetailClient({
     startDate: participant.budget_start_date || '',
     endDate: participant.budget_end_date || '',
     alertThreshold: participant.alert_threshold || 0,
-    supporterId: participant.assigned_supporter_id || '',
   })
   const [isSavingInfo, setIsSavingInfo] = useState(false)
-
-  // 관리자 목록: 서버 props 우선, 없으면 편집 모드 진입 시 fetch
-  const [supporters, setSupporters] = useState(initialSupporters)
-  const [supportersLoading, setSupportersLoading] = useState(false)
-
-  useEffect(() => {
-    if (!isEditing) return
-    if (supporters.length > 0) return // 이미 있으면 스킵
-
-    setSupportersLoading(true)
-    getSupporters()
-      .then(result => {
-        if (!result.error && result.supporters) {
-          setSupporters(result.supporters as { id: string; name: string | null; role: string }[])
-        }
-      })
-      .finally(() => setSupportersLoading(false))
-  }, [isEditing]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 재원 상태
   const [fundingSources, setFundingSources] = useState<any[]>(initialFundingSources)
@@ -118,7 +95,7 @@ export default function ParticipantDetailClient({
         startDate: formData.startDate,
         endDate: formData.endDate,
         alertThreshold: formData.alertThreshold,
-        supporterId: formData.supporterId || null,
+        supporterId: null,
       })
       if (result.error) {
         setSaveError(result.error)
@@ -262,25 +239,7 @@ export default function ParticipantDetailClient({
                     className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                 </div>
 
-                {/* ── 담당 관리자 선택 드롭다운 ── */}
-                <div className="sm:col-span-2">
-                  <label className="text-zinc-400 text-xs font-medium block mb-1">담당 관리자</label>
-                  <select
-                    value={formData.supporterId}
-                    onChange={e => setFormData({ ...formData, supporterId: e.target.value })}
-                    disabled={supportersLoading}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white disabled:opacity-60"
-                  >
-                    <option value="">미지정</option>
-                    {supporters.map(s => (
-                      <option key={s.id} value={s.id}>{s.name || s.id.slice(0, 8)}</option>
-                    ))}
-                  </select>
-                  {supportersLoading && <p className="text-[11px] text-zinc-400 mt-0.5">관리자 목록 불러오는 중...</p>}
-                  {!supportersLoading && supporters.length === 0 && (
-                    <p className="text-[11px] text-amber-600 mt-0.5">등록된 관리자가 없습니다.</p>
-                  )}
-                </div>
+
 
                 <div>
                   <label className="text-zinc-400 text-xs font-medium block mb-1">운영 시작일</label>
@@ -311,10 +270,7 @@ export default function ParticipantDetailClient({
                   <span className="text-zinc-400 text-xs font-medium">운영 기간</span>
                   <p className="font-bold text-zinc-800">{participant.budget_start_date} ~ {participant.budget_end_date}</p>
                 </div>
-                <div>
-                  <span className="text-zinc-400 text-xs font-medium">담당 관리자</span>
-                  <p className="font-bold text-zinc-800">{participant.supporter?.name || '미지정'}</p>
-                </div>
+
                 <div>
                   <span className="text-zinc-400 text-xs font-medium">이메일</span>
                   <p className="font-bold text-zinc-800">{participant.email || '—'}</p>
