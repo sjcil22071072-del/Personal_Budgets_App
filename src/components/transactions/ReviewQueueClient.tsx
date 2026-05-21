@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { updateTransactionStatus, updateTransaction, deleteTransaction } from '@/app/actions/transaction'
 import { searchPlaces } from '@/app/actions/geocode'
 import type { PlaceResult } from '@/app/actions/geocode'
@@ -203,12 +204,15 @@ export default function ReviewQueueClient({ transactions, allFundingSources }: P
           >
             {/* 카드 헤더 */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-100 bg-zinc-50">
-              <div className="flex items-center gap-2">
+              <Link
+                href={`/supporter/transactions/${tx.id}`}
+                className="flex items-center gap-2 rounded-xl px-1 py-1 transition-colors hover:bg-zinc-100"
+              >
                 <div className="w-7 h-7 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-black text-zinc-600">
                   {(tx.participant_name ?? '?')[0]}
                 </div>
-                <span className="font-black text-sm text-zinc-800">{tx.participant_name}</span>
-              </div>
+                <span className="font-black text-sm text-zinc-800 underline-offset-2 hover:underline">{tx.participant_name}</span>
+              </Link>
               <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">검토 대기</span>
             </div>
 

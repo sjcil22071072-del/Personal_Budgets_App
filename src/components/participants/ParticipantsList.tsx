@@ -43,7 +43,11 @@ export default function ParticipantsList({ participants }: ParticipantsListProps
         const percentage = totalBudget > 0 ? Math.round((totalBalance / totalBudget) * 100) : 0
 
         return (
-          <div key={p.id} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+          <Link
+            key={p.id}
+            href={`/admin/participants/${p.id}`}
+            className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 transition-all hover:ring-zinc-400 active:scale-[0.99]"
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-lg font-bold text-zinc-600">
@@ -72,16 +76,7 @@ export default function ParticipantsList({ participants }: ParticipantsListProps
                 style={{ width: `${percentage}%` }}
               />
             </div>
-
-            <div className="mt-5 flex gap-2 border-t border-zinc-50 pt-4">
-              <Link
-                href={`/admin/participants/${p.id}`}
-                className="rounded-xl bg-zinc-100 px-4 py-3 text-center text-xs font-black text-zinc-600 transition-all hover:bg-zinc-200"
-              >
-                상세 설정
-              </Link>
-            </div>
-          </div>
+          </Link>
         )
       })}
     </>
