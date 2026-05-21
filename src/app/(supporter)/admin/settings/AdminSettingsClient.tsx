@@ -1,7 +1,3 @@
-'use client'
-
-import { useState, useTransition } from 'react'
-import { updateUserRole } from '@/app/actions/admin'
 import Link from 'next/link'
 import type { UserRole } from '@/types/database'
 
@@ -20,11 +16,6 @@ interface AdminSettingsClientProps {
   profiles: Profile[]
 }
 
-const ROLE_OPTIONS: { value: UserRole; label: string; desc: string }[] = [
-  { value: 'admin', label: '관리자', desc: '전체 시스템 관리 권한' },
-  { value: 'participant', label: '당사자', desc: '개인 예산 관리' },
-]
-
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-50 text-red-600 ring-red-200',
   participant: 'bg-green-50 text-green-600 ring-green-200',
@@ -40,21 +31,6 @@ export default function AdminSettingsClient({
   currentUserEmail,
   profiles,
 }: AdminSettingsClientProps) {
-  const [isPending, startTransition] = useTransition()
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-
-  const handleRoleChange = (userId: string, newRole: UserRole) => {
-    setMessage(null)
-    startTransition(async () => {
-      const result = await updateUserRole(userId, newRole)
-      if (result.error) {
-        setMessage({ type: 'error', text: result.error })
-      } else {
-        setMessage({ type: 'success', text: '역할이 변경되었습니다.' })
-      }
-    })
-  }
-
   return (
     <div className="flex min-h-screen flex-col bg-background pb-20 text-foreground">
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
@@ -73,28 +49,6 @@ export default function AdminSettingsClient({
               <p className="text-sm font-bold text-foreground">현재 관리자</p>
               <p className="text-xs text-muted-foreground">{currentUserEmail}</p>
             </div>
-          </div>
-        </section>
-
-        {message && (
-          <div className={`rounded-2xl p-4 text-center text-sm font-medium ${
-            message.type === 'success'
-              ? 'bg-green-50 text-green-700 ring-1 ring-green-200'
-              : 'bg-red-50 text-red-700 ring-1 ring-red-200'
-          }`}>
-            {message.text}
-          </div>
-        )}
-
-        <section className="flex flex-col gap-3">
-          <h2 className="ml-1 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">역할 안내</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {ROLE_OPTIONS.map((role) => (
-              <div key={role.value} className="rounded-2xl bg-card p-4 text-center ring-1 ring-border">
-                <p className="text-sm font-bold">{role.label}</p>
-                <p className="mt-1 text-[10px] text-muted-foreground">{role.desc}</p>
-              </div>
-            ))}
           </div>
         </section>
 
