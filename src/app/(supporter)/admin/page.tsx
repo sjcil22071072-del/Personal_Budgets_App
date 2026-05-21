@@ -41,29 +41,29 @@ export default async function AdminDashboardPage() {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 flex flex-col gap-6">
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium">
-          <span className="mt-0.5 text-base">ℹ</span>
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-6 sm:px-6 flex flex-col gap-6">
+        <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-zinc-100/50 border border-zinc-200/60 text-zinc-650 text-xs font-bold">
+          <span className="text-sm">ℹ️</span>
           <span>
             현재 화면은 관리자 화면입니다. 당사자 등록, 예산 현황, 검토 대기 항목을 관리합니다.
           </span>
         </div>
 
-        <section className="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-700 text-white shadow-lg">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-3xl">👋</span>
-            <h2 className="text-xl font-black">
+        <section className="p-6 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center gap-3 mb-1.5">
+            <span className="text-2xl">👋</span>
+            <h2 className="text-xl font-black text-zinc-800">
               안녕하세요, {authProfile.name || "관리자"}님
             </h2>
           </div>
-          <p className="text-sm text-zinc-300 font-medium">
-            당사자들의 예산 사용 현황을 한눈에 확인하세요.
+          <p className="text-xs text-zinc-450 font-bold">
+            당사자들의 예산 사용 현황을 실시간으로 관리하고 검토할 수 있어요.
           </p>
         </section>
 
         <Suspense
           fallback={
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 overflow-hidden animate-pulse">
+            <div className="rounded-3xl border border-zinc-200 bg-zinc-50 overflow-hidden animate-pulse">
               <div className="flex items-center gap-2 px-5 py-3 border-b border-zinc-200 bg-zinc-100">
                 <div className="w-5 h-5 rounded-full bg-zinc-300" />
                 <div className="h-4 w-32 bg-zinc-300 rounded" />
@@ -85,47 +85,47 @@ export default async function AdminDashboardPage() {
 
         <Suspense
           fallback={
-            <div className="rounded-2xl bg-zinc-50 animate-pulse h-64" />
+            <div className="rounded-3xl bg-zinc-50 animate-pulse h-64" />
           }
         >
           <AdminParticipantBoard />
         </Suspense>
 
         <section className="flex flex-col gap-3">
-          <h3 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em] ml-1">
+          <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">
             빠른 실행
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Link
               href="/admin/participants/new"
-              className="group flex flex-col items-center justify-center p-6 rounded-2xl bg-white ring-1 ring-zinc-200 hover:ring-zinc-900 hover:bg-zinc-50 transition-all shadow-sm active:scale-95"
+              className="group flex flex-col items-center justify-center p-5 rounded-3xl bg-white border border-zinc-200/80 hover:border-zinc-350 hover:bg-zinc-50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] active:scale-[0.98]"
             >
-              <span className="text-4xl mb-3 group-hover:scale-110 transition-transform">
-                ➕
+              <span className="text-3xl mb-2.5 group-hover:scale-105 transition-transform">
+                👤➕
               </span>
-              <span className="text-base font-black text-zinc-800">
+              <span className="text-sm font-black text-zinc-700">
                 당사자 등록
               </span>
             </Link>
             <Link
               href="/admin/participants"
-              className="group flex flex-col items-center justify-center p-6 rounded-2xl bg-white ring-1 ring-zinc-200 hover:ring-zinc-900 hover:bg-zinc-50 transition-all shadow-sm active:scale-95"
+              className="group flex flex-col items-center justify-center p-5 rounded-3xl bg-white border border-zinc-200/80 hover:border-zinc-350 hover:bg-zinc-50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] active:scale-[0.98]"
             >
-              <span className="text-4xl mb-3 group-hover:scale-110 transition-transform">
+              <span className="text-3xl mb-2.5 group-hover:scale-105 transition-transform">
                 👥
               </span>
-              <span className="text-base font-black text-zinc-800">
+              <span className="text-sm font-black text-zinc-700">
                 당사자 관리
               </span>
             </Link>
             <Link
               href="/admin/settings"
-              className="group flex flex-col items-center justify-center p-6 rounded-2xl bg-white ring-1 ring-zinc-200 hover:ring-zinc-900 hover:bg-zinc-50 transition-all shadow-sm active:scale-95"
+              className="group flex flex-col items-center justify-center p-5 rounded-3xl bg-white border border-zinc-200/80 hover:border-zinc-350 hover:bg-zinc-50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] active:scale-[0.98]"
             >
-              <span className="text-4xl mb-3 group-hover:scale-110 transition-transform">
+              <span className="text-3xl mb-2.5 group-hover:scale-105 transition-transform">
                 ⚙️
               </span>
-              <span className="text-base font-black text-zinc-800">설정</span>
+              <span className="text-sm font-black text-zinc-700">설정</span>
             </Link>
           </div>
         </section>

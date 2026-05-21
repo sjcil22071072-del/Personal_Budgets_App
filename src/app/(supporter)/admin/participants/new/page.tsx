@@ -95,103 +95,163 @@ export default function NewParticipantPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background pb-20 text-foreground">
-      <header className="sticky top-0 z-10 flex h-16 items-center border-b border-zinc-200 bg-background/80 px-4 backdrop-blur-md sm:px-6">
-        <Link href="/admin/participants" className="mr-3 text-zinc-400 transition-colors hover:text-zinc-600">←</Link>
-        <h1 className="text-xl font-bold tracking-tight">새 당사자 등록</h1>
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-zinc-200 bg-background/80 px-4 backdrop-blur-md sm:px-6">
+        <div className="flex items-center gap-3">
+          <Link href="/admin/participants" className="text-zinc-400 hover:text-zinc-650 transition-colors font-bold">←</Link>
+          <h1 className="text-xl font-black tracking-tight text-zinc-800">새 당사자 등록</h1>
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-lg flex-1 p-4 sm:p-6">
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-600">
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-xs font-bold text-red-650">
               {error}
             </div>
           )}
 
-          <fieldset className="flex flex-col gap-4 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
-            <legend className="px-1 text-xs font-black uppercase tracking-widest text-zinc-400">당사자 정보</legend>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-zinc-500">이름 *</label>
+          <fieldset className="flex flex-col gap-4 rounded-3xl bg-white p-6 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
+            <legend className="px-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-400">당사자 정보</legend>
+            
+            <div className="flex flex-col gap-1 mt-2">
+              <label className="text-xs font-bold text-zinc-400 block mb-1">이름 *</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="당사자 이름"
-                className="rounded-xl bg-zinc-50 p-3 font-medium text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400"
+                className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all"
                 required
               />
             </div>
+            
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-zinc-500">이메일 *</label>
+              <label className="text-xs font-bold text-zinc-400 block mb-1">이메일 *</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="participant@example.com"
-                className="rounded-xl bg-zinc-50 p-3 font-medium text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400"
+                className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all"
                 required
               />
             </div>
           </fieldset>
 
-          <fieldset className="flex flex-col gap-4 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
-            <legend className="px-1 text-xs font-black uppercase tracking-widest text-zinc-400">예산 설정</legend>
-            <div className="grid grid-cols-2 gap-4">
+          <fieldset className="flex flex-col gap-4 rounded-3xl bg-white p-6 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
+            <legend className="px-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-400">예산 설정</legend>
+            
+            <div className="grid grid-cols-2 gap-4 mt-2">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-zinc-500">월 예산</label>
-                <input type="number" value={monthlyBudget} onChange={(e) => setMonthlyBudget(e.target.value)} className="rounded-xl bg-zinc-50 p-3 font-bold text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400" required />
+                <label className="text-xs font-bold text-zinc-400 block mb-1">월 예산 (원)</label>
+                <input 
+                  type="number" 
+                  value={monthlyBudget} 
+                  onChange={(e) => setMonthlyBudget(e.target.value)} 
+                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-black transition-all" 
+                  required 
+                />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-zinc-500">연 예산</label>
-                <input type="number" value={yearlyBudget} onChange={(e) => setYearlyBudget(e.target.value)} className="rounded-xl bg-zinc-50 p-3 font-bold text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400" required />
+                <label className="text-xs font-bold text-zinc-400 block mb-1">연 예산 (원)</label>
+                <input 
+                  type="number" 
+                  value={yearlyBudget} 
+                  onChange={(e) => setYearlyBudget(e.target.value)} 
+                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-black transition-all" 
+                  required 
+                />
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-zinc-500">운영 시작일</label>
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="rounded-xl bg-zinc-50 p-3 text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400" required />
+                <label className="text-xs font-bold text-zinc-400 block mb-1">운영 시작일</label>
+                <input 
+                  type="date" 
+                  value={startDate} 
+                  onChange={(e) => setStartDate(e.target.value)} 
+                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm transition-all" 
+                  required 
+                />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-zinc-500">운영 종료일</label>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="rounded-xl bg-zinc-50 p-3 text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400" required />
+                <label className="text-xs font-bold text-zinc-400 block mb-1">운영 종료일</label>
+                <input 
+                  type="date" 
+                  value={endDate} 
+                  onChange={(e) => setEndDate(e.target.value)} 
+                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm transition-all" 
+                  required 
+                />
               </div>
             </div>
+
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-zinc-500">잔액 경고 기준</label>
-              <input type="number" value={alertThreshold} onChange={(e) => setAlertThreshold(e.target.value)} className="rounded-xl bg-zinc-50 p-3 font-bold text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400" required />
+              <label className="text-xs font-bold text-zinc-400 block mb-1">잔액 경고 기준액 (원)</label>
+              <input 
+                type="number" 
+                value={alertThreshold} 
+                onChange={(e) => setAlertThreshold(e.target.value)} 
+                className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-black transition-all" 
+                required 
+              />
             </div>
           </fieldset>
 
-          <fieldset className="flex flex-col gap-4 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
-            <div className="flex items-center justify-between">
-              <legend className="px-1 text-xs font-black uppercase tracking-widest text-zinc-400">자원 설정</legend>
+          <fieldset className="flex flex-col gap-4 rounded-3xl bg-white p-6 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
+            <div className="flex items-center justify-between mb-2">
+              <legend className="px-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-400">자원 설정</legend>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => handleFundingSourceCountChange(Math.max(1, fundingSourceCount - 1))} className="h-8 w-8 rounded-lg bg-zinc-100 font-bold text-zinc-600 transition-colors hover:bg-zinc-200">-</button>
-                <span className="w-6 text-center text-sm font-bold text-zinc-700">{fundingSourceCount}</span>
-                <button type="button" onClick={() => handleFundingSourceCountChange(Math.min(5, fundingSourceCount + 1))} className="h-8 w-8 rounded-lg bg-zinc-100 font-bold text-zinc-600 transition-colors hover:bg-zinc-200">+</button>
+                <button type="button" onClick={() => handleFundingSourceCountChange(Math.max(1, fundingSourceCount - 1))} className="h-8 w-8 rounded-xl border border-zinc-200 bg-white font-bold text-zinc-650 transition-all hover:bg-zinc-50 active:scale-95 flex items-center justify-center">-</button>
+                <span className="w-6 text-center text-sm font-black text-zinc-700">{fundingSourceCount}</span>
+                <button type="button" onClick={() => handleFundingSourceCountChange(Math.min(5, fundingSourceCount + 1))} className="h-8 w-8 rounded-xl border border-zinc-200 bg-white font-bold text-zinc-650 transition-all hover:bg-zinc-50 active:scale-95 flex items-center justify-center">+</button>
               </div>
             </div>
 
             {fundingSources.map((fs, i) => (
-              <div key={i} className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                <div className="text-xs font-bold text-zinc-500">자원 {i + 1}</div>
-                <input type="text" value={fs.name} onChange={(e) => updateFundingSource(i, 'name', e.target.value)} placeholder="자원 이름" className="rounded-xl bg-white p-3 font-medium text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400" required />
+              <div key={i} className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/30 p-5">
+                <div className="text-[10px] font-black uppercase tracking-wider text-zinc-400">자원 {i + 1}</div>
+                <input 
+                  type="text" 
+                  value={fs.name} 
+                  onChange={(e) => updateFundingSource(i, 'name', e.target.value)} 
+                  placeholder="자원 이름 (예: 활동지원급여)" 
+                  className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-semibold bg-white" 
+                  required 
+                />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-medium text-zinc-400">월 예산</label>
-                    <input type="number" value={fs.monthly_budget} onChange={(e) => updateFundingSource(i, 'monthly_budget', e.target.value)} className="rounded-lg bg-white p-2.5 text-sm font-bold text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400" required />
+                    <label className="text-[10px] font-bold text-zinc-450 block mb-0.5">월 예산 (원)</label>
+                    <input 
+                      type="number" 
+                      value={fs.monthly_budget} 
+                      onChange={(e) => updateFundingSource(i, 'monthly_budget', e.target.value)} 
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-black bg-white" 
+                      required 
+                    />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-medium text-zinc-400">연 예산</label>
-                    <input type="number" value={fs.yearly_budget} onChange={(e) => updateFundingSource(i, 'yearly_budget', e.target.value)} className="rounded-lg bg-white p-2.5 text-sm font-bold text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-zinc-400" required />
+                    <label className="text-[10px] font-bold text-zinc-450 block mb-0.5">연 예산 (원)</label>
+                    <input 
+                      type="number" 
+                      value={fs.yearly_budget} 
+                      onChange={(e) => updateFundingSource(i, 'yearly_budget', e.target.value)} 
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-black bg-white" 
+                      required 
+                    />
                   </div>
                 </div>
               </div>
             ))}
           </fieldset>
 
-          <button type="submit" disabled={saving || !name.trim() || !email.trim()} className="rounded-2xl bg-zinc-900 p-4 text-base font-bold text-white shadow-lg transition-colors hover:bg-zinc-800 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50">
-            {saving ? '저장하고 있습니다...' : '당사자 등록하기'}
+          <button 
+            type="submit" 
+            disabled={saving || !name.trim() || !email.trim()} 
+            className="rounded-3xl bg-zinc-900 p-4 text-sm font-bold text-white shadow-md transition-all hover:bg-zinc-800 active:scale-[0.99] disabled:opacity-50"
+          >
+            {saving ? '등록하는 중...' : '당사자 등록하기'}
           </button>
         </form>
       </main>

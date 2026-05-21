@@ -44,19 +44,19 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
   return (
     <div className="space-y-6">
       {/* 검색 바 */}
-      <div className="flex items-center gap-2 max-w-md bg-white rounded-2xl ring-1 ring-zinc-200 px-4 py-3 shadow-sm">
-        <span className="text-zinc-400">🔍</span>
+      <div className="flex items-center gap-2 max-w-md bg-white rounded-3xl border border-zinc-200/80 px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.015)] transition-all focus-within:border-zinc-300">
+        <span className="text-zinc-400 text-sm">🔍</span>
         <input
           type="text"
           placeholder="당사자 이름으로 검색..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full text-sm font-medium outline-none bg-transparent placeholder-zinc-400 text-zinc-800"
+          className="w-full text-sm font-semibold outline-none bg-transparent placeholder-zinc-400 text-zinc-800"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="text-xs font-black text-zinc-400 hover:text-zinc-600 transition-colors px-1"
+            className="text-xs font-bold text-zinc-400 hover:text-zinc-600 transition-colors px-1"
           >
             초기화
           </button>
@@ -71,54 +71,54 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
           const isExpanded = expandedId === p.id
 
           return (
-            <div key={p.id} className="bg-white rounded-3xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div key={p.id} className="bg-white rounded-3xl border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.025)] transition-all duration-300 overflow-hidden">
               {/* 당사자 헤더 - 클릭하면 펼침/접힘 */}
               <button
                 onClick={() => toggleExpand(p.id)}
-                className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-zinc-50 transition-colors"
+                className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-zinc-50/50 transition-colors"
               >
-                <div className="w-11 h-11 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-600 text-base font-black shrink-0">
+                <div className="w-11 h-11 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-600 text-base font-black shrink-0">
                   {p.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-black text-zinc-800 text-base">{p.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      hasFamily ? 'bg-green-50 text-green-700' : 'bg-zinc-100 text-zinc-400'
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      hasFamily ? 'bg-green-50 text-green-700 border-green-100/80' : 'bg-zinc-50 text-zinc-400 border-zinc-200/60'
                     }`}>
                       증명서 {hasFamily ? '✓' : '✕'}
                     </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      totalCards > 0 ? 'bg-green-50 text-green-700' : 'bg-zinc-100 text-zinc-400'
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      totalCards > 0 ? 'bg-green-50 text-green-700 border-green-100/80' : 'bg-zinc-50 text-zinc-400 border-zinc-200/60'
                     }`}>
                       카드 {totalCards > 0 ? `${totalCards}건` : '✕'}
                     </span>
                   </div>
                 </div>
-                <span className={`text-zinc-400 text-sm transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                <span className={`text-zinc-400 text-xs transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
                   ▼
                 </span>
               </button>
 
               {/* 펼쳐진 상세 영역 */}
               {isExpanded && (
-                <div className="px-6 pb-6 pt-2 border-t border-zinc-100 space-y-5 animate-in slide-in-from-top-2 duration-200">
+                <div className="px-6 pb-6 pt-2 border-t border-zinc-100/80 space-y-5 animate-in slide-in-from-top-2 duration-200">
 
                   {/* 가족관계증명서 */}
-                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="p-5 rounded-2xl bg-zinc-50/40 border border-zinc-200/50">
+                    <div className="flex items-center justify-between mb-4">
                       <span className="text-xs font-black text-zinc-700">📄 가족관계증명서</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        hasFamily ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        hasFamily ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-650 border-red-100'
                       }`}>
                         {hasFamily ? '제출 완료' : '미등록'}
                       </span>
                     </div>
 
                     {hasFamily ? (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div
-                          className="group relative w-full max-w-xs h-40 rounded-xl overflow-hidden border border-zinc-200 bg-white cursor-zoom-in"
+                          className="group relative w-full max-w-xs h-40 rounded-2xl overflow-hidden border border-zinc-200/80 bg-white cursor-zoom-in shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
                           onClick={() => setActiveImage(p.familyRelation.imageUrl)}
                         >
                           <img
@@ -130,22 +130,22 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                             <span>🔍</span> 크게 보기
                           </div>
                         </div>
-                        <p className="text-[9px] text-zinc-400">제출일: {formatDate(p.familyRelation.createdAt)}</p>
+                        <p className="text-[9px] text-zinc-400 font-medium">제출일: {formatDate(p.familyRelation.createdAt)}</p>
                       </div>
                     ) : (
-                      <div className="w-full max-w-xs h-28 rounded-xl border border-dashed border-zinc-300 flex flex-col items-center justify-center text-[10px] text-zinc-400 bg-white gap-1">
+                      <div className="w-full max-w-xs h-28 rounded-2xl border border-dashed border-zinc-200 flex flex-col items-center justify-center text-[10px] text-zinc-400 bg-white gap-1">
                         <span className="text-lg">📄</span>
-                        <span>제출된 증명서가 없습니다.</span>
+                        <span className="font-semibold text-zinc-400">제출된 증명서가 없습니다.</span>
                       </div>
                     )}
                   </div>
 
                   {/* 등록 카드 목록 */}
-                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="p-5 rounded-2xl bg-zinc-50/40 border border-zinc-200/50">
+                    <div className="flex items-center justify-between mb-4">
                       <span className="text-xs font-black text-zinc-700">💳 등록 카드 정보</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        totalCards > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        totalCards > 0 ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-650 border-red-100'
                       }`}>
                         {totalCards > 0 ? `${totalCards}건 등록` : '미등록'}
                       </span>
@@ -154,16 +154,16 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                     {totalCards > 0 ? (
                       <div className="space-y-4">
                         {p.cardRegistrations.map((card, cardIdx) => (
-                          <div key={cardIdx} className="space-y-2">
+                          <div key={cardIdx} className="space-y-3">
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-bold text-zinc-500">카드 #{cardIdx + 1}</span>
-                              <span className="text-[9px] text-zinc-400">등록일: {formatDate(card.createdAt)}</span>
+                              <span className="text-[9px] text-zinc-400 font-medium">등록일: {formatDate(card.createdAt)}</span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 max-w-sm">
+                            <div className="grid grid-cols-2 gap-2.5 max-w-sm">
                               {card.imageUrls.map((url, imgIdx) => (
                                 <div
                                   key={imgIdx}
-                                  className="group relative h-32 rounded-xl overflow-hidden border border-zinc-200 bg-white cursor-zoom-in"
+                                  className="group relative h-32 rounded-2xl overflow-hidden border border-zinc-200/80 bg-white cursor-zoom-in shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
                                   onClick={() => setActiveImage(url)}
                                 >
                                   <img
@@ -177,14 +177,14 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                                 </div>
                               ))}
                             </div>
-                            {cardIdx < totalCards - 1 && <div className="border-b border-zinc-200 mt-2" />}
+                            {cardIdx < totalCards - 1 && <div className="border-b border-zinc-200/60 mt-3" />}
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="w-full max-w-xs h-28 rounded-xl border border-dashed border-zinc-300 flex flex-col items-center justify-center text-[10px] text-zinc-400 bg-white gap-1">
+                      <div className="w-full max-w-xs h-28 rounded-2xl border border-dashed border-zinc-200 flex flex-col items-center justify-center text-[10px] text-zinc-400 bg-white gap-1">
                         <span className="text-lg">💳</span>
-                        <span>등록된 카드가 없습니다.</span>
+                        <span className="font-semibold text-zinc-400">등록된 카드가 없습니다.</span>
                       </div>
                     )}
                   </div>
@@ -195,7 +195,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
         })}
 
         {filtered.length === 0 && (
-          <div className="py-16 text-center text-zinc-400 font-bold bg-white rounded-3xl border border-dashed border-zinc-300">
+          <div className="py-16 text-center text-zinc-450 font-bold bg-white rounded-3xl border border-dashed border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
             검색 결과와 일치하는 당사자가 없습니다.
           </div>
         )}

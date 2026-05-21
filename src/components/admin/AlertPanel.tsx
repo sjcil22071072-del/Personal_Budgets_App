@@ -64,21 +64,21 @@ export default async function AlertPanel() {
   if (alerts.length === 0) return null
 
   const iconMap: Record<Alert['type'], string> = {
-    low_balance: '💰',
+    low_balance: '🚨',
     pending_receipt: '🧾',
   }
   const colorMap: Record<Alert['type'], string> = {
-    low_balance: 'text-red-700 bg-red-50 border-red-200',
-    pending_receipt: 'text-orange-700 bg-orange-50 border-orange-200',
+    low_balance: 'text-red-650 bg-red-50/40 hover:bg-red-50/70 border-red-100',
+    pending_receipt: 'text-orange-700 bg-orange-50/40 hover:bg-orange-50/70 border-orange-100',
   }
 
   const pendingTotal = Array.from(pendingMap.values()).reduce((s, v) => s + v.count, 0)
 
   return (
-    <section className="rounded-2xl border border-orange-200 bg-orange-50 overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-orange-200 bg-orange-100">
+    <section className="rounded-3xl border border-orange-200/60 bg-orange-50/20 overflow-hidden shadow-[0_4px_20px_rgba(249,115,22,0.01)]">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-orange-100/80 bg-orange-50/50">
         <div className="flex items-center gap-2">
-          <span className="text-lg">⚠️</span>
+          <span className="text-base">⚠️</span>
           <span className="font-black text-orange-800 text-sm">주의가 필요한 항목 {alerts.length}건</span>
         </div>
         {pendingTotal > 0 && (
@@ -91,7 +91,7 @@ export default async function AlertPanel() {
         )}
       </div>
 
-      <div className="divide-y divide-orange-100">
+      <div className="divide-y divide-orange-100/50">
         {alerts.slice(0, 6).map((alert, i) => (
           <Link
             key={i}
@@ -100,16 +100,16 @@ export default async function AlertPanel() {
                 ? '/supporter/review'
                 : `/admin/participants/${alert.participantId}`
             }
-            className={`flex items-center gap-3 px-5 py-3 transition-colors hover:brightness-95 ${colorMap[alert.type]}`}
+            className={`flex items-center gap-3 px-5 py-3.5 transition-all border-b last:border-b-0 ${colorMap[alert.type]}`}
           >
             <span className="text-base shrink-0">{iconMap[alert.type]}</span>
             <span className="font-bold text-sm shrink-0">{alert.participantName}</span>
-            <span className="text-sm">— {alert.message}</span>
+            <span className="text-xs font-semibold opacity-90">— {alert.message}</span>
             <span className="ml-auto text-xs opacity-60">→</span>
           </Link>
         ))}
         {alerts.length > 6 && (
-          <div className="px-5 py-2 text-xs font-bold text-orange-500">
+          <div className="px-5 py-2.5 text-xs font-bold text-orange-500 bg-orange-50/10">
             외 {alerts.length - 6}건 더 있어요
           </div>
         )}

@@ -84,12 +84,12 @@ export default async function AdminParticipantBoard() {
         <span className="text-xs text-zinc-400 font-bold">{year}년 {month}월 · {total}명</span>
       </div>
 
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-700 text-white">
+      <div className="p-5 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-bold text-slate-300">전체 예산 사용률</span>
-          <span className="text-2xl font-black">{overallPct}%</span>
+          <span className="text-xs font-bold text-zinc-450">전체 예산 사용률</span>
+          <span className="text-2xl font-black text-zinc-800">{overallPct}%</span>
         </div>
-        <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
+        <div className="h-3 w-full rounded-full bg-zinc-100 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{
@@ -98,35 +98,35 @@ export default async function AdminParticipantBoard() {
             }}
           />
         </div>
-        <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-300">
+        <div className="mt-3 flex items-center justify-between text-xs font-bold text-zinc-400">
           <span>사용: {formatCurrency(totalSpent)}원</span>
           <span>전체 예산: {formatCurrency(totalBudget)}원</span>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="flex flex-col items-center gap-0.5 py-2 rounded-xl bg-white/10">
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <div className="flex flex-col items-center gap-1 py-3 rounded-2xl bg-zinc-50/50 border border-zinc-150">
             <span className="text-lg">🚨</span>
-            <span className="text-xl font-black text-red-300">{danger}</span>
-            <span className="text-[10px] font-bold text-red-300/80">위험</span>
+            <span className="text-xl font-black text-red-500">{danger}</span>
+            <span className="text-[10px] font-bold text-zinc-400">위험</span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 py-2 rounded-xl bg-white/10">
+          <div className="flex flex-col items-center gap-1 py-3 rounded-2xl bg-zinc-50/50 border border-zinc-150">
             <span className="text-lg">⚠️</span>
-            <span className="text-xl font-black text-orange-300">{warning}</span>
-            <span className="text-[10px] font-bold text-orange-300/80">주의</span>
+            <span className="text-xl font-black text-orange-500">{warning}</span>
+            <span className="text-[10px] font-bold text-zinc-400">주의</span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 py-2 rounded-xl bg-white/10">
+          <div className="flex flex-col items-center gap-1 py-3 rounded-2xl bg-zinc-50/50 border border-zinc-150">
             <span className="text-lg">✅</span>
-            <span className="text-xl font-black text-green-300">{safe}</span>
-            <span className="text-[10px] font-bold text-green-300/80">양호</span>
+            <span className="text-xl font-black text-green-500">{safe}</span>
+            <span className="text-[10px] font-bold text-zinc-400">양호</span>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white ring-1 ring-zinc-200 overflow-hidden">
-        <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_100px_64px_32px] px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 gap-2 items-center">
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">당사자 · 잔액</span>
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center hidden sm:block">영수증</span>
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center hidden sm:block">서류</span>
+      <div className="rounded-3xl bg-white border border-zinc-200/80 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+        <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_100px_64px_32px] px-5 py-3 bg-zinc-50/80 border-b border-zinc-150 gap-2 items-center">
+          <span className="text-[10px] font-black text-zinc-450 uppercase tracking-widest">당사자 · 잔액</span>
+          <span className="text-[10px] font-black text-zinc-455 uppercase tracking-widest text-center hidden sm:block">영수증</span>
+          <span className="text-[10px] font-black text-zinc-455 uppercase tracking-widest text-center hidden sm:block">서류</span>
           <span className="hidden sm:block" />
         </div>
 
@@ -135,7 +135,7 @@ export default async function AdminParticipantBoard() {
             <Link
               key={r.id}
               href={`/admin/participants/${r.id}`}
-              className="grid grid-cols-1 sm:grid-cols-[1fr_100px_64px_32px] px-4 py-3.5 gap-2 items-center hover:bg-zinc-50 transition-colors"
+              className="grid grid-cols-1 sm:grid-cols-[1fr_100px_64px_32px] px-5 py-4 gap-2 items-center hover:bg-zinc-50/80 transition-colors"
             >
               <div className="flex flex-col gap-1.5 min-w-0">
                 <div className="flex items-center justify-between gap-2">
@@ -184,8 +184,6 @@ export default async function AdminParticipantBoard() {
                 )}
               </div>
 
-
-
               <div className="text-center hidden sm:block">
                 <span className={`text-[11px] font-black ${r.fileCount > 0 ? 'text-zinc-700' : 'text-zinc-300'}`}>
                   {r.fileCount > 0 ? `${r.fileCount}건` : '—'}
@@ -203,7 +201,7 @@ export default async function AdminParticipantBoard() {
           )}
         </div>
 
-        <div className={`px-5 py-3 border-t border-zinc-100 flex items-center gap-2 ${allSettled ? 'bg-green-50' : 'bg-zinc-50'}`}>
+        <div className={`px-5 py-3.5 border-t border-zinc-150 flex items-center gap-2 ${allSettled ? 'bg-green-50/40' : 'bg-zinc-50/50'}`}>
           <span className="text-sm">{allSettled ? '✅' : '⏳'}</span>
           <span className={`text-xs font-bold ${allSettled ? 'text-green-700' : 'text-zinc-500'}`}>
             {allSettled ? `${month}월 모든 영수증 승인 완료` : `${month}월 영수증 검토 중`}

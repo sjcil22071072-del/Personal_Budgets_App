@@ -99,26 +99,26 @@ export default async function SubmittedDocumentsPage() {
     <div className="flex min-h-screen flex-col bg-background pb-20 text-foreground">
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-zinc-200 bg-background/80 px-4 backdrop-blur-md sm:px-6">
         <div className="flex items-center gap-3">
-          <Link href="/admin" className="text-zinc-400 transition-colors hover:text-zinc-600">←</Link>
-          <h1 className="text-xl font-bold tracking-tight">제출 서류 관리</h1>
+          <Link href="/admin" className="text-zinc-400 transition-colors hover:text-zinc-650 font-bold">←</Link>
+          <h1 className="text-xl font-black tracking-tight text-zinc-800">제출 서류 관리</h1>
         </div>
-        <div className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold text-red-500">관리자</div>
+        <div className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold text-red-500 border border-red-100">관리자</div>
       </header>
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 p-4 sm:p-6">
         {/* 요약 통계 카드 */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+          <div className="rounded-3xl bg-white p-5 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">전체 당사자</span>
-            <p className="mt-1 text-3xl font-black text-zinc-900">{initialData.length}명</p>
+            <p className="mt-1 text-3xl font-black text-zinc-800">{initialData.length}<span className="text-xs text-zinc-400 font-bold ml-0.5">명</span></p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+          <div className="rounded-3xl bg-white p-5 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">가족관계증명서</span>
-            <p className="mt-1 text-3xl font-black text-green-600">{familyCount}<span className="text-base font-bold text-zinc-400">/{initialData.length}</span></p>
+            <p className="mt-1 text-3xl font-black text-green-600">{familyCount}<span className="text-xs text-zinc-400 font-bold ml-0.5">/{initialData.length}</span></p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+          <div className="rounded-3xl bg-white p-5 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">카드 등록</span>
-            <p className="mt-1 text-3xl font-black text-green-600">{cardCount}<span className="text-base font-bold text-zinc-400">/{initialData.length}</span></p>
+            <p className="mt-1 text-3xl font-black text-green-600">{cardCount}<span className="text-xs text-zinc-400 font-bold ml-0.5">/{initialData.length}</span></p>
           </div>
         </div>
 

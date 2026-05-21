@@ -40,70 +40,73 @@ export default function StaffRegistrationClient() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {message && (
         <div
-          className={`rounded-xl border px-4 py-3 text-sm font-medium ${
+          className={`rounded-2xl border px-4 py-3 text-xs font-bold ${
             message.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-green-100 bg-green-50 text-green-650'
+              : 'border-red-100 bg-red-50 text-red-650'
           }`}
         >
           {message.text}
         </div>
       )}
 
-      <fieldset className="flex flex-col gap-4 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
+      <fieldset className="flex flex-col gap-4 rounded-3xl bg-white p-6 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
         <legend className="px-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
           계정 정보
         </legend>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-zinc-500">이름 *</label>
+        <div className="flex flex-col gap-1.5 mt-2">
+          <label className="text-xs font-bold text-zinc-450">이름 *</label>
           <input
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="홍길동"
             required
-            className="rounded-xl bg-zinc-50 p-3 text-sm font-medium text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all"
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-zinc-500">이메일 *</label>
+          <label className="text-xs font-bold text-zinc-450">이메일 *</label>
           <input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="user@gmail.com"
             required
-            className="rounded-xl bg-zinc-50 p-3 text-sm font-medium text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all"
           />
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-1.5">
-        <label className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
+      <fieldset className="flex flex-col gap-4 rounded-3xl bg-white p-6 border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
+        <legend className="px-1 text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
           메모
-        </label>
-        <input
-          type="text"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          placeholder="소속, 참고사항 등"
-          className="rounded-xl bg-white p-3 text-sm text-zinc-800 ring-1 ring-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-        />
+        </legend>
+        <div className="flex flex-col gap-1.5 mt-2">
+          <label className="text-xs font-bold text-zinc-450">참고사항 (선택)</label>
+          <input
+            type="text"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="소속, 참고사항 등"
+            className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all"
+          />
+        </div>
       </fieldset>
 
       <div className="grid grid-cols-2 gap-3">
         <Link
           href="/admin/settings"
-          className="rounded-2xl bg-zinc-100 p-4 text-center text-sm font-bold text-zinc-600 transition-colors hover:bg-zinc-200"
+          className="rounded-3xl bg-zinc-100 py-4 text-center text-xs font-bold text-zinc-650 transition-all hover:bg-zinc-200 active:scale-[0.99]"
         >
           취소
         </Link>
         <button
           type="submit"
           disabled={isPending || !name.trim() || !email.trim()}
-          className="rounded-2xl bg-zinc-900 p-4 text-sm font-bold text-white shadow-lg transition-colors hover:bg-zinc-800 disabled:pointer-events-none disabled:opacity-50"
+          className="rounded-3xl bg-zinc-900 py-4 text-xs font-bold text-white shadow-md transition-all hover:bg-zinc-800 active:scale-[0.99] disabled:opacity-50"
         >
           {isPending ? '등록 중...' : '관리자 등록'}
         </button>

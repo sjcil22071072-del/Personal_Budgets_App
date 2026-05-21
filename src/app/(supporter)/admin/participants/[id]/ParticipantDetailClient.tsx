@@ -163,25 +163,25 @@ export default function ParticipantDetailClient({
     <div className="flex flex-col min-h-screen bg-background text-foreground pb-20">
       <header className="flex h-16 items-center justify-between px-4 sm:px-6 z-10 sticky top-0 bg-background/80 backdrop-blur-md border-b border-zinc-200">
         <div className="flex items-center gap-3">
-          <Link href={backUrl} className="text-zinc-400 hover:text-zinc-600 transition-colors">←</Link>
-          <h1 className="text-xl font-bold tracking-tight">{participant.name || '당사자'}</h1>
+          <Link href={backUrl} className="text-zinc-400 hover:text-zinc-650 transition-colors font-bold">←</Link>
+          <h1 className="text-xl font-black tracking-tight text-zinc-800">{participant.name || '당사자'}</h1>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {isAdmin && (
             <button
               onClick={() => { setIsEditing(!isEditing); setEditingFsId(null); setShowAddFs(false); setSaveError('') }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isEditing ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${isEditing ? 'bg-zinc-900 border-zinc-900 text-white' : 'bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-600'}`}
             >
               <span>✏️</span>
               <span>{isEditing ? '편집 종료' : '정보 편집'}</span>
             </button>
           )}
           {isAdmin && (
-            <button onClick={handleDelete} disabled={isDeleting} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 transition-colors disabled:opacity-50">
+            <button onClick={handleDelete} disabled={isDeleting} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50/50 text-red-650 hover:bg-red-100/50 border border-red-100 transition-all disabled:opacity-50">
               <span>🗑</span><span>{isDeleting ? '삭제 중...' : '삭제'}</span>
             </button>
           )}
-          <div className={`px-3 py-1 rounded-full text-[10px] font-bold ${monthPercentage <= 20 ? 'bg-red-50 text-red-500' : monthPercentage <= 40 ? 'bg-orange-50 text-orange-500' : 'bg-zinc-100 text-zinc-500'}`}>
+          <div className={`px-3 py-1 rounded-full text-[10px] font-bold border ${monthPercentage <= 20 ? 'bg-red-50 text-red-500 border-red-100' : monthPercentage <= 40 ? 'bg-orange-50 text-orange-500 border-orange-100' : 'bg-zinc-50 text-zinc-500 border-zinc-200'}`}>
             {monthPercentage}% 남음
           </div>
         </div>
@@ -189,21 +189,21 @@ export default function ParticipantDetailClient({
 
       <main className="flex-1 w-full max-w-2xl mx-auto p-4 sm:p-6 flex flex-col gap-6">
         {/* 예산 요약 */}
-        <section className="p-6 rounded-3xl bg-zinc-900 text-white shadow-xl">
+        <section className="p-6 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">이번 달 잔액</p>
-              <p className="text-4xl font-black mt-1">{formatCurrency(totalMonthBalance)}원</p>
+              <p className="text-[10px] text-zinc-400 font-black uppercase tracking-widest">이번 달 잔액</p>
+              <p className="text-3xl font-black mt-1 text-zinc-800">{formatCurrency(totalMonthBalance)}원</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">올해 잔액</p>
-              <p className="text-xl font-bold mt-1">{formatCurrency(totalYearBalance)}원</p>
+              <p className="text-[10px] text-zinc-400 font-black uppercase tracking-widest">올해 잔액</p>
+              <p className="text-lg font-black mt-1.5 text-zinc-700">{formatCurrency(totalYearBalance)}원</p>
             </div>
           </div>
-          <div className="h-2 w-full bg-zinc-700 rounded-full overflow-hidden">
-            <div className={`h-full rounded-full transition-all ${monthPercentage <= 20 ? 'bg-red-500' : monthPercentage <= 40 ? 'bg-orange-500' : 'bg-white'}`} style={{ width: `${monthPercentage}%` }} />
+          <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full transition-all duration-500 ${monthPercentage <= 20 ? 'bg-red-500' : monthPercentage <= 40 ? 'bg-orange-500' : 'bg-zinc-800'}`} style={{ width: `${monthPercentage}%` }} />
           </div>
-          <div className="flex justify-between mt-2 text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+          <div className="flex justify-between mt-2 text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
             <span>0원</span><span>{formatCurrency(totalMonthlyBudget)}원</span>
           </div>
         </section>
@@ -211,77 +211,73 @@ export default function ParticipantDetailClient({
         {/* 기본 정보 */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between ml-1">
-            <h2 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em]">기본 정보</h2>
+            <h2 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">기본 정보</h2>
             {isEditing && (
-              <button onClick={handleSaveInfo} disabled={isSavingInfo} className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
-                {isSavingInfo ? '저장 중...' : '💾 저장'}
+              <button onClick={handleSaveInfo} disabled={isSavingInfo} className="px-3 py-1.5 bg-zinc-900 text-white text-xs font-bold rounded-xl hover:bg-zinc-800 transition-colors disabled:opacity-50 shadow-sm">
+                {isSavingInfo ? '저장 중...' : '💾 정보 저장'}
               </button>
             )}
           </div>
 
           {saveError && (
-            <div className="px-4 py-2 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
+            <div className="px-4 py-3 rounded-2xl bg-red-50 border border-red-100 text-red-650 text-xs font-bold">
               {saveError}
             </div>
           )}
 
-          <div className="p-5 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm">
+          <div className="p-5 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
             {isEditing ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <label className="text-zinc-400 text-xs font-medium block mb-1">이름</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-zinc-400 text-xs font-bold block">이름</label>
                   <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all" />
                 </div>
-                <div>
-                  <label className="text-zinc-400 text-xs font-medium block mb-1">이메일</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-zinc-400 text-xs font-bold block">이메일</label>
                   <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all" />
                 </div>
-
-
-
-                <div>
-                  <label className="text-zinc-400 text-xs font-medium block mb-1">운영 시작일</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-zinc-400 text-xs font-bold block">운영 시작일</label>
                   <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm transition-all" />
                 </div>
-                <div>
-                  <label className="text-zinc-400 text-xs font-medium block mb-1">운영 종료일</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-zinc-400 text-xs font-bold block">운영 종료일</label>
                   <input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm transition-all" />
                 </div>
-                <div>
-                  <label className="text-zinc-400 text-xs font-medium block mb-1">월 기본 예산 (원)</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-zinc-400 text-xs font-bold block">월 기본 예산 (원)</label>
                   <input type="number" value={formData.monthlyBudget} onChange={e => setFormData({ ...formData, monthlyBudget: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                  <p className="text-[11px] text-zinc-400 mt-0.5">{formatCurrency(formData.monthlyBudget)}원</p>
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-black transition-all" />
+                  <p className="text-[10px] text-zinc-400 font-bold mt-0.5">{formatCurrency(formData.monthlyBudget)}원</p>
                 </div>
-                <div>
-                  <label className="text-zinc-400 text-xs font-medium block mb-1">경고 기준액 (원)</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-zinc-400 text-xs font-bold block">경고 기준액 (원)</label>
                   <input type="number" value={formData.alertThreshold} onChange={e => setFormData({ ...formData, alertThreshold: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                  <p className="text-[11px] text-zinc-400 mt-0.5">{formatCurrency(formData.alertThreshold)}원</p>
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-black transition-all" />
+                  <p className="text-[10px] text-zinc-400 font-bold mt-0.5">{formatCurrency(formData.alertThreshold)}원</p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-5 text-sm">
                 <div>
-                  <span className="text-zinc-400 text-xs font-medium">운영 기간</span>
-                  <p className="font-bold text-zinc-800">{participant.budget_start_date} ~ {participant.budget_end_date}</p>
-                </div>
-
-                <div>
-                  <span className="text-zinc-400 text-xs font-medium">이메일</span>
-                  <p className="font-bold text-zinc-800">{participant.email || '—'}</p>
+                  <span className="text-zinc-400 text-xs font-bold">운영 기간</span>
+                  <p className="font-bold text-zinc-800 mt-0.5">{participant.budget_start_date} ~ {participant.budget_end_date}</p>
                 </div>
                 <div>
-                  <span className="text-zinc-400 text-xs font-medium">월 예산 (기본)</span>
-                  <p className="font-bold text-zinc-800">{formatCurrency(participant.monthly_budget_default)}원</p>
+                  <span className="text-zinc-400 text-xs font-bold">이메일</span>
+                  <p className="font-bold text-zinc-800 mt-0.5">{participant.email || '—'}</p>
                 </div>
                 <div>
-                  <span className="text-zinc-400 text-xs font-medium">경고 기준액</span>
-                  <p className="font-bold text-zinc-800">{formatCurrency(participant.alert_threshold)}원</p>
+                  <span className="text-zinc-400 text-xs font-bold">월 예산 (기본)</span>
+                  <p className="font-black text-zinc-800 mt-0.5">{formatCurrency(participant.monthly_budget_default)}원</p>
+                </div>
+                <div>
+                  <span className="text-zinc-400 text-xs font-bold">경고 기준액</span>
+                  <p className="font-black text-zinc-850 mt-0.5">{formatCurrency(participant.alert_threshold)}원</p>
                 </div>
               </div>
             )}
@@ -291,10 +287,10 @@ export default function ParticipantDetailClient({
         {/* 재원 목록 */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between ml-1">
-            <h2 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em]">재원 ({fundingSources.length}개)</h2>
+            <h2 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em]">재원 ({fundingSources.length}개)</h2>
             {isEditing && (
-              <button onClick={() => { setShowAddFs(true); setEditingFsId(null) }} className="px-3 py-1 bg-zinc-900 text-white text-xs font-bold rounded-lg hover:bg-zinc-700 transition-colors">
-                + 재원 추가
+              <button onClick={() => { setShowAddFs(true); setEditingFsId(null) }} className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm">
+                + 새 재원 추가
               </button>
             )}
           </div>
@@ -303,57 +299,57 @@ export default function ParticipantDetailClient({
             const fsPercentage = Number(fs.monthly_budget) > 0 ? Math.round((Number(fs.current_month_balance) / Number(fs.monthly_budget)) * 100) : 0
             const isEditingThis = editingFsId === fs.id
             return (
-              <div key={fs.id} className="p-5 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm">
+              <div key={fs.id} className="p-5 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
                 {isEditingThis ? (
                   <div className="flex flex-col gap-3">
                     <div>
-                      <label className="text-zinc-400 text-xs font-medium block mb-1">재원 이름</label>
+                      <label className="text-zinc-400 text-xs font-bold block mb-1">재원 이름</label>
                       <input type="text" value={fsForm.name} onChange={e => setFsForm({ ...fsForm, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                        className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-semibold" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-zinc-400 text-xs font-medium block mb-1">월 예산 (원)</label>
+                        <label className="text-zinc-400 text-xs font-bold block mb-1">월 예산 (원)</label>
                         <input type="number" value={fsForm.monthlyBudget} onChange={e => setFsForm({ ...fsForm, monthlyBudget: Number(e.target.value) })}
-                          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                        <p className="text-[11px] text-zinc-400 mt-0.5">{formatCurrency(fsForm.monthlyBudget)}원</p>
+                          className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-black" />
+                        <p className="text-[10px] text-zinc-400 font-bold mt-0.5">{formatCurrency(fsForm.monthlyBudget)}원</p>
                       </div>
                       <div>
-                        <label className="text-zinc-400 text-xs font-medium block mb-1">연 예산 (원)</label>
+                        <label className="text-zinc-400 text-xs font-bold block mb-1">연 예산 (원)</label>
                         <input type="number" value={fsForm.yearlyBudget} onChange={e => setFsForm({ ...fsForm, yearlyBudget: Number(e.target.value) })}
-                          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                        <p className="text-[11px] text-zinc-400 mt-0.5">{formatCurrency(fsForm.yearlyBudget)}원</p>
+                          className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-black" />
+                        <p className="text-[10px] text-zinc-400 font-bold mt-0.5">{formatCurrency(fsForm.yearlyBudget)}원</p>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-1">
-                      <button onClick={() => handleSaveFs(fs.id)} disabled={isSavingFs} className="flex-1 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                      <button onClick={() => handleSaveFs(fs.id)} disabled={isSavingFs} className="flex-1 py-2 bg-zinc-900 text-white text-xs font-bold rounded-xl hover:bg-zinc-800 transition-colors disabled:opacity-50">
                         {isSavingFs ? '저장 중...' : '저장'}
                       </button>
-                      <button onClick={() => setEditingFsId(null)} className="flex-1 py-2 bg-zinc-100 text-zinc-600 text-xs font-bold rounded-lg hover:bg-zinc-200 transition-colors">취소</button>
+                      <button onClick={() => setEditingFsId(null)} className="flex-1 py-2 bg-zinc-100 text-zinc-600 text-xs font-bold rounded-xl hover:bg-zinc-200 transition-colors">취소</button>
                     </div>
                   </div>
                 ) : (
                   <>
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-bold text-zinc-800">{fs.name}</p>
-                        <p className="text-xs text-zinc-400">월 {formatCurrency(fs.monthly_budget)}원</p>
+                        <p className="font-bold text-zinc-800 text-sm">{fs.name}</p>
+                        <p className="text-xs text-zinc-400 font-medium">월 {formatCurrency(fs.monthly_budget)}원</p>
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="text-right">
-                          <p className={`text-lg font-black ${fsPercentage <= 20 ? 'text-red-600' : fsPercentage <= 40 ? 'text-orange-600' : 'text-zinc-900'}`}>{formatCurrency(fs.current_month_balance)}원</p>
-                          <p className="text-[10px] text-zinc-400">{fsPercentage}% 남음</p>
+                          <p className={`text-base font-black ${fsPercentage <= 20 ? 'text-red-500' : fsPercentage <= 40 ? 'text-orange-500' : 'text-zinc-800'}`}>{formatCurrency(fs.current_month_balance)}원</p>
+                          <p className="text-[10px] text-zinc-400 font-bold">{fsPercentage}% 남음</p>
                         </div>
                         {isEditing && (
-                          <div className="flex flex-col gap-1 ml-1">
-                            <button onClick={() => startEditFs(fs)} className="p-1 rounded text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors" title="편집">✏️</button>
+                          <div className="flex flex-col gap-1 ml-2 border-l border-zinc-100 pl-2">
+                            <button onClick={() => startEditFs(fs)} className="p-1 rounded text-xs font-bold text-zinc-500 hover:bg-zinc-50 transition-colors" title="편집">✏️</button>
                             <button onClick={() => handleDeleteFs(fs.id, fs.name)} className="p-1 rounded text-xs font-bold text-red-500 hover:bg-red-50 transition-colors" title="삭제">🗑</button>
                           </div>
                         )}
                       </div>
                     </div>
                     <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${fsPercentage <= 20 ? 'bg-red-500' : fsPercentage <= 40 ? 'bg-orange-500' : 'bg-zinc-900'}`} style={{ width: `${fsPercentage}%` }} />
+                      <div className={`h-full rounded-full transition-all ${fsPercentage <= 20 ? 'bg-red-500' : fsPercentage <= 40 ? 'bg-orange-500' : 'bg-zinc-800'}`} style={{ width: `${fsPercentage}%` }} />
                     </div>
                   </>
                 )}
@@ -362,33 +358,33 @@ export default function ParticipantDetailClient({
           })}
 
           {showAddFs && (
-            <div className="p-5 rounded-2xl bg-blue-50 ring-1 ring-blue-200 shadow-sm">
-              <p className="text-xs font-bold text-blue-700 mb-3">새 재원 추가</p>
+            <div className="p-5 rounded-3xl bg-zinc-50/50 border border-zinc-200 shadow-sm animate-fade-in-down">
+              <p className="text-xs font-bold text-zinc-700 mb-3">새 재원 추가</p>
               <div className="flex flex-col gap-3">
                 <div>
-                  <label className="text-zinc-500 text-xs font-medium block mb-1">재원 이름</label>
+                  <label className="text-zinc-500 text-xs font-bold block mb-1">재원 이름</label>
                   <input type="text" placeholder="예: 활동지원급여" value={newFs.name} onChange={e => setNewFs({ ...newFs, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-semibold" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-zinc-500 text-xs font-medium block mb-1">월 예산 (원)</label>
+                    <label className="text-zinc-500 text-xs font-bold block mb-1">월 예산 (원)</label>
                     <input type="number" value={newFs.monthlyBudget} onChange={e => setNewFs({ ...newFs, monthlyBudget: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                    <p className="text-[11px] text-zinc-400 mt-0.5">{formatCurrency(newFs.monthlyBudget)}원</p>
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-black" />
+                    <p className="text-[10px] text-zinc-400 font-bold mt-0.5">{formatCurrency(newFs.monthlyBudget)}원</p>
                   </div>
                   <div>
-                    <label className="text-zinc-500 text-xs font-medium block mb-1">연 예산 (원)</label>
+                    <label className="text-zinc-500 text-xs font-bold block mb-1">연 예산 (원)</label>
                     <input type="number" value={newFs.yearlyBudget} onChange={e => setNewFs({ ...newFs, yearlyBudget: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                    <p className="text-[11px] text-zinc-400 mt-0.5">{formatCurrency(newFs.yearlyBudget)}원</p>
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-black" />
+                    <p className="text-[10px] text-zinc-400 font-bold mt-0.5">{formatCurrency(newFs.yearlyBudget)}원</p>
                   </div>
                 </div>
                 <div className="flex gap-2 mt-1">
-                  <button onClick={handleAddFs} disabled={isAddingFs} className="flex-1 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                  <button onClick={handleAddFs} disabled={isAddingFs} className="flex-1 py-2.5 bg-zinc-900 text-white text-xs font-bold rounded-xl hover:bg-zinc-800 transition-colors disabled:opacity-50">
                     {isAddingFs ? '추가 중...' : '추가'}
                   </button>
-                  <button onClick={() => { setShowAddFs(false); setNewFs({ name: '', monthlyBudget: 0, yearlyBudget: 0 }) }} className="flex-1 py-2 bg-zinc-100 text-zinc-600 text-xs font-bold rounded-lg hover:bg-zinc-200 transition-colors">취소</button>
+                  <button onClick={() => { setShowAddFs(false); setNewFs({ name: '', monthlyBudget: 0, yearlyBudget: 0 }) }} className="flex-1 py-2.5 bg-zinc-100 text-zinc-650 text-xs font-bold rounded-xl hover:bg-zinc-200 transition-colors">취소</button>
                 </div>
               </div>
             </div>
@@ -397,39 +393,41 @@ export default function ParticipantDetailClient({
 
         {/* 빠른 이동 */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em] ml-1">빠른 이동</h2>
+          <h2 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">빠른 이동</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Link href={`/supporter/transactions?participant=${participant.id}`} className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.97] group">
-              <span className="text-2xl group-hover:scale-110 transition-transform">📒</span>
-              <span className="text-xs font-black text-zinc-700 text-center">거래 장부</span>
+            <Link href={`/supporter/transactions?participant=${participant.id}`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:border-zinc-300 hover:bg-zinc-50/30 transition-all active:scale-[0.98] group">
+              <span className="text-2xl group-hover:scale-105 transition-transform">📒</span>
+              <span className="text-xs font-bold text-zinc-700 text-center">거래 장부</span>
             </Link>
-            <Link href={`/supporter/documents?participant_id=${participant.id}`} className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.97] group">
-              <span className="text-2xl group-hover:scale-110 transition-transform">📁</span>
-              <span className="text-xs font-black text-zinc-700 text-center">증빙 서류</span>
+            <Link href={`/supporter/documents?participant_id=${participant.id}`} className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:border-zinc-300 hover:bg-zinc-50/30 transition-all active:scale-[0.98] group">
+              <span className="text-2xl group-hover:scale-105 transition-transform">📁</span>
+              <span className="text-xs font-bold text-zinc-700 text-center">증빙 서류</span>
             </Link>
           </div>
         </section>
 
         {/* 최근 사용 내역 */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-black text-zinc-300 uppercase tracking-[0.2em] ml-1">최근 사용 내역</h2>
+          <h2 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">최근 사용 내역</h2>
           {(!recentTransactions || recentTransactions.length === 0) ? (
-            <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-200 text-center text-zinc-400 text-sm font-medium">아직 사용 내역이 없습니다.</div>
+            <div className="p-8 rounded-3xl bg-zinc-50/30 border border-zinc-200/80 text-center text-zinc-400 text-xs font-bold">아직 사용 내역이 없습니다.</div>
           ) : (
-            recentTransactions.map((tx: any) => (
-              <Link key={tx.id} href={`/supporter/transactions/${tx.id}`} className="p-4 rounded-xl bg-white ring-1 ring-zinc-200 flex justify-between items-center hover:ring-zinc-400 transition-colors active:scale-[0.99]">
-                <div>
-                  <p className="font-bold text-zinc-800 text-sm">{tx.activity_name}</p>
-                  <p className="text-xs text-zinc-400">{tx.date} · {tx.category || '미분류'}</p>
-                </div>
-                <div className="text-right flex flex-col items-end gap-1">
-                  <p className="font-bold text-zinc-900">{formatCurrency(tx.amount)}원</p>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tx.status === 'confirmed' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
-                    {tx.status === 'confirmed' ? '확정' : '임시'}
-                  </span>
-                </div>
-              </Link>
-            ))
+            <div className="flex flex-col gap-2.5">
+              {recentTransactions.map((tx: any) => (
+                <Link key={tx.id} href={`/supporter/transactions/${tx.id}`} className="p-4 rounded-2xl bg-white border border-zinc-200/80 flex justify-between items-center hover:border-zinc-300 hover:bg-zinc-50/30 transition-all active:scale-[0.99] shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+                  <div>
+                    <p className="font-bold text-zinc-800 text-sm">{tx.activity_name}</p>
+                    <p className="text-xs text-zinc-400 font-medium mt-0.5">{tx.date} · {tx.category || '미분류'}</p>
+                  </div>
+                  <div className="text-right flex flex-col items-end gap-1">
+                    <p className="font-black text-zinc-800 text-sm">{formatCurrency(tx.amount)}원</p>
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${tx.status === 'confirmed' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>
+                      {tx.status === 'confirmed' ? '확정' : '임시'}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           )}
         </section>
       </main>
