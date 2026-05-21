@@ -12,6 +12,7 @@ import {
   createFundingSource,
 } from '@/app/actions/admin'
 import { formatCurrency } from '@/utils/budget-visuals'
+import { OPERATION_END_DATE, OPERATION_START_DATE } from '@/constants/operation-period'
 
 interface ParticipantDetailClientProps {
   participant: any
@@ -46,8 +47,8 @@ export default function ParticipantDetailClient({
     email: participant.email || '',
     monthlyBudget: participant.monthly_budget_default || 0,
     yearlyBudget: participant.yearly_budget_default || 0,
-    startDate: participant.budget_start_date || '',
-    endDate: participant.budget_end_date || '',
+    startDate: OPERATION_START_DATE,
+    endDate: OPERATION_END_DATE,
     alertThreshold: participant.alert_threshold || 0,
   })
   const [isSavingInfo, setIsSavingInfo] = useState(false)
@@ -92,8 +93,8 @@ export default function ParticipantDetailClient({
         email: formData.email,
         monthlyBudget: formData.monthlyBudget,
         yearlyBudget: formData.yearlyBudget,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
+        startDate: OPERATION_START_DATE,
+        endDate: OPERATION_END_DATE,
         alertThreshold: formData.alertThreshold,
         supporterId: null,
       })
@@ -240,13 +241,13 @@ export default function ParticipantDetailClient({
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-zinc-400 text-xs font-bold block">운영 시작일</label>
-                  <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm transition-all" />
+                  <input type="date" value={OPERATION_START_DATE} readOnly
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-100 text-zinc-500 text-sm transition-all" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-zinc-400 text-xs font-bold block">운영 종료일</label>
-                  <input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm transition-all" />
+                  <input type="date" value={OPERATION_END_DATE} readOnly
+                    className="w-full px-3 py-2.5 border border-zinc-200 rounded-xl bg-zinc-100 text-zinc-500 text-sm transition-all" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-zinc-400 text-xs font-bold block">월 기본 예산 (원)</label>
@@ -265,7 +266,7 @@ export default function ParticipantDetailClient({
               <div className="grid grid-cols-2 gap-5 text-sm">
                 <div>
                   <span className="text-zinc-400 text-xs font-bold">운영 기간</span>
-                  <p className="font-bold text-zinc-800 mt-0.5">{participant.budget_start_date} ~ {participant.budget_end_date}</p>
+                  <p className="font-bold text-zinc-800 mt-0.5">{OPERATION_START_DATE} ~ {OPERATION_END_DATE}</p>
                 </div>
                 <div>
                   <span className="text-zinc-400 text-xs font-bold">이메일</span>

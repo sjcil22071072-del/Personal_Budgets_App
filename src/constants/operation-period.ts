@@ -1,0 +1,2 @@
+export const OPERATION_START_DATE = '2026-05-01'
+export const OPERATION_END_DATE = '2026-10-31'

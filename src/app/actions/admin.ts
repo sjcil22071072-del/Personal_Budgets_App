@@ -4,6 +4,7 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { UserRole } from '@/types/database'
+import { OPERATION_END_DATE, OPERATION_START_DATE } from '@/constants/operation-period'
 
 /**
  * 관리자 권한 검증
@@ -154,8 +155,8 @@ export async function createParticipant(formData: {
       email: formData.email,
       monthlyBudget: formData.monthlyBudget,
       yearlyBudget: formData.yearlyBudget,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
+      startDate: OPERATION_START_DATE,
+      endDate: OPERATION_END_DATE,
       alertThreshold: formData.alertThreshold,
       supporterId: formData.supporterId,
       fundingSourceCount: formData.fundingSources?.length ?? 0,
@@ -181,8 +182,8 @@ export async function createParticipant(formData: {
         email: formData.email,
         monthly_budget_default: formData.monthlyBudget,
         yearly_budget_default: formData.yearlyBudget,
-        budget_start_date: formData.startDate,
-        budget_end_date: formData.endDate,
+        budget_start_date: OPERATION_START_DATE,
+        budget_end_date: OPERATION_END_DATE,
         funding_source_count: formData.fundingSources.length,
         alert_threshold: formData.alertThreshold,
         assigned_supporter_id: formData.supporterId || null,
@@ -276,8 +277,8 @@ export async function updateParticipant(participantId: string, formData: {
     }
     if (formData.monthlyBudget !== undefined) updateData.monthly_budget_default = formData.monthlyBudget
     if (formData.yearlyBudget !== undefined) updateData.yearly_budget_default = formData.yearlyBudget
-    if (formData.startDate !== undefined) updateData.budget_start_date = formData.startDate
-    if (formData.endDate !== undefined) updateData.budget_end_date = formData.endDate
+    updateData.budget_start_date = OPERATION_START_DATE
+    updateData.budget_end_date = OPERATION_END_DATE
     if (formData.alertThreshold !== undefined) updateData.alert_threshold = formData.alertThreshold
     if (formData.supporterId !== undefined) updateData.assigned_supporter_id = formData.supporterId
 
@@ -290,10 +291,8 @@ export async function updateParticipant(participantId: string, formData: {
       return { error: `업데이트 실패: ${error.message}` }
     }
 
-    if (formData.startDate !== undefined) {
-      const { ensureMonthlyBudgetRollover } = await import('./budgetRollover')
-      await ensureMonthlyBudgetRollover(participantId, true)
-    }
+    const { ensureMonthlyBudgetRollover } = await import('./budgetRollover')
+    await ensureMonthlyBudgetRollover(participantId, true)
 
     revalidatePath('/admin/participants')
     revalidatePath(`/admin/participants/${participantId}`)

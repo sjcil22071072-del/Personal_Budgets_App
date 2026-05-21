@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import { createParticipant } from '@/app/actions/admin'
+import { OPERATION_END_DATE, OPERATION_START_DATE } from '@/constants/operation-period'
 
 interface FundingSourceInput {
   name: string
@@ -19,8 +20,6 @@ export default function NewParticipantPage() {
   const [email, setEmail] = useState('')
   const [monthlyBudget, setMonthlyBudget] = useState('150000')
   const [yearlyBudget, setYearlyBudget] = useState('1500000')
-  const [startDate, setStartDate] = useState('2026-03-01')
-  const [endDate, setEndDate] = useState('2026-12-31')
   const [alertThreshold, setAlertThreshold] = useState('15000')
   const [fundingSourceCount, setFundingSourceCount] = useState(1)
   const [fundingSources, setFundingSources] = useState<FundingSourceInput[]>([
@@ -65,8 +64,8 @@ export default function NewParticipantPage() {
         email: email.trim(),
         monthlyBudget: Number(monthlyBudget),
         yearlyBudget: Number(yearlyBudget),
-        startDate,
-        endDate,
+        startDate: OPERATION_START_DATE,
+        endDate: OPERATION_END_DATE,
         alertThreshold: Number(alertThreshold),
         supporterId: null,
         fundingSources: fundingSources.map((fs) => ({
@@ -169,9 +168,9 @@ export default function NewParticipantPage() {
                 <label className="text-xs font-bold text-zinc-400 block mb-1">운영 시작일</label>
                 <input 
                   type="date" 
-                  value={startDate} 
-                  onChange={(e) => setStartDate(e.target.value)} 
-                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm transition-all" 
+                  value={OPERATION_START_DATE} 
+                  readOnly
+                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-100 text-sm text-zinc-500 transition-all" 
                   required 
                 />
               </div>
@@ -179,9 +178,9 @@ export default function NewParticipantPage() {
                 <label className="text-xs font-bold text-zinc-400 block mb-1">운영 종료일</label>
                 <input 
                   type="date" 
-                  value={endDate} 
-                  onChange={(e) => setEndDate(e.target.value)} 
-                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm transition-all" 
+                  value={OPERATION_END_DATE} 
+                  readOnly
+                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-100 text-sm text-zinc-500 transition-all" 
                   required 
                 />
               </div>
