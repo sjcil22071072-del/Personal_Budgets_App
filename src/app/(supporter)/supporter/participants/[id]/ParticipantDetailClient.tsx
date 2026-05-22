@@ -56,10 +56,10 @@ export default function ParticipantDetailClient({
   // 재원 상태
   const [fundingSources, setFundingSources] = useState<any[]>(initialFundingSources)
   const [editingFsId, setEditingFsId] = useState<string | null>(null)
-  const [fsForm, setFsForm] = useState({ name: '', monthlyBudget: 0, yearlyBudget: 0 })
+  const [fsForm, setFsForm] = useState({ name: '', monthlyBudget: 0, yearlyBudget: 0, startDate: '', endDate: '' })
   const [isSavingFs, setIsSavingFs] = useState(false)
   const [showAddFs, setShowAddFs] = useState(false)
-  const [newFs, setNewFs] = useState({ name: '', monthlyBudget: 0, yearlyBudget: 0 })
+  const [newFs, setNewFs] = useState({ name: '', monthlyBudget: 0, yearlyBudget: 0, startDate: '', endDate: '' })
   const [isAddingFs, setIsAddingFs] = useState(false)
 
   const handleDelete = async () => {
@@ -113,18 +113,39 @@ export default function ParticipantDetailClient({
 
   const startEditFs = (fs: any) => {
     setEditingFsId(fs.id)
-    setFsForm({ name: fs.name || '', monthlyBudget: Number(fs.monthly_budget) || 0, yearlyBudget: Number(fs.yearly_budget) || 0 })
+    setFsForm({
+      name: fs.name || '',
+      monthlyBudget: Number(fs.monthly_budget) || 0,
+      yearlyBudget: Number(fs.yearly_budget) || 0,
+      startDate: fs.start_date || '',
+      endDate: fs.end_date || '',
+    })
   }
 
   const handleSaveFs = async (fsId: string) => {
     setIsSavingFs(true)
     try {
-      const result = await updateFundingSource(fsId, { name: fsForm.name, monthlyBudget: fsForm.monthlyBudget, yearlyBudget: fsForm.yearlyBudget })
+      const result = await updateFundingSource(fsId, {
+        name: fsForm.name,
+        monthlyBudget: fsForm.monthlyBudget,
+        yearlyBudget: fsForm.yearlyBudget,
+        startDate: fsForm.startDate || null,
+        endDate: fsForm.endDate || null,
+      })
       if (result.error) {
         alert(`저장 실패: ${result.error}`)
       } else {
         setFundingSources(prev => prev.map(fs => fs.id === fsId
-          ? { ...fs, name: fsForm.name, monthly_budget: fsForm.monthlyBudget, yearly_budget: fsForm.yearlyBudget, current_month_balance: fsForm.monthlyBudget, current_year_balance: fsForm.yearlyBudget }
+          ? {
+              ...fs,
+              name: fsForm.name,
+              monthly_budget: fsForm.monthlyBudget,
+              yearly_budget: fsForm.yearlyBudget,
+              current_month_balance: fsForm.monthlyBudget,
+              current_year_balance: fsForm.yearlyBudget,
+              start_date: fsForm.startDate || null,
+              end_date: fsForm.endDate || null,
+            }
           : fs))
         setEditingFsId(null)
       }
@@ -150,9 +171,19 @@ export default function ParticipantDetailClient({
     if (!newFs.name.trim()) { alert('재원 이름을 입력해주세요.'); return }
     setIsAddingFs(true)
     try {
-      const result = await createFundingSource(participant.id, { name: newFs.name, monthlyBudget: newFs.monthlyBudget, yearlyBudget: newFs.yearlyBudget })
+      const result = await createFundingSource(participant.id, {
+        name: newFs.name,
+        monthlyBudget: newFs.monthlyBudget,
+        yearlyBudget: newFs.yearlyBudget,
+        startDate: newFs.startDate || null,
+        endDate: newFs.endDate || null,
+      })
       if (result.error) alert(`추가 실패: ${result.error}`)
-      else { router.refresh(); setShowAddFs(false); setNewFs({ name: '', monthlyBudget: 0, yearlyBudget: 0 }) }
+      else {
+        router.refresh()
+        setShowAddFs(false)
+        setNewFs({ name: '', monthlyBudget: 0, yearlyBudget: 0, startDate: '', endDate: '' })
+      }
     } catch {
       alert('추가 중 오류가 발생했습니다.')
     } finally {
@@ -326,6 +357,18 @@ export default function ParticipantDetailClient({
                         <p className="text-[11px] text-zinc-400 mt-0.5">{formatCurrency(fsForm.yearlyBudget)}원</p>
                       </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-zinc-400 text-xs font-medium block mb-1">지원 시작일</label>
+                        <input type="date" value={fsForm.startDate} onChange={e => setFsForm({ ...fsForm, startDate: e.target.value })}
+                          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 text-xs font-medium block mb-1">지원 종료일</label>
+                        <input type="date" value={fsForm.endDate} onChange={e => setFsForm({ ...fsForm, endDate: e.target.value })}
+                          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                      </div>
+                    </div>
                     <div className="flex gap-2 mt-1">
                       <button onClick={() => handleSaveFs(fs.id)} disabled={isSavingFs} className="flex-1 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
                         {isSavingFs ? '저장 중...' : '저장'}
@@ -339,6 +382,11 @@ export default function ParticipantDetailClient({
                       <div>
                         <p className="font-bold text-zinc-800">{fs.name}</p>
                         <p className="text-xs text-zinc-400">월 {formatCurrency(fs.monthly_budget)}원</p>
+                        {(fs.start_date || fs.end_date) && (
+                          <p className="text-[10px] text-zinc-400 font-bold mt-1">
+                            📅 {fs.start_date || '시작일 없음'} ~ {fs.end_date || '종료일 없음'}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="text-right">
@@ -385,11 +433,23 @@ export default function ParticipantDetailClient({
                     <p className="text-[11px] text-zinc-400 mt-0.5">{formatCurrency(newFs.yearlyBudget)}원</p>
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-zinc-500 text-xs font-medium block mb-1">지원 시작일</label>
+                    <input type="date" value={newFs.startDate} onChange={e => setNewFs({ ...newFs, startDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-zinc-500 text-xs font-medium block mb-1">지원 종료일</label>
+                    <input type="date" value={newFs.endDate} onChange={e => setNewFs({ ...newFs, endDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                  </div>
+                </div>
                 <div className="flex gap-2 mt-1">
                   <button onClick={handleAddFs} disabled={isAddingFs} className="flex-1 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
                     {isAddingFs ? '추가 중...' : '추가'}
                   </button>
-                  <button onClick={() => { setShowAddFs(false); setNewFs({ name: '', monthlyBudget: 0, yearlyBudget: 0 }) }} className="flex-1 py-2 bg-zinc-100 text-zinc-600 text-xs font-bold rounded-lg hover:bg-zinc-200 transition-colors">취소</button>
+                  <button onClick={() => { setShowAddFs(false); setNewFs({ name: '', monthlyBudget: 0, yearlyBudget: 0, startDate: '', endDate: '' }) }} className="flex-1 py-2 bg-zinc-100 text-zinc-600 text-xs font-bold rounded-lg hover:bg-zinc-200 transition-colors">취소</button>
                 </div>
               </div>
             </div>
