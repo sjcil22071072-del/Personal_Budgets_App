@@ -330,8 +330,29 @@ export default function ParticipantDetailClient({
           {fundingSources.map((fs: any) => {
             const fsPercentage = Number(fs.monthly_budget) > 0 ? Math.round((Number(fs.current_month_balance) / Number(fs.monthly_budget)) * 100) : 0
             const isEditingThis = editingFsId === fs.id
+
+            // 날짜 기반 상태 확인
+            const now = new Date()
+            const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+            let isPast = false
+            let isFuture = false
+            if (fs.start_date) {
+              const start = new Date(fs.start_date)
+              const startMonthStart = new Date(start.getFullYear(), start.getMonth(), 1)
+              if (startMonthStart > currentMonthStart) isFuture = true
+            }
+            if (fs.end_date) {
+              const end = new Date(fs.end_date)
+              const endMonthStart = new Date(end.getFullYear(), end.getMonth(), 1)
+              if (endMonthStart < currentMonthStart) isPast = true
+            }
+            const isActive = !isPast && !isFuture
+
             return (
-              <div key={fs.id} className="p-5 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
+              <div key={fs.id} className={`p-5 rounded-3xl border shadow-[0_4px_20px_rgba(0,0,0,0.015)] transition-all ${
+                isEditingThis ? 'bg-white border-zinc-200' :
+                isActive ? 'bg-white border-zinc-200/80' : 'bg-zinc-50/70 border-zinc-200/50 opacity-75'
+              }`}>
                 {isEditingThis ? (
                   <div className="flex flex-col gap-3">
                     <div>
@@ -377,7 +398,7 @@ export default function ParticipantDetailClient({
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <p className="font-bold text-zinc-800 text-sm">{fs.name}</p>
-                        <p className="text-xs text-zinc-400 font-medium">월 {formatCurrency(fs.monthly_budget)}원</p>
+                        <p className="text-xs text-zinc-400 font-medium mt-0.5">월 {formatCurrency(fs.monthly_budget)}원</p>
                         {(fs.start_date || fs.end_date) && (
                           <p className="text-[10px] text-zinc-400 font-bold mt-1">
                             📅 {fs.start_date || '시작일 없음'} ~ {fs.end_date || '종료일 없음'}
@@ -386,7 +407,11 @@ export default function ParticipantDetailClient({
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="text-right">
-                          <p className={`text-base font-black ${fsPercentage <= 20 ? 'text-red-500' : fsPercentage <= 40 ? 'text-orange-500' : 'text-zinc-800'}`}>{formatCurrency(fs.current_month_balance)}원</p>
+                          <p className={`text-base font-black ${
+                            !isActive ? 'text-zinc-500' :
+                            fsPercentage <= 20 ? 'text-red-500' :
+                            fsPercentage <= 40 ? 'text-orange-500' : 'text-zinc-800'
+                          }`}>{formatCurrency(fs.current_month_balance)}원</p>
                           <p className="text-[10px] text-zinc-400 font-bold">{fsPercentage}% 남음</p>
                         </div>
                         {isEditing && (
@@ -398,7 +423,11 @@ export default function ParticipantDetailClient({
                       </div>
                     </div>
                     <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${fsPercentage <= 20 ? 'bg-red-500' : fsPercentage <= 40 ? 'bg-orange-500' : 'bg-zinc-800'}`} style={{ width: `${fsPercentage}%` }} />
+                      <div className={`h-full rounded-full transition-all ${
+                        !isActive ? 'bg-zinc-300' :
+                        fsPercentage <= 20 ? 'bg-red-500' :
+                        fsPercentage <= 40 ? 'bg-orange-500' : 'bg-zinc-800'
+                      }`} style={{ width: `${fsPercentage}%` }} />
                     </div>
                   </>
                 )}

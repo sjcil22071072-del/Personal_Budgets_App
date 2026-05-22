@@ -93,11 +93,28 @@ export default function HomeDashboard({
     })
   }, [uiPreferences])
 
-  // 통합 계산
-  const totalMonthlyBudget = fundingSources.reduce((acc, fs) => acc + Number(fs.monthly_budget), 0) || participant.monthly_budget_default
-  const totalMonthBalance = fundingSources.reduce((acc, fs) => acc + Number(fs.current_month_balance), 0)
-  const totalYearBalance = fundingSources.reduce((acc, fs) => acc + Number(fs.current_year_balance), 0)
-  const totalYearlyBudget = fundingSources.reduce((acc, fs) => acc + Number(fs.yearly_budget), 0) || participant.yearly_budget_default
+  // 통합 계산 및 노출용 활성 재원 필터링
+  const now = new Date()
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  const activeFundingSources = fundingSources.filter(fs => {
+    if (fs.start_date) {
+      const start = new Date(fs.start_date)
+      const startMonthStart = new Date(start.getFullYear(), start.getMonth(), 1)
+      if (startMonthStart > currentMonthStart) return false
+    }
+    if (fs.end_date) {
+      const end = new Date(fs.end_date)
+      const endMonthStart = new Date(end.getFullYear(), end.getMonth(), 1)
+      if (endMonthStart < currentMonthStart) return false
+    }
+    return true
+  })
+
+  const totalMonthlyBudget = activeFundingSources.reduce((acc, fs) => acc + Number(fs.monthly_budget), 0) || participant.monthly_budget_default
+  const totalMonthBalance = activeFundingSources.reduce((acc, fs) => acc + Number(fs.current_month_balance), 0)
+  const totalYearBalance = activeFundingSources.reduce((acc, fs) => acc + Number(fs.current_year_balance), 0)
+  const totalYearlyBudget = activeFundingSources.reduce((acc, fs) => acc + Number(fs.yearly_budget), 0) || participant.yearly_budget_default
 
   const visual = getBudgetVisualInfo(totalMonthBalance, totalMonthlyBudget, remainingDays, totalDaysInMonth)
 
@@ -106,13 +123,13 @@ export default function HomeDashboard({
     switch (blockId) {
 
       case 'source_view':
-        if (fundingSources.length === 0) return null
+        if (activeFundingSources.length === 0) return null
         return (
           <section className="flex flex-col gap-3">
             <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] ml-2">
               <EasyTerm formal="재원별 잔액" easy="돈 종류별 남은 돈" />
             </h3>
-            {fundingSources.map((fs) => {
+            {activeFundingSources.map((fs) => {
               const fsPercentage = Number(fs.monthly_budget) > 0
                 ? Math.round((Number(fs.current_month_balance) / Number(fs.monthly_budget)) * 100)
                 : 0

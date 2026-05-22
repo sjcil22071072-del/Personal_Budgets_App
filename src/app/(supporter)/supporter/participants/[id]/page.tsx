@@ -84,15 +84,32 @@ export default async function ParticipantDetailPage({ params }: PageProps) {
   }
 
   const fundingSources = participant.funding_sources || [];
-  const totalMonthlyBudget = fundingSources.reduce(
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const activeFundingSources = fundingSources.filter((fs: any) => {
+    if (fs.start_date) {
+      const start = new Date(fs.start_date);
+      const startMonthStart = new Date(start.getFullYear(), start.getMonth(), 1);
+      if (startMonthStart > currentMonthStart) return false;
+    }
+    if (fs.end_date) {
+      const end = new Date(fs.end_date);
+      const endMonthStart = new Date(end.getFullYear(), end.getMonth(), 1);
+      if (endMonthStart < currentMonthStart) return false;
+    }
+    return true;
+  });
+
+  const totalMonthlyBudget = activeFundingSources.reduce(
     (acc: number, fs: any) => acc + Number(fs.monthly_budget),
     0,
   );
-  const totalMonthBalance = fundingSources.reduce(
+  const totalMonthBalance = activeFundingSources.reduce(
     (acc: number, fs: any) => acc + Number(fs.current_month_balance),
     0,
   );
-  const totalYearBalance = fundingSources.reduce(
+  const totalYearBalance = activeFundingSources.reduce(
     (acc: number, fs: any) => acc + Number(fs.current_year_balance),
     0,
   );

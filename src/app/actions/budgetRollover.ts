@@ -50,13 +50,19 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       // 해당 지원금의 시작일이 있다면 이를 최우선 적용, 없으면 참여자 시작일 적용
       const effectiveStartDate = fundingSource.start_date || startDate
 
-      // Query total confirmed spent since the budget start date
-      const { data: spentData, error: spentError } = await supabase
+      // Query confirmed spending only inside the funding source's active period.
+      let spentQuery = supabase
         .from('transactions')
         .select('amount')
         .eq('funding_source_id', fundingSource.id)
         .eq('status', 'confirmed')
         .gte('date', effectiveStartDate)
+
+      if (fundingSource.end_date) {
+        spentQuery = spentQuery.lte('date', fundingSource.end_date)
+      }
+
+      const { data: spentData, error: spentError } = await spentQuery
 
       if (spentError) {
         console.error('[budgetRollover] spent query failed:', spentError)
@@ -90,10 +96,13 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       // Calculate stateless yearly balance
       const startYear = fsResolvedStartMonth.getFullYear()
       const currentYear = limitMonth.getFullYear()
-      const yearsActive = currentYear - startYear + 1
-      const yearsActiveClamped = yearsActive < 1 ? 1 : yearsActive
+      let yearsActive = 0
+      if (fsResolvedStartMonth <= limitMonth) {
+        yearsActive = currentYear - startYear + 1
+      }
+      const yearsActiveClamped = yearsActive < 0 ? 0 : yearsActive
       const yearlyBudget = Number(fundingSource.yearly_budget || 0)
-      const targetYearBalance = (yearlyBudget * yearsActiveClamped) - totalSpent
+      const targetYearBalance = yearsActiveClamped === 0 ? 0 : (yearlyBudget * yearsActiveClamped) - totalSpent
 
       if (!rollover && !force) continue
 
@@ -108,9 +117,12 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
         // If force is true, we should also update current_month_balance in case it was out of sync
         // even if rollover was null (which happens if last_rollover_month is already currentMonth)
         const monthlyBudget = Number(fundingSource.monthly_budget || 0)
-        const monthsActive = ((limitMonth.getFullYear() - fsResolvedStartMonth.getFullYear()) * 12) + (limitMonth.getMonth() - fsResolvedStartMonth.getMonth()) + 1
-        const monthsActiveClamped = monthsActive < 1 ? 1 : monthsActive
-        updateData.current_month_balance = (monthlyBudget * monthsActiveClamped) - totalSpent
+        let monthsActive = 0
+        if (fsResolvedStartMonth <= limitMonth) {
+          monthsActive = ((limitMonth.getFullYear() - fsResolvedStartMonth.getFullYear()) * 12) + (limitMonth.getMonth() - fsResolvedStartMonth.getMonth()) + 1
+        }
+        const monthsActiveClamped = monthsActive < 0 ? 0 : monthsActive
+        updateData.current_month_balance = monthsActiveClamped === 0 ? 0 : (monthlyBudget * monthsActiveClamped) - totalSpent
         updateData.last_rollover_month = `${limitMonth.getFullYear()}-${String(limitMonth.getMonth() + 1).padStart(2, '0')}-01`
       }
 

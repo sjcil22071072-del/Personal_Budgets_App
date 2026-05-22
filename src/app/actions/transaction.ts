@@ -4,6 +4,7 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getSignedImageUrl } from './storage'
+import { ensureMonthlyBudgetRollover } from './budgetRollover'
 
 export interface ParticipantWithFundingSources {
   id: string
@@ -162,6 +163,8 @@ export async function createTransaction(formData: FormData) {
     throw new Error('Failed to create transaction')
   }
 
+  await ensureMonthlyBudgetRollover(participant_id, true)
+
   revalidatePath('/')
   revalidatePath('/calendar')
   revalidatePath('/receipt')
@@ -178,6 +181,13 @@ export async function updateTransactionStatus(transactionId: string, newStatus: 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  const { data: tx } = await adminClient
+    .from('transactions')
+    .select('participant_id')
+    .eq('id', transactionId)
+    .single()
+  const participant_id = tx?.participant_id
+
   const { error } = await adminClient
     .from('transactions')
     .update({ status: newStatus })
@@ -186,6 +196,10 @@ export async function updateTransactionStatus(transactionId: string, newStatus: 
   if (error) {
     console.error('Update Status Error:', error)
     throw new Error('Failed to update transaction status')
+  }
+
+  if (participant_id) {
+    await ensureMonthlyBudgetRollover(participant_id, true)
   }
 
   return { success: true }
@@ -198,6 +212,13 @@ export async function deleteTransaction(transactionId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  const { data: tx } = await adminClient
+    .from('transactions')
+    .select('participant_id')
+    .eq('id', transactionId)
+    .single()
+  const participant_id = tx?.participant_id
+
   const { error } = await adminClient
     .from('transactions')
     .delete()
@@ -206,6 +227,10 @@ export async function deleteTransaction(transactionId: string) {
   if (error) {
     console.error('Delete Error:', error)
     throw new Error('Failed to delete transaction')
+  }
+
+  if (participant_id) {
+    await ensureMonthlyBudgetRollover(participant_id, true)
   }
 
   revalidatePath('/')
@@ -236,6 +261,13 @@ export async function updateTransactionDetail(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  const { data: tx } = await adminClient
+    .from('transactions')
+    .select('participant_id')
+    .eq('id', transactionId)
+    .single()
+  const participant_id = tx?.participant_id
+
   // Balance is updated automatically by the database trigger calculate_funding_source_balance
   const { error } = await adminClient
     .from('transactions')
@@ -243,6 +275,9 @@ export async function updateTransactionDetail(
     .eq('id', transactionId)
   if (error) throw new Error('Failed to update transaction')
 
+  if (participant_id) {
+    await ensureMonthlyBudgetRollover(participant_id, true)
+  }
 
   revalidatePath('/supporter/transactions')
   revalidatePath('/')
@@ -255,10 +290,21 @@ export async function deleteTransactionWithBalance(transactionId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  const { data: tx } = await adminClient
+    .from('transactions')
+    .select('participant_id')
+    .eq('id', transactionId)
+    .single()
+  const participant_id = tx?.participant_id
+
   // Balance is updated automatically by the database trigger calculate_funding_source_balance
 
   const { error } = await adminClient.from('transactions').delete().eq('id', transactionId)
   if (error) throw new Error('Failed to delete transaction')
+
+  if (participant_id) {
+    await ensureMonthlyBudgetRollover(participant_id, true)
+  }
 
   revalidatePath('/supporter/transactions')
   revalidatePath('/')
@@ -286,6 +332,13 @@ export async function updateTransaction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  const { data: tx } = await adminClient
+    .from('transactions')
+    .select('participant_id')
+    .eq('id', transactionId)
+    .single()
+  const participant_id = tx?.participant_id
+
   const { error } = await adminClient
     .from('transactions')
     .update(updates)
@@ -294,6 +347,10 @@ export async function updateTransaction(
   if (error) {
     console.error('Update Error:', error)
     throw new Error('Failed to update transaction')
+  }
+
+  if (participant_id) {
+    await ensureMonthlyBudgetRollover(participant_id, true)
   }
 
   revalidatePath('/')

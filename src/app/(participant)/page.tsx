@@ -209,17 +209,31 @@ export default async function Home() {
     };
   });
 
-  // 최근 6개월 월별 지출 집계
-  const totalMonthlyBudget =
-    (participant.funding_sources || []).reduce(
-      (acc: number, fs: any) => acc + Number(fs.monthly_budget),
-      0,
-    ) ||
-    participant.monthly_budget_default ||
-    0;
-
   for (let mIdx = 5; mIdx <= 10; mIdx++) {
     const m = `2026-${String(mIdx).padStart(2, "0")}`;
+    const targetMonthStart = new Date(2026, mIdx - 1, 1);
+
+    const activeFsInMonth = (participant.funding_sources || []).filter((fs: any) => {
+      if (fs.start_date) {
+        const start = new Date(fs.start_date);
+        const startMonthStart = new Date(start.getFullYear(), start.getMonth(), 1);
+        if (startMonthStart > targetMonthStart) return false;
+      }
+      if (fs.end_date) {
+        const end = new Date(fs.end_date);
+        const endMonthStart = new Date(end.getFullYear(), end.getMonth(), 1);
+        if (endMonthStart < targetMonthStart) return false;
+      }
+      return true;
+    });
+
+    const totalMonthlyBudgetInMonth =
+      activeFsInMonth.reduce(
+        (acc: number, fs: any) => acc + Number(fs.monthly_budget),
+        0,
+      ) ||
+      participant.monthly_budget_default ||
+      0;
 
     const monthTxs = (allMonthTxs || []).filter((t: any) =>
       t.date.startsWith(m),
@@ -233,7 +247,7 @@ export default async function Home() {
     monthlyTrend.push({
       month: m,
       totalSpent,
-      budget: totalMonthlyBudget,
+      budget: totalMonthlyBudgetInMonth,
       transactions: monthTxs.map((t: any) => ({
         id: t.id,
         activity_name: t.activity_name,

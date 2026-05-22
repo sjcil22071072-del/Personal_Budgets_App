@@ -60,7 +60,7 @@ export function calculateFundingSourceRollover(
   if (!force && lastRolloverMonth >= currentMonth) return null
 
   const monthsActive = monthDiff(resolvedStartMonth, limitMonth) + 1
-  const monthsActiveClamped = monthsActive < 1 ? 1 : monthsActive
+  const monthsActiveClamped = monthsActive < 0 ? 0 : monthsActive
 
   const monthlyBudget = Number(fundingSource.monthly_budget || 0)
   const currentBalance = Number(fundingSource.current_month_balance || 0)
@@ -72,11 +72,11 @@ export function calculateFundingSourceRollover(
     totalSpent = Number(fundingSource.total_spent)
   } else {
     const lastRolloverMonthsActive = monthDiff(resolvedStartMonth, lastRolloverMonth) + 1
-    const lastRolloverMonthsClamped = lastRolloverMonthsActive < 1 ? 1 : lastRolloverMonthsActive
+    const lastRolloverMonthsClamped = lastRolloverMonthsActive < 0 ? 0 : lastRolloverMonthsActive
     totalSpent = (monthlyBudget * lastRolloverMonthsClamped) - currentBalance
   }
 
-  const targetBalance = (monthlyBudget * monthsActiveClamped) - totalSpent
+  const targetBalance = monthsActiveClamped === 0 ? 0 : (monthlyBudget * monthsActiveClamped) - totalSpent
 
   return {
     current_month_balance: targetBalance,
