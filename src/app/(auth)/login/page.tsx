@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 
 // ────────────────────────────────────────────────────────────────
 // Google OAuth 로그인 화면
@@ -11,6 +11,36 @@ function GoogleLoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const [loading, setLoading] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isKakao = userAgent.includes("kakaotalk");
+    const isNaver = userAgent.includes("naver");
+    const isLine = userAgent.includes("line");
+    const isFacebook = userAgent.includes("fb");
+    const isInstagram = userAgent.includes("instagram");
+    
+    // 인앱 브라우저 여부
+    const isInApp = isKakao || isNaver || isLine || isFacebook || isInstagram || userAgent.includes("inapp");
+
+    if (isInApp) {
+      setIsInAppBrowser(true);
+      const targetUrl = window.location.href;
+
+      // 1. 안드로이드인 경우 Chrome 실행
+      if (/android/i.test(userAgent)) {
+        const schemeUrl = targetUrl.replace(/https?:\/\//i, "");
+        window.location.href = `intent://${schemeUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+      } 
+      // 2. iOS이면서 카카오톡인 경우 아웃링크 스킴 실행
+      else if (/iphone|ipad|ipod/i.test(userAgent) && isKakao) {
+        window.location.href = `kakaotalk://web/openExternalApp?url=${encodeURIComponent(targetUrl)}`;
+      }
+    }
+  }, []);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -49,6 +79,34 @@ function GoogleLoginContent() {
               </p>
             </div>
           </div>
+
+          {/* 인앱 브라우저 안내 배너 */}
+          {isInAppBrowser && (
+            <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-4 text-xs text-amber-900 leading-relaxed shadow-sm flex flex-col gap-2">
+              <div className="flex items-center gap-2 font-bold text-amber-800">
+                <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                간편 로그인 이용 안내
+              </div>
+              <p className="text-zinc-600">
+                카카오톡, 네이버 등 앱 내부 브라우저에서는 구글 로그인 정책상 직접 로그인이 불가능합니다.
+              </p>
+              <div className="mt-1 bg-white/60 rounded-xl p-2.5 border border-amber-200/30 flex flex-col gap-1.5 text-[11px] text-zinc-500">
+                <p className="font-semibold text-zinc-700">💡 해결 방법:</p>
+                <div className="pl-2 relative">
+                  <span className="absolute left-0 text-amber-500 font-bold">•</span>
+                  <span className="pl-2.5 block text-zinc-600">
+                    <strong className="text-zinc-700">안드로이드:</strong> 잠시 후 외부 인터넷 브라우저(크롬 등)가 자동으로 실행됩니다.
+                  </span>
+                </div>
+                <div className="pl-2 relative">
+                  <span className="absolute left-0 text-amber-500 font-bold">•</span>
+                  <span className="pl-2.5 block text-zinc-600">
+                    <strong className="text-zinc-700">아이폰 (iOS):</strong> 화면 우측 하단/상단의 <strong className="text-zinc-700">더보기(점 3개)</strong> 버튼을 누른 후, <strong className="text-amber-700 font-extrabold">"다른 브라우저로 열기"</strong> 또는 <strong className="text-amber-700 font-extrabold">"Safari로 열기"</strong>를 선택해 주세요.
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 오류 메시지 */}
           {error && (
