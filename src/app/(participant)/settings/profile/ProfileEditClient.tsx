@@ -10,7 +10,6 @@ interface Props {
     name: string | null
     role: string
     bio: string | null
-    avatar_url: string | null
   }
   userEmail: string
   isAdminEmail: boolean
@@ -53,15 +52,9 @@ export default function ProfileEditClient({ profile, userEmail, isAdminEmail }: 
         </div>
       )}
 
-      <div className="flex flex-col items-center gap-3">
-        <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-4xl ring-4 ring-zinc-200">
-          {profile.avatar_url ? (
-            <img src={profile.avatar_url} alt="프로필" className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-3xl font-black text-zinc-400">{(profile.name || '?')[0]}</span>
-          )}
-        </div>
-        <p className="text-xs font-bold text-zinc-400">{userEmail}</p>
+      <div className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200">
+        <p className="text-xs font-bold text-zinc-400">계정 이메일</p>
+        <p className="mt-1 text-sm font-black text-zinc-800">{userEmail}</p>
       </div>
 
       <div className="flex flex-col gap-2">

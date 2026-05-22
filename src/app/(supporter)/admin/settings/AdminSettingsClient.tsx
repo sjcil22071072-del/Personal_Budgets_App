@@ -44,7 +44,6 @@ export default function AdminSettingsClient({
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-6">
         <section className="p-5 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)]">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-white text-base font-black">A</div>
             <div>
               <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">현재 관리자</p>
               <p className="text-sm font-black text-zinc-800 mt-0.5">{currentUserEmail}</p>
@@ -83,16 +82,11 @@ export default function AdminSettingsClient({
                   <tbody className="divide-y divide-zinc-100">
                     {profiles.map((profile) => {
                       const isCurrentUser = profile.id === currentUserId
-                      const isParticipantRecord = profile.source === 'participant'
-                      const initial = (profile.name || profile.email || '?')[0]
 
                       return (
                         <tr key={`${profile.source}-${profile.id}`} className={`transition-colors hover:bg-zinc-50/40 ${isCurrentUser ? 'bg-zinc-50/60' : ''}`}>
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-150 border border-zinc-200 text-xs font-black text-zinc-650">
-                                {initial}
-                              </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className="truncate text-sm font-bold text-zinc-800">
