@@ -22,7 +22,17 @@ interface Props {
 }
 
 export default function TransactionCalendar({ transactions }: Props) {
-  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 4, 1))
+  const [currentDate, setCurrentDate] = useState(() => {
+    const today = new Date()
+    const y = today.getFullYear()
+    const m = today.getMonth() // 0-based
+    if (y === 2026) {
+      if (m < 4) return new Date(2026, 4, 1) // 5월 이전이면 5월로
+      if (m > 9) return new Date(2026, 9, 1) // 10월 이후면 10월로
+      return today // 5월~10월 사이면 오늘 날짜
+    }
+    return new Date(2026, 4, 1)
+  })
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
 
