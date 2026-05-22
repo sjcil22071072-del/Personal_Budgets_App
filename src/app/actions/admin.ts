@@ -417,6 +417,8 @@ export async function updateFundingSource(fundingSourceId: string, formData: {
   name?: string
   monthlyBudget?: number
   yearlyBudget?: number
+  startDate?: string | null
+  endDate?: string | null
 }) {
   const { supabase } = await verifyAdmin()
 
@@ -425,6 +427,8 @@ export async function updateFundingSource(fundingSourceId: string, formData: {
     if (formData.name !== undefined) updateData.name = formData.name
     if (formData.monthlyBudget !== undefined) updateData.monthly_budget = formData.monthlyBudget
     if (formData.yearlyBudget !== undefined) updateData.yearly_budget = formData.yearlyBudget
+    if (formData.startDate !== undefined) updateData.start_date = formData.startDate
+    if (formData.endDate !== undefined) updateData.end_date = formData.endDate
 
     const { error } = await supabase
       .from('funding_sources')
@@ -460,6 +464,8 @@ export async function createFundingSource(participantId: string, formData: {
   name: string
   monthlyBudget: number
   yearlyBudget: number
+  startDate?: string | null
+  endDate?: string | null
 }) {
   const { supabase } = await verifyAdmin()
 
@@ -473,6 +479,8 @@ export async function createFundingSource(participantId: string, formData: {
         yearly_budget: formData.yearlyBudget,
         current_month_balance: formData.monthlyBudget,
         current_year_balance: formData.yearlyBudget,
+        start_date: formData.startDate || null,
+        end_date: formData.endDate || null,
       })
 
     if (error) {

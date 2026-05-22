@@ -10,6 +10,8 @@ type FundingSourceRow = {
   current_month_balance: number | string | null
   current_year_balance: number | string | null
   last_rollover_month?: string | null
+  start_date?: string | null
+  end_date?: string | null
 }
 
 type ParticipantRow = {
@@ -23,7 +25,7 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
 
   let query = supabase
     .from('participants')
-    .select('id, budget_start_date, funding_sources(id, monthly_budget, yearly_budget, current_month_balance, current_year_balance, last_rollover_month)')
+    .select('id, budget_start_date, funding_sources(id, monthly_budget, yearly_budget, current_month_balance, current_year_balance, last_rollover_month, start_date, end_date)')
 
   if (participantId) {
     query = query.eq('id', participantId)
@@ -45,13 +47,16 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
     const resolvedStartMonth = Number.isNaN(startMonth.getTime()) ? currentMonth : new Date(startMonth.getFullYear(), startMonth.getMonth(), 1)
 
     for (const fundingSource of participant.funding_sources || []) {
+      // 해당 지원금의 시작일이 있다면 이를 최우선 적용, 없으면 참여자 시작일 적용
+      const effectiveStartDate = fundingSource.start_date || startDate
+
       // Query total confirmed spent since the budget start date
       const { data: spentData, error: spentError } = await supabase
         .from('transactions')
         .select('amount')
         .eq('funding_source_id', fundingSource.id)
         .eq('status', 'confirmed')
-        .gte('date', startDate)
+        .gte('date', effectiveStartDate)
 
       if (spentError) {
         console.error('[budgetRollover] spent query failed:', spentError)
@@ -70,9 +75,21 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
         force
       )
 
+      // 지원금 날짜를 반영한 연도 계산용 시작/종료월 도출
+      const fsStart = fundingSource.start_date ? new Date(fundingSource.start_date) : null
+      const fsResolvedStartMonth = fsStart && !Number.isNaN(fsStart.getTime()) 
+        ? new Date(fsStart.getFullYear(), fsStart.getMonth(), 1) 
+        : resolvedStartMonth
+      
+      const fsEnd = fundingSource.end_date ? new Date(fundingSource.end_date) : null
+      const fsResolvedEndMonth = fsEnd && !Number.isNaN(fsEnd.getTime())
+        ? new Date(fsEnd.getFullYear(), fsEnd.getMonth(), 1)
+        : null
+      const limitMonth = fsResolvedEndMonth && fsResolvedEndMonth < currentMonth ? fsResolvedEndMonth : currentMonth
+
       // Calculate stateless yearly balance
-      const startYear = resolvedStartMonth.getFullYear()
-      const currentYear = currentMonth.getFullYear()
+      const startYear = fsResolvedStartMonth.getFullYear()
+      const currentYear = limitMonth.getFullYear()
       const yearsActive = currentYear - startYear + 1
       const yearsActiveClamped = yearsActive < 1 ? 1 : yearsActive
       const yearlyBudget = Number(fundingSource.yearly_budget || 0)
@@ -91,10 +108,10 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
         // If force is true, we should also update current_month_balance in case it was out of sync
         // even if rollover was null (which happens if last_rollover_month is already currentMonth)
         const monthlyBudget = Number(fundingSource.monthly_budget || 0)
-        const monthsActive = ((currentMonth.getFullYear() - resolvedStartMonth.getFullYear()) * 12) + (currentMonth.getMonth() - resolvedStartMonth.getMonth()) + 1
+        const monthsActive = ((limitMonth.getFullYear() - fsResolvedStartMonth.getFullYear()) * 12) + (limitMonth.getMonth() - fsResolvedStartMonth.getMonth()) + 1
         const monthsActiveClamped = monthsActive < 1 ? 1 : monthsActive
         updateData.current_month_balance = (monthlyBudget * monthsActiveClamped) - totalSpent
-        updateData.last_rollover_month = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-01`
+        updateData.last_rollover_month = `${limitMonth.getFullYear()}-${String(limitMonth.getMonth() + 1).padStart(2, '0')}-01`
       }
 
       const { error: updateError } = await supabase

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { participant_id, name, monthly_budget, description } = body
+    const { participant_id, name, monthly_budget, description, start_date, end_date } = body
 
     if (!participant_id || !name || monthly_budget === undefined) {
       return NextResponse.json(
@@ -39,6 +39,8 @@ export async function POST(request: Request) {
         name,
         monthly_budget,
         description,
+        start_date: start_date || null,
+        end_date: end_date || null,
       })
       .select()
       .single()

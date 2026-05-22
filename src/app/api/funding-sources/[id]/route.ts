@@ -26,12 +26,14 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, monthly_budget, description } = body
+    const { name, monthly_budget, description, start_date, end_date } = body
 
     const updateData: any = {}
     if (name !== undefined) updateData.name = name
     if (monthly_budget !== undefined) updateData.monthly_budget = monthly_budget
     if (description !== undefined) updateData.description = description
+    if (start_date !== undefined) updateData.start_date = start_date
+    if (end_date !== undefined) updateData.end_date = end_date
 
     const { data, error } = await supabase
       .from('funding_sources')

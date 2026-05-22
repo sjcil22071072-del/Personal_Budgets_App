@@ -7,6 +7,8 @@ interface FundingSource {
   name: string
   monthly_budget: number
   description?: string
+  start_date?: string | null
+  end_date?: string | null
 }
 
 interface FundingSourceModalProps {
@@ -25,6 +27,8 @@ export default function FundingSourceModal({
   const [name, setName] = useState(fundingSource?.name || '')
   const [monthlyBudget, setMonthlyBudget] = useState(fundingSource?.monthly_budget.toString() || '')
   const [description, setDescription] = useState(fundingSource?.description || '')
+  const [startDate, setStartDate] = useState(fundingSource?.start_date || '')
+  const [endDate, setEndDate] = useState(fundingSource?.end_date || '')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -49,6 +53,8 @@ export default function FundingSourceModal({
           name,
           monthly_budget: Number(monthlyBudget),
           description: description || null,
+          start_date: startDate || null,
+          end_date: endDate || null,
         }),
       })
 
@@ -140,6 +146,31 @@ export default function FundingSourceModal({
               placeholder="재원에 대한 설명을 입력하세요"
               rows={3}
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                시작일 (선택)
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                종료일 (선택)
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           <div className="flex gap-2">

@@ -138,6 +138,8 @@ export interface Database {
           current_year_balance: number
           last_rollover_month: string | null
           created_at: string
+          start_date: string | null
+          end_date: string | null
         }
         Insert: {
           id?: string
@@ -149,6 +151,8 @@ export interface Database {
           current_year_balance: number
           last_rollover_month?: string | null
           created_at?: string
+          start_date?: string | null
+          end_date?: string | null
         }
         Update: {
           id?: string
@@ -160,6 +164,8 @@ export interface Database {
           current_year_balance?: number
           last_rollover_month?: string | null
           created_at?: string
+          start_date?: string | null
+          end_date?: string | null
         }
       }
       transactions: {

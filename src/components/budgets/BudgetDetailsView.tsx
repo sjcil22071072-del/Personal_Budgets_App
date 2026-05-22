@@ -12,6 +12,8 @@ interface FundingSource {
   name: string
   monthly_budget: number
   description?: string
+  start_date?: string | null
+  end_date?: string | null
 }
 
 interface Transaction {
@@ -184,6 +186,13 @@ export default function BudgetDetailsView({
                     {fs.description && (
                       <p className="text-sm text-zinc-500">{fs.description}</p>
                     )}
+                    <p className="text-xs text-zinc-400 mt-1">
+                      {fs.start_date || fs.end_date ? (
+                        `기간: ${fs.start_date || '제한 없음'} ~ ${fs.end_date || '제한 없음'}`
+                      ) : (
+                        '기간 제한 없음'
+                      )}
+                    </p>
                     <p className="text-lg font-bold text-blue-600 mt-1">
                       {Number(fs.monthly_budget).toLocaleString()}원/월
                     </p>

@@ -3,6 +3,8 @@ export interface FundingSourceRolloverInput {
   current_month_balance: number | string | null
   last_rollover_month?: string | null
   total_spent?: number | string | null
+  start_date?: string | null
+  end_date?: string | null
 }
 
 export interface ParticipantRolloverInput {
@@ -38,18 +40,26 @@ export function calculateFundingSourceRollover(
   const currentMonth = toMonthStart(currentDate)
   if (!currentMonth) return null
 
-  const startMonth = participant.budget_start_date
-    ? toMonthStart(participant.budget_start_date)
-    : null
+  const startMonth = fundingSource.start_date
+    ? toMonthStart(fundingSource.start_date)
+    : (participant.budget_start_date ? toMonthStart(participant.budget_start_date) : null)
   const resolvedStartMonth = startMonth || currentMonth
 
   const lastRolloverMonth = (fundingSource.last_rollover_month
     ? toMonthStart(fundingSource.last_rollover_month)
     : null) || resolvedStartMonth
 
+  const endMonth = fundingSource.end_date ? toMonthStart(fundingSource.end_date) : null
+  const limitMonth = endMonth && endMonth < currentMonth ? endMonth : currentMonth
+
+  if (endMonth && resolvedStartMonth > endMonth) {
+    return null
+  }
+
+  if (!force && lastRolloverMonth >= limitMonth) return null
   if (!force && lastRolloverMonth >= currentMonth) return null
 
-  const monthsActive = monthDiff(resolvedStartMonth, currentMonth) + 1
+  const monthsActive = monthDiff(resolvedStartMonth, limitMonth) + 1
   const monthsActiveClamped = monthsActive < 1 ? 1 : monthsActive
 
   const monthlyBudget = Number(fundingSource.monthly_budget || 0)
@@ -70,8 +80,8 @@ export function calculateFundingSourceRollover(
 
   return {
     current_month_balance: targetBalance,
-    last_rollover_month: formatMonthStart(currentMonth),
-    months_added: monthDiff(lastRolloverMonth, currentMonth),
+    last_rollover_month: formatMonthStart(limitMonth),
+    months_added: monthDiff(lastRolloverMonth, limitMonth),
   }
 }
 
