@@ -47,6 +47,8 @@ export default async function TransactionsPage({
   // Apply Filters based on Search Params
   const monthParam = typeof resolvedSearchParams.month === 'string' ? resolvedSearchParams.month : new Date().toISOString().slice(0, 7)
   const sourceIdParam = typeof resolvedSearchParams.sourceId === 'string' ? resolvedSearchParams.sourceId : null
+  const categoryMajorParam = typeof resolvedSearchParams.categoryMajor === 'string' ? resolvedSearchParams.categoryMajor : null
+  const categoryMinorParam = typeof resolvedSearchParams.categoryMinor === 'string' ? resolvedSearchParams.categoryMinor : null
   
   // Date range for the selected month
   const startDate = `${monthParam}-01`
@@ -67,6 +69,14 @@ export default async function TransactionsPage({
 
   if (sourceIdParam && sourceIdParam !== 'all') {
     query = query.eq('funding_source_id', sourceIdParam)
+  }
+
+  if (categoryMajorParam && categoryMajorParam !== 'all') {
+    if (categoryMinorParam && categoryMinorParam !== 'all') {
+      query = query.eq('category', `${categoryMajorParam} - ${categoryMinorParam}`)
+    } else {
+      query = query.like('category', `${categoryMajorParam} - %`)
+    }
   }
 
   // Type assertion to bypass structural lint errors in the view
@@ -124,7 +134,22 @@ export default async function TransactionsPage({
                         {(t.funding_sources as any)?.name}
                       </span>
                     </td>
-                    <td className="p-4 text-sm text-gray-600">{t.category}</td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {(() => {
+                        const parts = (t.category || '').split(' - ');
+                        if (parts.length >= 2) {
+                          return (
+                            <div className="flex flex-col gap-1 items-start">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                                {parts[0]}
+                              </span>
+                              <span className="text-gray-900 font-medium pl-0.5">{parts[1]}</span>
+                            </div>
+                          );
+                        }
+                        return <span className="text-gray-950 font-medium">{t.category || '-'}</span>;
+                      })()}
+                    </td>
                     <td className="p-4 text-sm font-semibold text-gray-900 text-right">
                       {t.amount >= 0 ? '-' : '+'}{Math.abs(t.amount).toLocaleString()}원
                     </td>
