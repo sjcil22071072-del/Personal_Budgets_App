@@ -51,7 +51,7 @@ export async function createTransaction(formData: FormData) {
   const creator_id = profile ? user.id : null
 
   const participant_id = formData.get('participant_id') as string
-  const funding_source_id = formData.get('funding_source_id') as string
+  let funding_source_id = (formData.get('funding_source_id') as string | null) || null
   const rawAmount = Number(formData.get('amount'))
   const date = (formData.get('date') as string) || new Date().toISOString().split('T')[0]
   const description = formData.get('description') as string
@@ -87,6 +87,16 @@ export async function createTransaction(formData: FormData) {
   }
 
   const amount = is_expense ? rawAmount : -Math.abs(rawAmount)
+
+  if (!funding_source_id) {
+    const { data: defaultFundingSource } = await adminClient
+      .from('funding_sources')
+      .select('id')
+      .eq('participant_id', participant_id)
+      .limit(1)
+      .maybeSingle()
+    funding_source_id = defaultFundingSource?.id ?? null
+  }
 
   const receipt_image_urls: string[] = []
   const activity_image_urls: string[] = []

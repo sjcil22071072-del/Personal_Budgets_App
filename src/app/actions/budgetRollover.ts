@@ -54,8 +54,8 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       // only for receipt/admin workflow, not for excluding spending from budget math.
       let spentQuery = supabase
         .from('transactions')
-        .select('amount')
-        .eq('funding_source_id', fundingSource.id)
+        .select('amount, funding_source_id')
+        .eq('participant_id', participant.id)
         .gte('date', effectiveStartDate)
 
       if (fundingSource.end_date) {
@@ -69,7 +69,13 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
         continue
       }
 
-      const totalSpent = (spentData || []).reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
+      const onlyFundingSource = (participant.funding_sources || []).length === 1
+      const totalSpent = (spentData || []).reduce((sum, tx) => {
+        const txFundingSourceId = tx.funding_source_id || null
+        const belongsToSource = txFundingSourceId === fundingSource.id
+        const isLegacyUnassigned = onlyFundingSource && !txFundingSourceId
+        return belongsToSource || isLegacyUnassigned ? sum + Number(tx.amount || 0) : sum
+      }, 0)
 
       const rollover = calculateFundingSourceRollover(
         participant,
