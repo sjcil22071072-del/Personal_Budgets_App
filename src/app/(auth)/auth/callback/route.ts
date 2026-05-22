@@ -45,8 +45,7 @@ export async function GET(request: Request) {
 
   const baseUrl = forwardedHost
     ? `${forwardedProto}://${forwardedHost}`
-    : process.env.NEXT_PUBLIC_SITE_URL ??
-      new URL(request.url).origin
+    : process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin
 
   if (!code) {
     return NextResponse.redirect(`${baseUrl}/login?error=AuthFailed`)
@@ -147,9 +146,7 @@ export async function GET(request: Request) {
           role: resolvedRole,
         })
         .eq('id', user.id)
-    : await adminClient
-        .from('profiles')
-        .upsert(profilePayload, { onConflict: 'id' })
+    : await adminClient.from('profiles').upsert(profilePayload, { onConflict: 'id' })
 
   if (profileError) {
     console.error('Profile upsert failed:', profileError)
@@ -164,12 +161,7 @@ export async function GET(request: Request) {
       .eq('id', typedAdminRegistration.id)
   }
 
-  const destination =
-    next !== '/'
-      ? next
-      : resolvedRole === 'admin'
-        ? '/admin'
-        : '/'
+  const destination = next !== '/' ? next : resolvedRole === 'admin' ? '/admin' : '/'
 
   return NextResponse.redirect(`${baseUrl}${destination}`)
 }

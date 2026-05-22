@@ -27,7 +27,7 @@ export default function StaffRegistrationClient() {
 
       setMessage({
         type: 'success',
-        text: '관리자로 등록했습니다. 해당 이메일로 로그인하면 관리자 권한이 적용됩니다.',
+        text: '관리자로 등록했습니다. 해당 이메일로 Google 로그인하면 관리자 권한이 적용됩니다.',
       })
       setName('')
       setEmail('')

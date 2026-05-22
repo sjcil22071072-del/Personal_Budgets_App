@@ -511,27 +511,17 @@ export async function deleteFundingSource(fundingSourceId: string) {
 }
 
 // ──────────────────────────────────────────
-// 사용자 초대 관리 (user_invitations 테이블)
+// 관리자 사전 등록
 // ──────────────────────────────────────────
 
-export type InvitationRole = 'admin' | 'participant'
 export type StaffRole = 'admin'
-
-export interface Invitation {
-  id: string
-  email: string
-  role: InvitationRole
-  note: string | null
-  used_at: string | null
-  created_at: string
-}
 
 export async function registerStaffUser(formData: {
   name: string
   email: string
   role: StaffRole
   note?: string
-}): Promise<{ success?: boolean; error?: string; mode?: 'updated' | 'invited' }> {
+}): Promise<{ success?: boolean; error?: string; mode?: 'updated' | 'registered' }> {
   const { supabase, user } = await verifyAdmin()
 
   const email = formData.email.trim().toLowerCase()
@@ -571,7 +561,6 @@ export async function registerStaffUser(formData: {
 
     revalidatePath('/admin/settings')
     revalidatePath('/admin/users/new')
-    revalidatePath('/admin/invitations')
     return { success: true, mode: 'updated' }
   }
 
@@ -582,11 +571,11 @@ export async function registerStaffUser(formData: {
     .maybeSingle()
 
   if (invitationLookupError) {
-    return { error: `초대 확인 실패: ${invitationLookupError.message}` }
+    return { error: `등록 확인 실패: ${invitationLookupError.message}` }
   }
 
   if (existingInvitation) {
-    return { error: '이미 역할이 지정된 이메일입니다. 가입 전 초대 역할도 다시 수정할 수 없습니다.' }
+    return { error: '이미 역할이 지정된 이메일입니다. 가입 전 역할도 다시 수정할 수 없습니다.' }
   }
 
   const { error: invitationError } = await supabase
@@ -605,70 +594,5 @@ export async function registerStaffUser(formData: {
 
   revalidatePath('/admin/settings')
   revalidatePath('/admin/users/new')
-  revalidatePath('/admin/invitations')
-  return { success: true, mode: 'invited' }
-}
-
-/**
- * 초대 목록 조회
- */
-export async function getInvitations(): Promise<{ invitations: Invitation[]; error?: string }> {
-  const { supabase } = await verifyAdmin()
-  const { data, error } = await supabase
-    .from('user_invitations')
-    .select('id, email, role, note, used_at, created_at')
-    .order('created_at', { ascending: false })
-
-  if (error) return { error: error.message, invitations: [] }
-  return { invitations: (data as Invitation[]) ?? [] }
-}
-
-/**
- * 초대 등록 (이메일 + 역할)
- */
-export async function createInvitation(formData: {
-  email: string
-  role: InvitationRole
-  note?: string
-}): Promise<{ success?: boolean; error?: string }> {
-  const { supabase, user } = await verifyAdmin()
-
-  if (formData.role !== 'admin' && formData.role !== 'participant') {
-    return { error: '??? ?? ???? ??? ? ????.' }
-  }
-
-  const { error } = await supabase
-    .from('user_invitations')
-    .insert({
-      email: formData.email.trim().toLowerCase(),
-      role: formData.role,
-      note: formData.note?.trim() || null,
-      invited_by: user.id,
-    })
-
-  if (error) {
-    if (error.code === '23505') return { error: '이미 등록된 이메일입니다.' }
-    return { error: `등록 실패: ${error.message}` }
-  }
-
-  revalidatePath('/admin/invitations')
-  return { success: true }
-}
-
-/**
- * 초대 삭제 (미사용 초대만)
- */
-export async function deleteInvitation(id: string): Promise<{ success?: boolean; error?: string }> {
-  const { supabase } = await verifyAdmin()
-
-  const { error } = await supabase
-    .from('user_invitations')
-    .delete()
-    .eq('id', id)
-    .is('used_at', null)
-
-  if (error) return { error: `삭제 실패: ${error.message}` }
-
-  revalidatePath('/admin/invitations')
-  return { success: true }
+  return { success: true, mode: 'registered' }
 }
