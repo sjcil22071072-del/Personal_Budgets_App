@@ -32,12 +32,12 @@ export async function getDocumentUploadUrl(
 
   if (!profile) {
     console.warn('[getDocumentUploadUrl] Profile not found for user:', user.id)
-    return { error: `프로필을 찾을 수 없습니다. (UserID: ${user.id}, Email: ${user.email})` }
+    return { error: '프로필을 찾을 수 없습니다.' }
   }
 
   if (!isStaffRole(profile.role)) {
     console.warn('[getDocumentUploadUrl] Insufficient permissions. Role:', profile.role, 'User:', user.id)
-    return { error: `권한이 없습니다. (현재 역할: ${profile.role}, UserID: ${user.id})` }
+    return { error: '권한이 없습니다.' }
   }
 
   // Storage 경로는 ASCII만 허용 — 확장자만 추출하고 타임스탬프로 고유성 보장
@@ -88,12 +88,12 @@ export async function saveDocumentRecord(
 
   if (!profile) {
     console.warn('[saveDocumentRecord] Profile not found for user:', user.id)
-    return { error: `프로필을 찾을 수 없습니다. (UserID: ${user.id}, Email: ${user.email})` }
+    return { error: '프로필을 찾을 수 없습니다.' }
   }
 
   if (!isStaffRole(profile.role)) {
     console.warn('[saveDocumentRecord] Insufficient permissions. Role:', profile.role, 'User:', user.id)
-    return { error: `권한이 없습니다. (현재 역할: ${profile.role}, UserID: ${user.id})` }
+    return { error: '권한이 없습니다.' }
   }
 
   const { data: { publicUrl } } = admin.storage.from('documents').getPublicUrl(filePath)
@@ -134,12 +134,12 @@ export async function uploadDocument(formData: FormData): Promise<{ success: boo
 
     if (!profile) {
       console.warn('[uploadDocument] Profile not found for user:', user.id)
-      return { error: `프로필을 찾을 수 없습니다. (UserID: ${user.id}, Email: ${user.email})` }
+      return { error: '프로필을 찾을 수 없습니다.' }
     }
 
     if (!isStaffRole(profile.role)) {
       console.warn('[uploadDocument] Insufficient permissions. Role:', profile.role, 'User:', user.id)
-      return { error: `권한이 없습니다. (현재 역할: ${profile.role}, UserID: ${user.id})` }
+      return { error: '권한이 없습니다.' }
     }
 
     const participantId = formData.get('participant_id') as string
@@ -233,12 +233,12 @@ export async function deleteDocument(id: string): Promise<{ success: boolean } |
 
     if (!profile) {
       console.warn('[deleteDocument] Profile not found for user:', user.id)
-      return { error: `프로필을 찾을 수 없습니다. (UserID: ${user.id}, Email: ${user.email})` }
+      return { error: '프로필을 찾을 수 없습니다.' }
     }
 
     if (!isStaffRole(profile.role)) {
       console.warn('[deleteDocument] Insufficient permissions. Role:', profile.role, 'User:', user.id)
-      return { error: `권한이 없습니다. (현재 역할: ${profile.role}, UserID: ${user.id})` }
+      return { error: '권한이 없습니다.' }
     }
 
     const { error } = await admin.from('file_links').delete().eq('id', id)
