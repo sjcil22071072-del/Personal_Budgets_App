@@ -204,6 +204,30 @@ export async function createParticipant(formData: {
 
     const newParticipantId = participant.id
 
+    // 1-1. auth.users에 가입된 이메일이 있는지 확인하여 profiles 테이블과 연동
+    try {
+      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers()
+      if (!listError && users) {
+        const matchedUser = users.find((u: any) => u.email?.toLowerCase() === formData.email.toLowerCase())
+        if (matchedUser) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: matchedUser.id,
+              name: formData.name,
+              email: formData.email,
+              role: 'participant'
+            }, { onConflict: 'id' })
+          
+          if (profileError) {
+            console.error('[admin.createParticipant] profile sync error:', profileError)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[admin.createParticipant] profile sync exception:', err)
+    }
+
     // 2. 재원 등록 (배치 INSERT)
     if (formData.fundingSources.length > 0) {
       const { error: fsError } = await supabase
@@ -260,6 +284,14 @@ export async function updateParticipant(participantId: string, formData: {
   const { supabase } = await verifyAdmin()
 
   try {
+    // 업데이트 전 원래 당사자 이메일 확인
+    const { data: originalParticipant } = await supabase
+      .from('participants')
+      .select('email')
+      .eq('id', participantId)
+      .maybeSingle()
+    const oldEmail = originalParticipant?.email
+
     const updateData: any = {}
     if (formData.name !== undefined) updateData.name = formData.name
     if (formData.email !== undefined) {
@@ -291,6 +323,34 @@ export async function updateParticipant(participantId: string, formData: {
       return { error: `업데이트 실패: ${error.message}` }
     }
 
+    // profiles 테이블 정보도 동기화
+    if (oldEmail) {
+      try {
+        const { data: { users }, error: listError } = await supabase.auth.admin.listUsers()
+        if (!listError && users) {
+          const matchedUser = users.find((u: any) => u.email?.toLowerCase() === oldEmail.toLowerCase())
+          if (matchedUser) {
+            const profileUpdate: any = {}
+            if (formData.name !== undefined) profileUpdate.name = formData.name
+            if (formData.email !== undefined) profileUpdate.email = formData.email
+            
+            if (Object.keys(profileUpdate).length > 0) {
+              const { error: profileError } = await supabase
+                .from('profiles')
+                .update(profileUpdate)
+                .eq('id', matchedUser.id)
+              
+              if (profileError) {
+                console.error('[admin.updateParticipant] profile sync error:', profileError)
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[admin.updateParticipant] profile sync exception:', err)
+      }
+    }
+
     const { ensureMonthlyBudgetRollover } = await import('./budgetRollover')
     await ensureMonthlyBudgetRollover(participantId, true)
 
@@ -310,6 +370,14 @@ export async function deleteParticipant(participantId: string) {
   const { supabase } = await verifyAdmin()
 
   try {
+    // 삭제 전 당사자 이메일 확인
+    const { data: participant } = await supabase
+      .from('participants')
+      .select('email')
+      .eq('id', participantId)
+      .maybeSingle()
+    const email = participant?.email
+
     const { error } = await supabase
       .from('participants')
       .delete()
@@ -317,6 +385,22 @@ export async function deleteParticipant(participantId: string) {
 
     if (error) {
       return { error: `삭제 실패: ${error.message}` }
+    }
+
+    // profiles 테이블 정보도 동기화 (해당 이메일의 프로필 삭제)
+    if (email) {
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('email', email)
+        
+        if (profileError) {
+          console.error('[admin.deleteParticipant] profile sync error:', profileError)
+        }
+      } catch (err) {
+        console.error('[admin.deleteParticipant] profile sync exception:', err)
+      }
     }
 
     revalidatePath('/admin/participants')
