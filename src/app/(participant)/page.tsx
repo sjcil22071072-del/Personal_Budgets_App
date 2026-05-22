@@ -6,6 +6,71 @@ import { UIPreferences, DEFAULT_PREFERENCES } from "@/types/ui-preferences";
 import { getSignedImageUrls } from "@/app/actions/storage";
 import { ensureMonthlyBudgetRollover } from "@/app/actions/budgetRollover";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function toMonthStart(value: string | Date): Date | null {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function monthDiff(from: Date, to: Date): number {
+  return (
+    (to.getFullYear() - from.getFullYear()) * 12 +
+    (to.getMonth() - from.getMonth())
+  );
+}
+
+function calculateDisplayFundingSources(participant: any, transactions: any[]) {
+  const fundingSources = participant.funding_sources || [];
+  const currentDate = new Date();
+  const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const participantStart =
+    toMonthStart(participant.budget_start_date) || currentMonth;
+  const onlyFundingSource = fundingSources.length === 1;
+
+  return fundingSources.map((fs: any) => {
+    const startMonth = fs.start_date
+      ? toMonthStart(fs.start_date)
+      : participantStart;
+    const resolvedStartMonth = startMonth || currentMonth;
+    const endMonth = fs.end_date ? toMonthStart(fs.end_date) : null;
+    const limitMonth = endMonth && endMonth < currentMonth ? endMonth : currentMonth;
+
+    let monthsActive = 0;
+    if (!endMonth || resolvedStartMonth <= endMonth) {
+      monthsActive = resolvedStartMonth <= limitMonth
+        ? monthDiff(resolvedStartMonth, limitMonth) + 1
+        : 0;
+    }
+
+    const effectiveStart = fs.start_date || participant.budget_start_date || null;
+    const totalSpent = transactions.reduce((sum: number, tx: any) => {
+      const txDate = typeof tx.date === "string" ? tx.date : "";
+      if (effectiveStart && txDate < effectiveStart) return sum;
+      if (fs.end_date && txDate > fs.end_date) return sum;
+
+      const txFundingSourceId = tx.funding_source_id || null;
+      const belongsToSource = txFundingSourceId === fs.id;
+      const isLegacyUnassigned = onlyFundingSource && !txFundingSourceId;
+      return belongsToSource || isLegacyUnassigned
+        ? sum + Number(tx.amount || 0)
+        : sum;
+    }, 0);
+
+    return {
+      ...fs,
+      current_month_balance:
+        monthsActive > 0
+          ? Number(fs.monthly_budget || 0) * monthsActive - totalSpent
+          : 0,
+      current_year_balance:
+        Number(fs.yearly_budget || 0) - totalSpent,
+    };
+  });
+}
+
 export default async function Home() {
   const supabase = await createClient();
 
@@ -147,7 +212,7 @@ export default async function Home() {
 
     adminClient
       .from("transactions")
-      .select("id, amount, date, activity_name, category")
+      .select("id, amount, date, activity_name, category, funding_source_id")
       .eq("participant_id", participantId)
       .gte("date", "2026-05-01")
       .lte("date", "2026-10-31")
@@ -156,6 +221,11 @@ export default async function Home() {
 
   const rawRecent = recentTxData.data || [];
   const rawDaily = dailyTxData.data || [];
+  const displayFundingSources = calculateDisplayFundingSources(
+    participant,
+    allMonthTxs || [],
+  );
+  participant = { ...participant, funding_sources: displayFundingSources };
 
   // 영수증·활동사진 signed URL 변환
   const allForSigning = [
@@ -261,7 +331,7 @@ export default async function Home() {
     <HomeDashboard
       participant={participant}
       participantId={participantId}
-      fundingSources={participant.funding_sources || []}
+      fundingSources={displayFundingSources}
       recentTransactions={recentTransactions || []}
       remainingDays={remainingDays}
       totalDaysInMonth={totalDaysInMonth}
