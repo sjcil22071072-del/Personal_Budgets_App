@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { isStaffRole } from '@/utils/user-role'
 
 /**
  * 클라이언트 직접 업로드용 서명 URL 발급
@@ -15,18 +16,30 @@ export async function getDocumentUploadUrl(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: '로그인이 필요합니다.' }
 
-  // 역할 확인 + supporter인 경우 담당 참여자만 접근 허용
-  const { data: profile } = await supabase
+  const admin = createAdminClient()
+
+  // 역할 확인 (RLS 우회를 위해 adminClient 사용)
+  const { data: profile, error: profileError } = await admin
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (!profile || profile.role !== 'admin') {
-    return { error: '권한이 없습니다.' }
+  if (profileError) {
+    console.error('[getDocumentUploadUrl] Profile fetch error:', profileError)
+    return { error: `프로필 조회 중 오류가 발생했습니다: ${profileError.message} (코드: ${profileError.code})` }
   }
 
-  const admin = createAdminClient()
+  if (!profile) {
+    console.warn('[getDocumentUploadUrl] Profile not found for user:', user.id)
+    return { error: `프로필을 찾을 수 없습니다. (UserID: ${user.id}, Email: ${user.email})` }
+  }
+
+  if (!isStaffRole(profile.role)) {
+    console.warn('[getDocumentUploadUrl] Insufficient permissions. Role:', profile.role, 'User:', user.id)
+    return { error: `권한이 없습니다. (현재 역할: ${profile.role}, UserID: ${user.id})` }
+  }
+
   // Storage 경로는 ASCII만 허용 — 확장자만 추출하고 타임스탬프로 고유성 보장
   const ext = (originalFileName.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '')
   const filePath = `${participantId}/${Date.now()}${ext ? '.' + ext : ''}`
@@ -60,6 +73,29 @@ export async function saveDocumentRecord(
   }
 
   const admin = createAdminClient()
+
+  // 역할 확인 (RLS 우회를 위해 adminClient 사용)
+  const { data: profile, error: profileError } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profileError) {
+    console.error('[saveDocumentRecord] Profile fetch error:', profileError)
+    return { error: `프로필 조회 중 오류가 발생했습니다: ${profileError.message} (코드: ${profileError.code})` }
+  }
+
+  if (!profile) {
+    console.warn('[saveDocumentRecord] Profile not found for user:', user.id)
+    return { error: `프로필을 찾을 수 없습니다. (UserID: ${user.id}, Email: ${user.email})` }
+  }
+
+  if (!isStaffRole(profile.role)) {
+    console.warn('[saveDocumentRecord] Insufficient permissions. Role:', profile.role, 'User:', user.id)
+    return { error: `권한이 없습니다. (현재 역할: ${profile.role}, UserID: ${user.id})` }
+  }
+
   const { data: { publicUrl } } = admin.storage.from('documents').getPublicUrl(filePath)
 
   const { error } = await admin.from('file_links').insert({
@@ -81,6 +117,30 @@ export async function uploadDocument(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('로그인이 필요합니다.')
 
+  const admin = createAdminClient()
+
+  // 역할 확인 (RLS 우회를 위해 adminClient 사용)
+  const { data: profile, error: profileError } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profileError) {
+    console.error('[uploadDocument] Profile fetch error:', profileError)
+    throw new Error(`프로필 조회 중 오류가 발생했습니다: ${profileError.message} (코드: ${profileError.code})`)
+  }
+
+  if (!profile) {
+    console.warn('[uploadDocument] Profile not found for user:', user.id)
+    throw new Error(`프로필을 찾을 수 없습니다. (UserID: ${user.id}, Email: ${user.email})`)
+  }
+
+  if (!isStaffRole(profile.role)) {
+    console.warn('[uploadDocument] Insufficient permissions. Role:', profile.role, 'User:', user.id)
+    throw new Error(`권한이 없습니다. (현재 역할: ${profile.role}, UserID: ${user.id})`)
+  }
+
   const participantId = formData.get('participant_id') as string
   const title = formData.get('title') as string
   const fileType = formData.get('file_type') as string
@@ -90,9 +150,6 @@ export async function uploadDocument(formData: FormData) {
   const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
 
   let finalUrl = externalUrl
-
-  // Storage 업로드·DB 쓰기는 서비스 롤 클라이언트 사용 (RLS 우회)
-  const admin = createAdminClient()
 
   if (file && file.size > 0) {
     if (file.size > MAX_FILE_SIZE) {
@@ -150,7 +207,33 @@ export async function uploadDocument(formData: FormData) {
 }
 
 export async function deleteDocument(id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('로그인이 필요합니다.')
+
   const admin = createAdminClient()
+
+  // 역할 확인 (RLS 우회를 위해 adminClient 사용)
+  const { data: profile, error: profileError } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profileError) {
+    console.error('[deleteDocument] Profile fetch error:', profileError)
+    throw new Error(`프로필 조회 중 오류가 발생했습니다: ${profileError.message} (코드: ${profileError.code})`)
+  }
+
+  if (!profile) {
+    console.warn('[deleteDocument] Profile not found for user:', user.id)
+    throw new Error(`프로필을 찾을 수 없습니다. (UserID: ${user.id}, Email: ${user.email})`)
+  }
+
+  if (!isStaffRole(profile.role)) {
+    console.warn('[deleteDocument] Insufficient permissions. Role:', profile.role, 'User:', user.id)
+    throw new Error(`권한이 없습니다. (현재 역할: ${profile.role}, UserID: ${user.id})`)
+  }
 
   const { error } = await admin.from('file_links').delete().eq('id', id)
   if (error) throw error

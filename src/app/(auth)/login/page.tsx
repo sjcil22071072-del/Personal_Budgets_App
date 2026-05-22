@@ -27,6 +27,7 @@ function GoogleLoginContent() {
     const isInApp = isKakao || isNaver || isLine || isFacebook || isInstagram || userAgent.includes("inapp");
 
     if (isInApp) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsInAppBrowser(true);
       const targetUrl = window.location.href;
 
