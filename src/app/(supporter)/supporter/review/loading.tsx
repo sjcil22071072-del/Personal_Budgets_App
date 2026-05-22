@@ -21,10 +21,7 @@ export default function ReviewQueueLoading() {
           <div key={i} className="bg-white rounded-2xl ring-1 ring-zinc-200 overflow-hidden shadow-sm animate-pulse">
             {/* 카드 헤더 */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-100 bg-zinc-50">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-zinc-200" />
-                <div className="h-4 w-20 bg-zinc-200 rounded" />
-              </div>
+              <div className="h-4 w-20 bg-zinc-200 rounded" />
               <div className="h-5 w-16 bg-orange-100 rounded-full" />
             </div>
             {/* 카드 본문 */}

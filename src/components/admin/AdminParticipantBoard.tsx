@@ -140,9 +140,6 @@ export default async function AdminParticipantBoard() {
               <div className="flex flex-col gap-1.5 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0" style={{ backgroundColor: r.barColor }}>
-                      {r.name.charAt(0)}
-                    </div>
                     <span className="text-sm font-black text-zinc-800">{r.name}</span>
                     {r.pendingCount > 0 && (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 shrink-0">검토 {r.pendingCount}건</span>

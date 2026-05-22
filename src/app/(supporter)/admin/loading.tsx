@@ -16,7 +16,6 @@ export default function AdminDashboardLoading() {
         {/* 환영 섹션 skeleton */}
         <div className="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-700">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 animate-pulse" />
             <div className="h-7 w-48 bg-white/20 rounded-lg animate-pulse" />
           </div>
           <div className="h-4 w-64 bg-white/10 rounded animate-pulse" />

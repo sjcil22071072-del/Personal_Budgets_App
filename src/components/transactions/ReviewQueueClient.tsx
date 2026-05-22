@@ -36,9 +36,6 @@ export default function ReviewQueueClient({ transactions }: Props) {
           className="block rounded-2xl bg-white px-5 py-4 shadow-sm ring-1 ring-zinc-200 transition-all hover:ring-zinc-400 active:scale-[0.99]"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-base font-black text-zinc-600">
-              {(tx.participant_name || '?')[0]}
-            </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-black text-zinc-900">{tx.participant_name}</p>
               <p className="mt-0.5 truncate text-xs font-bold text-zinc-400">

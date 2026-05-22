@@ -80,9 +80,6 @@ export default async function ParticipantsOverviewPage() {
                   className="p-5 rounded-2xl bg-white ring-1 ring-zinc-200 hover:ring-zinc-400 transition-all shadow-sm group flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-zinc-100 flex items-center justify-center text-xl font-bold text-zinc-600 shrink-0">
-                      {(p.name || "?")[0]}
-                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-zinc-900 truncate">
                         {p.name || "이름 없음"}

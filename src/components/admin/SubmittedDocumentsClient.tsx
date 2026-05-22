@@ -77,9 +77,6 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                 onClick={() => toggleExpand(p.id)}
                 className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-zinc-50/50 transition-colors"
               >
-                <div className="w-11 h-11 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center text-zinc-600 text-base font-black shrink-0">
-                  {p.name.charAt(0)}
-                </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-black text-zinc-800 text-base">{p.name}</h3>
                   <div className="flex items-center gap-2 mt-1">

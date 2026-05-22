@@ -50,9 +50,6 @@ export default function ParticipantsList({ participants }: ParticipantsListProps
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100/80 text-sm font-black text-zinc-600">
-                  {(p.name || '?')[0]}
-                </div>
                 <div>
                   <p className="font-bold text-zinc-800 text-sm">{p.name || '이름 없음'}</p>
                   <p className="text-[11px] text-zinc-400 font-medium">자원 {p.funding_sources?.length || 0}개</p>
