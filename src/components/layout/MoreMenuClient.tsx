@@ -1,72 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { useAccessibility } from "@/hooks/useAccessibility";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface FileLink {
   id: string;
   title: string;
   url: string;
-  file_type: string;
-}
-
-function SectionToggle({
-  title,
-  open,
-  onToggle,
-}: {
-  title: string;
-  open: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="w-full flex items-center justify-between py-1 mb-2"
-    >
-      <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest ml-2">
-        {title}
-      </h3>
-      <span className="text-zinc-400 text-xs font-bold mr-1">
-        {open ? "▲ 접기" : "▼ 펼치기"}
-      </span>
-    </button>
-  );
+  file_type?: string | null;
+  created_at?: string | null;
 }
 
 export default function MoreMenuClient({
   fileLinks,
-  initialOpenSection,
 }: {
   fileLinks: FileLink[];
   initialOpenSection?: string;
 }) {
-  const {
-    fontSize,
-    setFontSize,
-    highContrast,
-    setHighContrast,
-    easyTerms,
-    setEasyTerms,
-    yellowBg,
-    setYellowBg,
-    darkMode,
-    setDarkMode,
-  } = useAccessibility();
-  const supabase = createClient();
   const router = useRouter();
 
-  const [openQuickNav, setOpenQuickNav] = useState(true);
-  const [openDisplay, setOpenDisplay] = useState(
-    initialOpenSection === "display",
-  );
-  const [openFiles, setOpenFiles] = useState(initialOpenSection === "files");
-
   const handleLogout = async () => {
+    const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
@@ -74,230 +28,58 @@ export default function MoreMenuClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* 빠른 이동 */}
-      <section className="flex flex-col">
-        <SectionToggle
-          title="빠른 이동"
-          open={openQuickNav}
-          onToggle={() => setOpenQuickNav((v) => !v)}
-        />
-        {openQuickNav && (
-          <div className="grid grid-cols-2 gap-3">
-            <Link
-              href="/calendar"
-              className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.98] group"
-            >
-              <span className="text-3xl group-hover:scale-110 transition-transform">
-                📅
-              </span>
-              <span className="text-sm font-black text-zinc-800">달력</span>
-            </Link>
-            <Link
-              href="/gallery"
-              className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-white ring-1 ring-zinc-200 shadow-sm hover:ring-zinc-900 transition-all active:scale-[0.98] group"
-            >
-              <span className="text-3xl group-hover:scale-110 transition-transform">
-                📸
-              </span>
-              <span className="text-sm font-black text-zinc-800">
-                사진 모아보기
-              </span>
-            </Link>
-          </div>
-        )}
-      </section>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-sm font-black text-zinc-800">내 서류함</h2>
+          <span className="text-[11px] font-bold text-zinc-400">
+            {fileLinks.length}건
+          </span>
+        </div>
 
-      {/* 화면 설정 */}
-      <section className="flex flex-col">
-        <SectionToggle
-          title="화면 설정"
-          open={openDisplay}
-          onToggle={() => setOpenDisplay((v) => !v)}
-        />
-        {openDisplay && (
-          <div className="bg-white rounded-[2rem] p-6 ring-1 ring-zinc-200 shadow-sm flex flex-col gap-6">
-            {/* 글자 크기 */}
-            <div className="flex flex-col gap-3">
-              <p className="text-sm font-bold text-zinc-600">
-                🔤 글자 크기를 조절할 수 있어요.
-              </p>
-              <div className="flex gap-2">
-                {[
-                  { id: "normal", label: "가", size: "기본" },
-                  { id: "large", label: "가", size: "크게" },
-                  { id: "huge", label: "가", size: "매우 크게" },
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    onClick={() => setFontSize(s.id as any)}
-                    className={`flex-1 flex flex-col items-center justify-center py-4 rounded-2xl transition-all border-2
-                      ${
-                        fontSize === s.id
-                          ? "bg-zinc-900 border-zinc-900 text-white shadow-lg scale-105"
-                          : "bg-zinc-50 border-transparent text-zinc-400 hover:bg-zinc-100"
-                      }
-                    `}
-                  >
-                    <span
-                      className={`font-black ${s.id === "normal" ? "text-sm" : s.id === "large" ? "text-xl" : "text-3xl"}`}
-                    >
-                      {s.label}
-                    </span>
-                    <span className="text-[10px] font-bold mt-1">{s.size}</span>
-                  </button>
-                ))}
-              </div>
+        <div className="bg-white rounded-[2rem] p-5 ring-1 ring-zinc-200 shadow-sm flex flex-col gap-3">
+          {fileLinks.length === 0 ? (
+            <div className="py-10 text-center text-zinc-400">
+              <span className="text-4xl block mb-3">📁</span>
+              <p className="text-sm font-bold">아직 등록된 서류가 없어요.</p>
             </div>
-
-            {/* 고대비 모드 */}
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-700">
-                  🌗 글씨가 더 잘 보여요
-                </span>
-                <span className="text-xs text-zinc-400 font-medium">
-                  글씨와 배경의 대비를 높여요
-                </span>
-              </div>
-              <button
-                onClick={() => setHighContrast(!highContrast)}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${highContrast ? "bg-zinc-900" : "bg-zinc-200"}`}
-                role="switch"
-                aria-checked={highContrast}
-                aria-label="글씨 더 잘 보이기 전환"
-              >
-                <div
-                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${highContrast ? "left-7" : "left-1"}`}
-                />
-              </button>
-            </div>
-
-            {/* 다크 모드 */}
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-700">
-                  🌙 다크 모드
-                </span>
-                <span className="text-xs text-zinc-400 font-medium">
-                  눈부심을 줄이기 위해 어두운 배경을 사용해요
-                </span>
-              </div>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${darkMode ? "bg-indigo-600" : "bg-zinc-200"}`}
-                role="switch"
-                aria-checked={darkMode}
-                aria-label="다크 모드 전환"
-              >
-                <div
-                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${darkMode ? "left-7" : "left-1"}`}
-                />
-              </button>
-            </div>
-
-            {/* 쉬운 말 모드 */}
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-700">
-                  💬 쉬운 말 모드
-                </span>
-                <span className="text-xs text-zinc-400 font-medium">
-                  쉬운 말로 바꿔요
-                </span>
-              </div>
-              <button
-                onClick={() => setEasyTerms(!easyTerms)}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${easyTerms ? "bg-blue-600" : "bg-zinc-200"}`}
-                role="switch"
-                aria-checked={easyTerms}
-                aria-label="쉬운 용어 모드 전환"
-              >
-                <div
-                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${easyTerms ? "left-7" : "left-1"}`}
-                />
-              </button>
-            </div>
-
-            {/* 노란 배경 모드 */}
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-zinc-700">
-                  🟡 노란 배경 모드
-                </span>
-                <span className="text-xs text-zinc-400 font-medium">
-                  글 읽기 어려운 분을 위해 배경을 노란색으로 바꿔요
-                </span>
-              </div>
-              <button
-                onClick={() => setYellowBg(!yellowBg)}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${yellowBg ? "bg-yellow-400" : "bg-zinc-200"}`}
-                role="switch"
-                aria-checked={yellowBg}
-                aria-label="노란 배경 모드 전환"
-              >
-                <div
-                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${yellowBg ? "left-7" : "left-1"}`}
-                />
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* 내 서류함 */}
-      <section className="flex flex-col">
-        <SectionToggle
-          title="내 서류함"
-          open={openFiles}
-          onToggle={() => setOpenFiles((v) => !v)}
-        />
-        {openFiles && (
-          <div className="bg-white rounded-[2rem] p-6 ring-1 ring-zinc-200 shadow-sm flex flex-col gap-3">
-            {fileLinks.length === 0 ? (
-              <div className="py-8 text-center text-zinc-400">
-                <span className="text-4xl block mb-2">📁</span>
-                <p className="text-sm font-bold">아직 등록한 서류가 없어요.</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {fileLinks.map((file) => (
-                  <a
-                    key={file.id}
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 hover:bg-zinc-100 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">📄</span>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-zinc-800">
-                          {file.title}
-                        </span>
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase">
-                          {file.file_type}
-                        </span>
-                      </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {fileLinks.map((file) => (
+                <a
+                  key={file.id}
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-zinc-50 hover:bg-zinc-100 transition-colors group"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="text-2xl shrink-0">📄</span>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-black text-zinc-800">
+                        {file.title}
+                      </span>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                        {file.file_type || "document"}
+                      </span>
                     </div>
-                    <span className="text-zinc-300 group-hover:text-zinc-900 transition-colors">
-                      →
-                    </span>
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                  </div>
+                  <span className="shrink-0 text-zinc-300 group-hover:text-zinc-900 transition-colors">
+                    →
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
-      {/* 로그아웃 */}
       <section className="flex flex-col gap-4">
         <button
+          type="button"
           onClick={handleLogout}
           className="w-full p-5 rounded-[2rem] bg-red-50 text-red-600 font-black text-center ring-1 ring-red-100 hover:bg-red-100 transition-all active:scale-95"
         >
-          안전하게 나가기
+          로그아웃
         </button>
       </section>
     </div>

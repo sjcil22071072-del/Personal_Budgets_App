@@ -39,7 +39,6 @@ export default async function MorePage({
   }
 
   const participant = participantData.data
-  const participantId = participant?.id ?? user.id
 
   // 2. profiles 조회 (maybeSingle로 안전하게 처리)
   const { data: profile } = await adminClient
@@ -48,22 +47,25 @@ export default async function MorePage({
     .eq('id', user.id)
     .maybeSingle()
 
-  // 3. 파일 링크 조회 (participantId 기준)
-  const { data: fileLinks } = await adminClient
-    .from('file_links')
-    .select('*')
-    .eq('participant_id', participantId)
-    .order('created_at', { ascending: false })
+  // 3. 내 서류만 조회: 로그인한 사용자와 연결된 당사자 id가 없으면 빈 목록을 보여줍니다.
+  let signedFileLinks: any[] = []
+  if (participant?.id) {
+    const { data: fileLinks } = await adminClient
+      .from('file_links')
+      .select('*')
+      .eq('participant_id', participant.id)
+      .order('created_at', { ascending: false })
 
-  const signedFileLinks = fileLinks ? await Promise.all(
-    fileLinks.map(async (doc) => {
-      if (doc.url) {
-        const signed = await getSignedImageUrl(doc.url, 'documents')
-        return { ...doc, url: signed ?? doc.url }
-      }
-      return doc
-    })
-  ) : []
+    signedFileLinks = fileLinks ? await Promise.all(
+      fileLinks.map(async (doc) => {
+        if (doc.url) {
+          const signed = await getSignedImageUrl(doc.url, 'documents')
+          return { ...doc, url: signed ?? doc.url }
+        }
+        return doc
+      })
+    ) : []
+  }
 
   return (
     <div className="flex flex-col min-h-dvh bg-zinc-50 text-foreground pb-10">
