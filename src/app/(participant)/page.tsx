@@ -130,14 +130,14 @@ export default async function Home() {
   const sixMonthsAgo = new Date(year, month - 5, 1).toISOString().split("T")[0];
 
   const [recentTxData, dailyTxData, { data: allMonthTxs }] = await Promise.all([
-    supabase
+    adminClient
       .from("transactions")
       .select("*")
       .eq("participant_id", participantId)
       .order("date", { ascending: false })
       .limit(3),
 
-    supabase
+    adminClient
       .from("transactions")
       .select(
         "id, date, amount, activity_name, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls",
@@ -147,7 +147,7 @@ export default async function Home() {
       .lte("date", lastDayOfMonth)
       .order("date", { ascending: true }),
 
-    supabase
+    adminClient
       .from("transactions")
       .select("id, amount, date, activity_name, category")
       .eq("participant_id", participantId)

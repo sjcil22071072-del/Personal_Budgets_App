@@ -58,7 +58,7 @@ export default async function GalleryPage({
   const nextMonthDate = new Date(year, month, 1) // month is 1-based so this gives next month day 1
   const endDate = nextMonthDate.toISOString().split('T')[0]
 
-  const { data: transactions } = await supabase
+  const { data: transactions } = await adminClient
     .from('transactions')
     .select('id, activity_name, date, amount, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, category')
     .eq('participant_id', participantId)
