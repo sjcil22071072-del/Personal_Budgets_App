@@ -338,6 +338,18 @@ export default function HomeDashboard({
       </header>
 
       <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
+        <section className="p-6 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center gap-3 mb-1.5">
+            <span className="text-2xl">👋</span>
+            <h2 className="text-xl font-black text-zinc-800">
+              안녕하세요, {userName || '당사자'}님
+            </h2>
+          </div>
+          <p className="text-xs text-zinc-450 font-bold">
+            오늘 사용할 수 있는 예산과 최근 활동을 한눈에 확인할 수 있어요.
+          </p>
+        </section>
+
         {/* [필수] 잔액 시각화 위젯 */}
         <div className="stagger-item" style={{ animationDelay: '0s' }}>
           <BalanceVisualWidget
