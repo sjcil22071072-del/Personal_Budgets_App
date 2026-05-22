@@ -436,6 +436,11 @@ export default function BalanceVisualWidget({
   const displayRef = useRef(targetBalance);
 
   useEffect(() => {
+    displayRef.current = targetBalance;
+    setDisplayBalance(targetBalance);
+  }, [targetBalance]);
+
+  useEffect(() => {
     const start = displayRef.current;
     const end = targetBalance;
     if (start === end) return;
