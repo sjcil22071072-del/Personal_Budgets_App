@@ -12,7 +12,6 @@ import BudgetTrendChart from './BudgetTrendChart'
 import BlockCustomizeSheet from './BlockCustomizeSheet'
 import WeeklyChartBlock from './WeeklyChartBlock'
 import { UIPreferences, DEFAULT_PREFERENCES, BlockId, BLOCK_METADATA } from '@/types/ui-preferences'
-import { saveUIPreferences } from '@/app/actions/preferences'
 import NavDropdown from '@/components/layout/NavDropdown'
 import HelpButton from '@/components/help/HelpButton'
 import FaqButton from '@/components/ui/FaqButton'
@@ -91,16 +90,6 @@ export default function HomeDashboard({
       enabled_blocks: (prefs.enabled_blocks || []).filter(id => id in BLOCK_METADATA)
     })
   }, [uiPreferences])
-
-  async function handleSavePreferences(newPrefs: UIPreferences) {
-    const sanitizedPrefs = {
-      ...newPrefs,
-      enabled_blocks: (newPrefs.enabled_blocks || []).filter(id => id in BLOCK_METADATA)
-    }
-    setLocalPreferences(sanitizedPrefs)
-    setIsSheetOpen(false)
-    await saveUIPreferences(participantId, sanitizedPrefs)
-  }
 
   // 통합 계산
   const totalMonthlyBudget = fundingSources.reduce((acc, fs) => acc + Number(fs.monthly_budget), 0) || participant.monthly_budget_default
@@ -305,9 +294,18 @@ export default function HomeDashboard({
     <div className="flex flex-col min-h-dvh easy-read-bg text-foreground participant-view pb-10">
       <HelpAutoTrigger sectionKey="home" />
       <header className="flex h-14 items-center justify-between px-4 z-10 sticky top-0 bg-white/80 backdrop-blur-md border-b border-zinc-150/80">
-        <Link href="/" className="text-base font-black tracking-tight text-zinc-800 hover:opacity-70 transition-opacity">중랑구청</Link>
+        <Link href="/" className="flex items-center gap-2 text-base font-black tracking-tight text-zinc-800 hover:opacity-70 transition-opacity">
+          <span className="h-8 w-8 overflow-hidden rounded-xl border border-zinc-200/70 shadow-sm shrink-0">
+            <img
+              src="https://pbs.twimg.com/profile_images/1588913576349401089/GkEk9byS_400x400.jpg"
+              alt="중랑구 로고"
+              className="h-full w-full object-cover"
+            />
+          </span>
+          <span>중랑구청</span>
+        </Link>
         <div className="flex items-center gap-1">
-          {/* 도움말, 궁금한 점, 꾸미기 — 같은 색, 아이콘으로 구분 */}
+          {/* 도움말, 궁금한 점, 화면 설정 */}
           <div className="flex items-center bg-zinc-100/80 border border-zinc-200/20 rounded-full p-0.5 gap-0.5">
             <HelpButton
               sectionKey="home"
@@ -323,10 +321,10 @@ export default function HomeDashboard({
             <button
               onClick={() => setIsSheetOpen(true)}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-650 hover:bg-white hover:shadow-sm transition-all active:scale-95"
-              aria-label="화면 꾸미기"
-              title="화면 구성 편집"
+              aria-label="화면 설정"
+              title="화면 설정"
             >
-              <span className="text-xs font-bold">⚙️ 꾸미기</span>
+              <span className="text-xs font-bold">⚙️ 화면 설정</span>
             </button>
           </div>
           
@@ -379,11 +377,9 @@ export default function HomeDashboard({
 
 
 
-      {/* 블록 커스터마이징 바텀시트 */}
+      {/* 화면 설정 바텀시트 */}
       <BlockCustomizeSheet
         isOpen={isSheetOpen}
-        currentPreferences={localPreferences}
-        onSave={handleSavePreferences}
         onClose={() => setIsSheetOpen(false)}
       />
 
