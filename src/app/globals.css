@@ -629,28 +629,3 @@ html.yellow-bg .bg-background {
 /* 스크롤바 숨김 유틸리티 */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* Admin theme */
-.admin-shell {
-  background: #f4f7f8;
-  color: #1f2937;
-}
-
-.admin-shell .admin-content {
-  background: #f4f7f8;
-}
-
-.admin-shell .bg-background,
-.admin-shell .bg-zinc-50 {
-  background-color: transparent !important;
-}
-
-.admin-shell header {
-  background: rgba(255, 255, 255, 0.86) !important;
-  border-color: rgba(203, 213, 225, 0.75) !important;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
-}
-
-.admin-shell .bg-white {
-  border-color: rgba(148, 163, 184, 0.28);
-}

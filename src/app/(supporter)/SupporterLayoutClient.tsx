@@ -45,7 +45,7 @@ export function SupporterLayoutClient({
   const mainML   = sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
 
   return (
-    <div className="admin-shell flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       <NavigationProgress />
 
       {/* 데스크톱 사이드바 — 접기/펼치기 지원 */}
@@ -58,7 +58,7 @@ export function SupporterLayoutClient({
 
       {/* 모바일 상단 헤더 + 햄버거 */}
       <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 bg-slate-800 text-white border-b border-slate-700 print:hidden shadow-lg"
+        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 bg-pink-100 text-slate-800 border-b border-pink-200 print:hidden shadow-sm"
         data-print-hide
       >
         <button
@@ -89,7 +89,7 @@ export function SupporterLayoutClient({
             <div className="absolute top-3 right-3 z-10">
               <button
                 onClick={closeMenu}
-                className="p-2 rounded-lg bg-slate-900/10 hover:bg-slate-900/20 text-slate-700 transition-colors"
+                className="p-2 rounded-lg bg-white/70 hover:bg-white text-slate-700 transition-colors"
                 aria-label="메뉴 닫기"
               >
                 <span className="text-lg leading-none">✕</span>
@@ -102,7 +102,7 @@ export function SupporterLayoutClient({
       )}
 
       <main
-        className={`admin-content flex-1 w-full transition-all duration-300 ${mainML} print:ml-0 relative min-h-screen pt-14 md:pt-0 print:pt-0`}
+        className={`flex-1 w-full transition-all duration-300 ${mainML} print:ml-0 relative min-h-screen pt-14 md:pt-0 print:pt-0`}
       >
         {children}
       </main>
