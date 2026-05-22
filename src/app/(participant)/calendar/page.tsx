@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import TransactionCalendar from '@/components/transactions/TransactionCalendar'
@@ -16,11 +16,31 @@ export default async function CalendarPage() {
     redirect('/login')
   }
 
+  const adminClient = createAdminClient()
+  const userEmail = user.email?.trim().toLowerCase() || null
+
+  // user.id 또는 email로 participants 조회
+  let participantData = await adminClient
+    .from('participants')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!participantData.data && userEmail) {
+    participantData = await adminClient
+      .from('participants')
+      .select('id')
+      .eq('email', userEmail)
+      .maybeSingle()
+  }
+
+  const participantId = participantData.data?.id ?? user.id
+
   // 당사자의 전체 사용 내역 조회
   const { data: rawTransactions } = await supabase
     .from('transactions')
     .select('id, date, amount, activity_name, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls')
-    .eq('participant_id', user.id)
+    .eq('participant_id', participantId)
     .order('date', { ascending: false })
 
   // 영수증·활동사진 signed URL 변환 (private 버킷)

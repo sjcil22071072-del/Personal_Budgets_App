@@ -40,14 +40,20 @@ export async function getSignedImageUrls(
 
   // receipts 버킷 signed URLs 일괄 생성
   if (receiptPaths.length > 0) {
-    const { data } = await admin.storage
+    const uniqueReceiptPaths = Array.from(new Set(receiptPaths.map(p => p.path)))
+    const { data, error } = await admin.storage
       .from('receipts')
-      .createSignedUrls(receiptPaths.map(p => p.path), SIGNED_URL_EXPIRES)
+      .createSignedUrls(uniqueReceiptPaths, SIGNED_URL_EXPIRES)
+    if (error) {
+      console.error('Failed to create signed URLs for receipts:', error)
+    }
     if (data) {
-      data.forEach((item, idx) => {
-        if (item.signedUrl) {
-          const id = receiptPaths[idx].id
-          result[id] = { ...result[id], receipt: item.signedUrl }
+      data.forEach(item => {
+        if (item.signedUrl && item.path) {
+          const matched = receiptPaths.filter(p => p.path === item.path)
+          matched.forEach(p => {
+            result[p.id] = { ...result[p.id], receipt: item.signedUrl as string }
+          })
         }
       })
     }
@@ -55,14 +61,20 @@ export async function getSignedImageUrls(
 
   // activity-photos 버킷 signed URLs 일괄 생성
   if (activityPaths.length > 0) {
-    const { data } = await admin.storage
+    const uniqueActivityPaths = Array.from(new Set(activityPaths.map(p => p.path)))
+    const { data, error } = await admin.storage
       .from('activity-photos')
-      .createSignedUrls(activityPaths.map(p => p.path), SIGNED_URL_EXPIRES)
+      .createSignedUrls(uniqueActivityPaths, SIGNED_URL_EXPIRES)
+    if (error) {
+      console.error('Failed to create signed URLs for activity-photos:', error)
+    }
     if (data) {
-      data.forEach((item, idx) => {
-        if (item.signedUrl) {
-          const id = activityPaths[idx].id
-          result[id] = { ...result[id], activity: item.signedUrl }
+      data.forEach(item => {
+        if (item.signedUrl && item.path) {
+          const matched = activityPaths.filter(p => p.path === item.path)
+          matched.forEach(p => {
+            result[p.id] = { ...result[p.id], activity: item.signedUrl as string }
+          })
         }
       })
     }

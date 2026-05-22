@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { EasyTerm } from '@/components/ui/EasyTerm'
@@ -29,6 +29,26 @@ export default async function GalleryPage({
 
   if (!user) redirect('/login')
 
+  const adminClient = createAdminClient()
+  const userEmail = user.email?.trim().toLowerCase() || null
+
+  // user.id 또는 email로 participants 조회
+  let participantData = await adminClient
+    .from('participants')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!participantData.data && userEmail) {
+    participantData = await adminClient
+      .from('participants')
+      .select('id')
+      .eq('email', userEmail)
+      .maybeSingle()
+  }
+
+  const participantId = participantData.data?.id ?? user.id
+
   const months = getRecentMonths(6)
   const currentMonth = params.month || months[0].value
 
@@ -41,7 +61,7 @@ export default async function GalleryPage({
   const { data: transactions } = await supabase
     .from('transactions')
     .select('id, activity_name, date, amount, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, category')
-    .eq('participant_id', user.id)
+    .eq('participant_id', participantId)
     .gte('date', startDate)
     .lt('date', endDate)
     .order('date', { ascending: false })

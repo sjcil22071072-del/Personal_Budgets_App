@@ -115,20 +115,36 @@ export default async function TransactionsPage({
 
   // signed URL 일괄 변환
   const signedUrls = await getSignedImageUrls(
-    (rawTransactions || []).map((t: any) => ({
-      id: t.id,
-      receiptUrl: t.receipt_image_url ?? null,
-      activityUrl: t.activity_image_url ?? null,
-    })),
+    (rawTransactions || []).map((t: any) => {
+      const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+        ? t.receipt_image_urls[0]
+        : (t.receipt_image_url ?? null);
+      const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
+        ? t.activity_image_urls[0]
+        : (t.activity_image_url ?? null);
+      return {
+        id: t.id,
+        receiptUrl,
+        activityUrl,
+      };
+    }),
   );
 
   const transactions = (rawTransactions || [])
-    .map((t: any) => ({
-      ...t,
-      payment_method: t.payment_method === "계좌이체" ? "계좌이체" : "카드",
-      receipt_image_url: signedUrls[t.id]?.receipt ?? t.receipt_image_url,
-      activity_image_url: signedUrls[t.id]?.activity ?? t.activity_image_url,
-    }))
+    .map((t: any) => {
+      const receipt = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+        ? t.receipt_image_urls[0]
+        : t.receipt_image_url;
+      const activity = (t.activity_image_urls && t.activity_image_urls.length > 0)
+        ? t.activity_image_urls[0]
+        : t.activity_image_url;
+      return {
+        ...t,
+        payment_method: t.payment_method === "계좌이체" ? "계좌이체" : "카드",
+        receipt_image_url: signedUrls[t.id]?.receipt ?? receipt,
+        activity_image_url: signedUrls[t.id]?.activity ?? activity,
+      };
+    })
     .filter((t: any) => !params.paymentMethod || t.payment_method === params.paymentMethod);
 
   const totalCount = transactions?.length || 0;
