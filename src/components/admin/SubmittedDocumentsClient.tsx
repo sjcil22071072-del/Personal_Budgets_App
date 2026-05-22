@@ -71,22 +71,23 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
           const isExpanded = expandedId === p.id
 
           return (
-            <div key={p.id} className="bg-white rounded-3xl border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.025)] transition-all duration-300 overflow-hidden">
+            <div key={p.id} className="bg-white rounded-3xl border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:border-zinc-300 hover:shadow-[0_6px_24px_rgba(0,0,0,0.025)] transition-all duration-300 overflow-hidden">
               {/* 당사자 헤더 - 클릭하면 펼침/접힘 */}
               <button
                 onClick={() => toggleExpand(p.id)}
-                className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-zinc-50/50 transition-colors"
+                className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-zinc-50/60 transition-colors sm:px-6"
               >
+                <div className={`h-12 w-1.5 shrink-0 rounded-full ${hasFamily || totalCards > 0 ? 'bg-emerald-400' : 'bg-zinc-200'}`} />
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-black text-zinc-800 text-base">{p.name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      hasFamily ? 'bg-green-50 text-green-700 border-green-100/80' : 'bg-zinc-50 text-zinc-400 border-zinc-200/60'
+                  <h3 className="truncate font-black text-zinc-850 text-base">{p.name}</h3>
+                  <div className="flex flex-wrap items-center gap-2.5 mt-2">
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
+                      hasFamily ? 'bg-green-50 text-green-700 border-green-100/80' : 'bg-zinc-50 text-zinc-500 border-zinc-200/70'
                     }`}>
                       증명서 {hasFamily ? '✓' : '✕'}
                     </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      totalCards > 0 ? 'bg-green-50 text-green-700 border-green-100/80' : 'bg-zinc-50 text-zinc-400 border-zinc-200/60'
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
+                      totalCards > 0 ? 'bg-green-50 text-green-700 border-green-100/80' : 'bg-zinc-50 text-zinc-500 border-zinc-200/70'
                     }`}>
                       카드 {totalCards > 0 ? `${totalCards}건` : '✕'}
                     </span>
