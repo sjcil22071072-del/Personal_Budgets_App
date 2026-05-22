@@ -27,6 +27,8 @@ interface FundingSource {
   yearly_budget: number
   current_month_balance: number
   current_year_balance: number
+  start_date?: string | null
+  end_date?: string | null
 }
 
 interface DailyTransaction {
@@ -126,6 +128,11 @@ export default function HomeDashboard({
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{fs.name}</p>
+                      {(fs.start_date || fs.end_date) && (
+                        <p className="text-[10px] text-zinc-450 font-bold mt-1">
+                          📅 {fs.start_date || '시작일 없음'} ~ {fs.end_date || '종료일 없음'}
+                        </p>
+                      )}
                       <p className={`text-2xl font-black mt-1 hc-amount ${
                         fsVisual.status === 'critical' ? 'text-red-600' :
                         fsVisual.status === 'warning'  ? 'text-orange-600' : 'text-zinc-900'
