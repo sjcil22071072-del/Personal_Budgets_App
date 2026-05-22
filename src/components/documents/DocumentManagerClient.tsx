@@ -62,6 +62,14 @@ export default function DocumentManagerClient({
       return
     }
 
+    // 파일과 외부 링크가 둘 다 비어있는지 검증
+    const hasFile = file && file.size > 0
+    const hasUrl = externalUrl && externalUrl.trim() !== ''
+    if (!hasFile && !hasUrl) {
+      alert('파일을 업로드하거나 외부 링크(URL)를 입력해주세요.')
+      return
+    }
+
     setLoading(true)
     try {
       if (file && file.size > 0) {
