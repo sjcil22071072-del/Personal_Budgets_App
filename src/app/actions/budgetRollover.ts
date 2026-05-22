@@ -50,12 +50,12 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       // 해당 지원금의 시작일이 있다면 이를 최우선 적용, 없으면 참여자 시작일 적용
       const effectiveStartDate = fundingSource.start_date || startDate
 
-      // Query confirmed spending only inside the funding source's active period.
+      // Balance should reflect every recorded transaction. The review status is
+      // only for receipt/admin workflow, not for excluding spending from budget math.
       let spentQuery = supabase
         .from('transactions')
         .select('amount')
         .eq('funding_source_id', fundingSource.id)
-        .eq('status', 'confirmed')
         .gte('date', effectiveStartDate)
 
       if (fundingSource.end_date) {

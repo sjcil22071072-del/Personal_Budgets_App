@@ -34,6 +34,46 @@ describe('calculateFundingSourceRollover', () => {
     expect(update).toBeNull()
   })
 
+  it('deducts recorded spending from the active month balance', () => {
+    const update = calculateFundingSourceRollover(
+      { budget_start_date: '2026-05-01' },
+      {
+        monthly_budget: 200000,
+        current_month_balance: 200000,
+        last_rollover_month: null,
+        total_spent: 20000,
+      },
+      new Date('2026-05-21T00:00:00+09:00'),
+      true
+    )
+
+    expect(update).toEqual({
+      current_month_balance: 180000,
+      last_rollover_month: '2026-05-01',
+      months_added: 0,
+    })
+  })
+
+  it('carries unused balance into the next active month', () => {
+    const update = calculateFundingSourceRollover(
+      { budget_start_date: '2026-05-01' },
+      {
+        monthly_budget: 200000,
+        current_month_balance: 180000,
+        last_rollover_month: '2026-05-01',
+        total_spent: 20000,
+      },
+      new Date('2026-06-01T00:00:00+09:00'),
+      true
+    )
+
+    expect(update).toEqual({
+      current_month_balance: 380000,
+      last_rollover_month: '2026-06-01',
+      months_added: 1,
+    })
+  })
+
   it('waits until the start month when the budget starts in the future', () => {
     const update = calculateFundingSourceRollover(
       { budget_start_date: '2026-06-01' },
