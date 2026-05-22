@@ -30,10 +30,10 @@ function GoogleLoginContent() {
       setIsInAppBrowser(true);
       const targetUrl = window.location.href;
 
-      // 1. 안드로이드인 경우 Chrome 실행
+      // 1. 안드로이드인 경우 기본 인터넷 브라우저 실행
       if (/android/i.test(userAgent)) {
         const schemeUrl = targetUrl.replace(/https?:\/\//i, "");
-        window.location.href = `intent://${schemeUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+        window.location.href = `intent://${schemeUrl}#Intent;scheme=https;end`;
       } 
       // 2. iOS이면서 카카오톡인 경우 아웃링크 스킴 실행
       else if (/iphone|ipad|ipod/i.test(userAgent) && isKakao) {
@@ -95,7 +95,7 @@ function GoogleLoginContent() {
                 <div className="pl-2 relative">
                   <span className="absolute left-0 text-amber-500 font-bold">•</span>
                   <span className="pl-2.5 block text-zinc-600">
-                    <strong className="text-zinc-700">안드로이드:</strong> 잠시 후 외부 인터넷 브라우저(크롬 등)가 자동으로 실행됩니다.
+                    <strong className="text-zinc-700">안드로이드:</strong> 잠시 후 기본 인터넷 브라우저가 자동으로 실행됩니다.
                   </span>
                 </div>
                 <div className="pl-2 relative">
