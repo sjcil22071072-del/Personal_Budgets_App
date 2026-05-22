@@ -140,7 +140,7 @@ export default async function Home() {
     supabase
       .from("transactions")
       .select(
-        "id, date, amount, activity_name, status, receipt_image_url, activity_image_url",
+        "id, date, amount, activity_name, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls",
       )
       .eq("participant_id", participantId)
       .gte("date", firstDayOfMonth)
@@ -161,31 +161,55 @@ export default async function Home() {
 
   // 영수증·활동사진 signed URL 변환
   const allForSigning = [
-    ...rawRecent.map((t: any) => ({
-      id: t.id,
-      receiptUrl: t.receipt_image_url ?? null,
-      activityUrl: t.activity_image_url ?? null,
-    })),
-    ...rawDaily.map((t: any) => ({
-      id: t.id,
-      receiptUrl: t.receipt_image_url ?? null,
-      activityUrl: t.activity_image_url ?? null,
-    })),
+    ...rawRecent.map((t: any) => {
+      const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+        ? t.receipt_image_urls[0]
+        : (t.receipt_image_url ?? null);
+      const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
+        ? t.activity_image_urls[0]
+        : (t.activity_image_url ?? null);
+      return { id: t.id, receiptUrl, activityUrl };
+    }),
+    ...rawDaily.map((t: any) => {
+      const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+        ? t.receipt_image_urls[0]
+        : (t.receipt_image_url ?? null);
+      const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
+        ? t.activity_image_urls[0]
+        : (t.activity_image_url ?? null);
+      return { id: t.id, receiptUrl, activityUrl };
+    }),
   ];
 
   const signedUrlMap = await getSignedImageUrls(allForSigning);
 
-  recentTransactions = rawRecent.map((t: any) => ({
-    ...t,
-    receipt_image_url: signedUrlMap[t.id]?.receipt ?? t.receipt_image_url,
-    activity_image_url: signedUrlMap[t.id]?.activity ?? t.activity_image_url,
-  }));
+  recentTransactions = rawRecent.map((t: any) => {
+    const receipt = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+      ? t.receipt_image_urls[0]
+      : t.receipt_image_url;
+    const activity = (t.activity_image_urls && t.activity_image_urls.length > 0)
+      ? t.activity_image_urls[0]
+      : t.activity_image_url;
+    return {
+      ...t,
+      receipt_image_url: signedUrlMap[t.id]?.receipt ?? receipt,
+      activity_image_url: signedUrlMap[t.id]?.activity ?? activity,
+    };
+  });
 
-  dailyTransactions = rawDaily.map((t: any) => ({
-    ...t,
-    receipt_image_url: signedUrlMap[t.id]?.receipt ?? t.receipt_image_url,
-    activity_image_url: signedUrlMap[t.id]?.activity ?? t.activity_image_url,
-  }));
+  dailyTransactions = rawDaily.map((t: any) => {
+    const receipt = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+      ? t.receipt_image_urls[0]
+      : t.receipt_image_url;
+    const activity = (t.activity_image_urls && t.activity_image_urls.length > 0)
+      ? t.activity_image_urls[0]
+      : t.activity_image_url;
+    return {
+      ...t,
+      receipt_image_url: signedUrlMap[t.id]?.receipt ?? receipt,
+      activity_image_url: signedUrlMap[t.id]?.activity ?? activity,
+    };
+  });
 
   // 최근 6개월 월별 지출 집계
   const totalMonthlyBudget =

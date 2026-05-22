@@ -106,12 +106,17 @@ export default function WeeklyChartBlock({ dailyTransactions, themeColor }: Prop
                 }`}
               >
                 {photo ? (
-                  <img
-                    src={photo}
-                    alt={day.label}
-                    className="w-full h-full object-cover cursor-zoom-in"
-                    onClick={e => { e.stopPropagation(); setLightboxSrc(photo) }}
-                  />
+                  <div className="relative w-full h-full">
+                    <img
+                      src={photo}
+                      alt={day.label}
+                      className="w-full h-full object-cover cursor-zoom-in"
+                      onClick={e => { e.stopPropagation(); setLightboxSrc(photo) }}
+                    />
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-white/80 rounded-full flex items-center justify-center text-xs shadow-sm pointer-events-none z-10">
+                      {day.transactions[0]?.status === 'confirmed' ? '✅' : '⏳'}
+                    </div>
+                  </div>
                 ) : hasActivity ? (
                   <div
                     className="w-full h-full flex items-center justify-center"
@@ -157,6 +162,9 @@ export default function WeeklyChartBlock({ dailyTransactions, themeColor }: Prop
                         onClick={() => setLightboxSrc(thumb)}
                       >
                         <Image src={thumb} alt="활동" fill sizes="48px" className="object-cover" />
+                        <div className="absolute top-0.5 right-0.5 w-4.5 h-4.5 bg-white/80 rounded-full flex items-center justify-center text-[10px] shadow-sm pointer-events-none z-10">
+                          {tx.status === 'confirmed' ? '✅' : '⏳'}
+                        </div>
                       </button>
                     ) : (
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${

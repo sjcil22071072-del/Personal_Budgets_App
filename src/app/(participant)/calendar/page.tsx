@@ -19,23 +19,35 @@ export default async function CalendarPage() {
   // 당사자의 전체 사용 내역 조회
   const { data: rawTransactions } = await supabase
     .from('transactions')
-    .select('id, date, amount, activity_name, status, receipt_image_url, activity_image_url')
+    .select('id, date, amount, activity_name, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls')
     .eq('participant_id', user.id)
     .order('date', { ascending: false })
 
   // 영수증·활동사진 signed URL 변환 (private 버킷)
   const signedUrls = await getSignedImageUrls(
-    (rawTransactions ?? []).map(t => ({
-      id: t.id,
-      receiptUrl: t.receipt_image_url ?? null,
-      activityUrl: t.activity_image_url ?? null,
-    }))
+    (rawTransactions ?? []).map(t => {
+      const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+        ? t.receipt_image_urls[0]
+        : (t.receipt_image_url ?? null);
+      const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
+        ? t.activity_image_urls[0]
+        : (t.activity_image_url ?? null);
+      return { id: t.id, receiptUrl, activityUrl };
+    })
   )
-  const transactions = (rawTransactions ?? []).map(t => ({
-    ...t,
-    receipt_image_url: signedUrls[t.id]?.receipt ?? t.receipt_image_url,
-    activity_image_url: signedUrls[t.id]?.activity ?? t.activity_image_url,
-  }))
+  const transactions = (rawTransactions ?? []).map(t => {
+    const receipt = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+      ? t.receipt_image_urls[0]
+      : t.receipt_image_url;
+    const activity = (t.activity_image_urls && t.activity_image_urls.length > 0)
+      ? t.activity_image_urls[0]
+      : t.activity_image_url;
+    return {
+      ...t,
+      receipt_image_url: signedUrls[t.id]?.receipt ?? receipt,
+      activity_image_url: signedUrls[t.id]?.activity ?? activity,
+    };
+  })
 
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground pb-10">

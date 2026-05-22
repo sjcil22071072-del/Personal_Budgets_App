@@ -40,32 +40,47 @@ export default async function GalleryPage({
 
   const { data: transactions } = await supabase
     .from('transactions')
-    .select('id, activity_name, date, amount, receipt_image_url, activity_image_url, category')
+    .select('id, activity_name, date, amount, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, category')
     .eq('participant_id', user.id)
     .gte('date', startDate)
     .lt('date', endDate)
-    .or('receipt_image_url.not.is.null,activity_image_url.not.is.null')
     .order('date', { ascending: false })
 
   const rawItems = (transactions || []).filter(
-    (t: any) => t.receipt_image_url || t.activity_image_url
+    (t: any) => 
+      t.receipt_image_url || 
+      t.activity_image_url || 
+      (t.receipt_image_urls && t.receipt_image_urls.length > 0) ||
+      (t.activity_image_urls && t.activity_image_urls.length > 0)
   )
   const signedUrls = await getSignedImageUrls(
-    rawItems.map((t: any) => ({
-      id: t.id,
-      receiptUrl: t.receipt_image_url ?? null,
-      activityUrl: t.activity_image_url ?? null,
-    }))
+    rawItems.map((t: any) => {
+      const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+        ? t.receipt_image_urls[0]
+        : (t.receipt_image_url ?? null);
+      const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
+        ? t.activity_image_urls[0]
+        : (t.activity_image_url ?? null);
+      return { id: t.id, receiptUrl, activityUrl };
+    })
   )
-  const items = rawItems.map((t: any) => ({
-    id: t.id,
-    activity_name: t.activity_name,
-    date: t.date,
-    amount: t.amount,
-    receipt_image_url: signedUrls[t.id]?.receipt ?? t.receipt_image_url,
-    activity_image_url: signedUrls[t.id]?.activity ?? t.activity_image_url,
-    category: t.category,
-  }))
+  const items = rawItems.map((t: any) => {
+    const receipt = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+      ? t.receipt_image_urls[0]
+      : t.receipt_image_url;
+    const activity = (t.activity_image_urls && t.activity_image_urls.length > 0)
+      ? t.activity_image_urls[0]
+      : t.activity_image_url;
+    return {
+      id: t.id,
+      activity_name: t.activity_name,
+      date: t.date,
+      amount: t.amount,
+      receipt_image_url: signedUrls[t.id]?.receipt ?? receipt,
+      activity_image_url: signedUrls[t.id]?.activity ?? activity,
+      category: t.category,
+    };
+  })
 
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground pb-10">
