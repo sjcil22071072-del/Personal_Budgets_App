@@ -101,9 +101,6 @@ export default function AdminSettingsClient({
                                   {isCurrentUser && (
                                     <span className="shrink-0 rounded-full bg-zinc-900 border border-zinc-900 px-2 py-0.5 text-[8px] font-bold text-white scale-90">나</span>
                                   )}
-                                  {isParticipantRecord && (
-                                    <span className="shrink-0 rounded-full bg-zinc-100 border border-zinc-200 px-2 py-0.5 text-[8px] font-bold text-zinc-500 scale-90">당사자 계정</span>
-                                  )}
                                 </div>
                                 {profile.email && <p className="truncate text-xs text-zinc-400 font-medium mt-0.5">{profile.email}</p>}
                               </div>
