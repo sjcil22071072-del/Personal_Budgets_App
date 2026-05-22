@@ -111,6 +111,17 @@ export default function ReceiptUploadForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // 카테고리 유효성 검사 (대분류와 중분류 모두 선택 여부)
+    const parts = description.split(" - ");
+    if (parts.length < 2 || !parts[0].trim() || !parts[1].trim()) {
+      setToast({
+        type: "error",
+        message: "대분류와 중분류를 모두 선택하거나 직접 입력해 주세요.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData(e.currentTarget);
@@ -171,7 +182,6 @@ export default function ReceiptUploadForm({
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
                 multiple
                 className="hidden"
                 onChange={handleReceiptChange}
@@ -207,7 +217,6 @@ export default function ReceiptUploadForm({
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   multiple
                   className="hidden"
                   onChange={handleReceiptChange}
@@ -224,7 +233,6 @@ export default function ReceiptUploadForm({
             <input
               type="file"
               accept="image/*"
-              capture="environment"
               multiple
               className="hidden"
               onChange={handleReceiptChange}
@@ -318,7 +326,6 @@ export default function ReceiptUploadForm({
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
                 multiple
                 className="hidden"
                 onChange={handleActivityChange}
@@ -354,7 +361,6 @@ export default function ReceiptUploadForm({
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   multiple
                   className="hidden"
                   onChange={handleActivityChange}
@@ -371,7 +377,6 @@ export default function ReceiptUploadForm({
             <input
               type="file"
               accept="image/*"
-              capture="environment"
               multiple
               className="hidden"
               onChange={handleActivityChange}

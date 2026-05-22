@@ -610,6 +610,13 @@ export default function BalanceVisualWidget({
       setUploadToast("실물 카드의 앞뒷면을 모두 등록해주세요.");
       return;
     }
+    if (uploadMode !== "card") {
+      const parts = uploadDescription.split(" - ");
+      if (parts.length < 2 || !parts[0].trim() || !parts[1].trim()) {
+        setUploadToast("대분류와 중분류를 모두 선택하거나 직접 입력해 주세요.");
+        return;
+      }
+    }
     setUploadSubmitting(true);
     const amountNum = parseFloat(uploadAmount) || 0;
     if (uploadMode !== "card" && amountNum > 0)
@@ -852,7 +859,6 @@ export default function BalanceVisualWidget({
         ref={receiptInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={(e) => handleInlineUpload(e, "receipt")}
       />
@@ -860,7 +866,6 @@ export default function BalanceVisualWidget({
         ref={activityInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={(e) => handleInlineUpload(e, "activity")}
       />
@@ -905,7 +910,6 @@ export default function BalanceVisualWidget({
                               <input
                                 type="file"
                                 accept="image/*"
-                                capture="environment"
                                 className="hidden"
                                 onChange={handlePrimaryFile}
                               />
@@ -925,7 +929,6 @@ export default function BalanceVisualWidget({
                               <input
                                 type="file"
                                 accept="image/*"
-                                capture="environment"
                                 className="hidden"
                                 onChange={handleSecondFile}
                               />
@@ -1000,7 +1003,6 @@ export default function BalanceVisualWidget({
                               ref={secondFileRef}
                               type="file"
                               accept="image/*"
-                              capture="environment"
                               className="hidden"
                               onChange={handleSecondFile}
                             />

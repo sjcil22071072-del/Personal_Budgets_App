@@ -167,7 +167,6 @@ function CardImagePicker({
       <input
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
       />

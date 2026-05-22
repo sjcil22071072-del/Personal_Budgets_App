@@ -215,6 +215,14 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault()
+
+    // 카테고리 유효성 검사 (대분류와 중분류 모두 선택 여부)
+    const parts = (category || '').split(" - ");
+    if (parts.length < 2 || !parts[0].trim() || !parts[1].trim()) {
+      setError("대분류와 중분류를 모두 선택하거나 직접 입력해 주세요.");
+      return;
+    }
+
     setSaving(true)
     setError('')
     try {
