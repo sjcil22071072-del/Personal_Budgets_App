@@ -55,27 +55,27 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
   }
 
   return (
-    <aside className="h-full w-full bg-gradient-to-b from-[#f8fbff] via-[#effaf7] to-[#fff7ed] text-slate-650 flex flex-col pb-4 shadow-xl overflow-y-auto overflow-x-hidden border-r border-emerald-100/80">
+    <aside className="h-full w-full bg-gradient-to-b from-[#dff3ef] via-[#e7f2ff] to-[#fff1db] text-slate-700 flex flex-col pb-4 shadow-[8px_0_32px_rgba(15,118,110,0.12)] overflow-y-auto overflow-x-hidden border-r border-teal-200/80">
       {/* 헤더 */}
       <div className={`flex items-center h-14 shrink-0 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
         {!collapsed && (
           <Link href="/admin" className="block hover:opacity-80 transition-opacity min-w-0 flex-1 mr-2">
             <h2 className="text-slate-900 font-extrabold text-base tracking-tight leading-tight truncate">중랑구청</h2>
-            <span className="text-emerald-600 text-xs font-bold">관리자 뷰 (회계장부)</span>
+            <span className="text-teal-700 text-xs font-bold">관리자 뷰 (회계장부)</span>
           </Link>
         )}
         {onToggle && (
           <button
             onClick={onToggle}
             title={collapsed ? '사이드바 펼치기' : '사이드바 접기'}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/70 hover:bg-emerald-50 text-slate-500 hover:text-emerald-700 border border-emerald-100/80 transition-all"
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/75 hover:bg-white text-slate-500 hover:text-teal-700 border border-white/80 shadow-sm transition-all"
           >
             <span className="text-sm">{collapsed ? '▶' : '◀'}</span>
           </button>
         )}
       </div>
 
-      <div className="h-px bg-emerald-200/70 mx-3 mb-3 shrink-0" />
+      <div className="h-px bg-teal-300/60 mx-3 mb-3 shrink-0" />
 
       {/* 메인 메뉴 */}
       <nav className="flex-1 px-2 space-y-0.5">
@@ -94,7 +94,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                   title={collapsed ? item.name : undefined}
                   className={`flex items-center gap-3 rounded-xl transition-all duration-150 flex-1 ${
                     collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
-                  } ${isActive ? 'bg-gradient-to-r from-emerald-500 to-sky-500 text-white font-black shadow-lg shadow-emerald-300/40' : 'hover:bg-white/80 hover:text-emerald-800 text-slate-650'}`}
+                  } ${isActive ? 'bg-gradient-to-r from-emerald-500 to-sky-500 text-white font-black shadow-lg shadow-emerald-300/40' : 'hover:bg-white/85 hover:text-teal-800 text-slate-700'}`}
                 >
                   <span className={`text-xl shrink-0 transition-transform ${isActive ? 'scale-110' : ''}`}>
                     {item.icon}
@@ -112,7 +112,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                 {hasSub && (
                   <button
                     onClick={() => toggleSub(item.href)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/80 text-slate-400 hover:text-emerald-700 transition-all shrink-0 mr-1"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/85 text-slate-500 hover:text-teal-700 transition-all shrink-0 mr-1"
                     aria-label={isSubOpen ? '접기' : '펼치기'}
                   >
                     <span className="text-xs">{isSubOpen ? '▲' : '▼'}</span>
@@ -130,7 +130,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
                       className={`text-xs px-3 py-2 rounded-lg transition-all ${
                         pathname === sub.href
                           ? 'bg-gradient-to-r from-emerald-500/90 to-sky-500/90 text-white font-bold shadow-sm'
-                          : 'text-slate-500 hover:bg-white/80 hover:text-emerald-800'
+                          : 'text-slate-600 hover:bg-white/85 hover:text-teal-800'
                       }`}
                     >
                       {sub.name}
@@ -146,7 +146,7 @@ export function AdminSidebar({ collapsed = false, onToggle }: AdminSidebarProps)
       {/* 사용자 정보 + 로그아웃 */}
       <div className="px-2 mt-3 space-y-1 shrink-0">
         {!collapsed && user && (
-          <div className="px-3 py-2 rounded-xl bg-white/75 border border-emerald-100/80">
+          <div className="px-3 py-2 rounded-xl bg-white/70 border border-white/80 shadow-sm">
             <p className="text-xs text-slate-500 truncate">{user.email}</p>
           </div>
         )}

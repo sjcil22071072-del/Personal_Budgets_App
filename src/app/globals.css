@@ -629,3 +629,31 @@ html.yellow-bg .bg-background {
 /* 스크롤바 숨김 유틸리티 */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Admin theme */
+.admin-shell {
+  background:
+    linear-gradient(135deg, #e8f7f2 0%, #f4f8ff 46%, #fff3df 100%);
+  color: #1f2937;
+}
+
+.admin-shell .admin-content {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0) 42%),
+    linear-gradient(135deg, rgba(209,250,229,0.62) 0%, rgba(219,234,254,0.58) 48%, rgba(254,243,199,0.55) 100%);
+}
+
+.admin-shell .bg-background,
+.admin-shell .bg-zinc-50 {
+  background-color: transparent !important;
+}
+
+.admin-shell header {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(20, 184, 166, 0.18) !important;
+  box-shadow: 0 1px 0 rgba(15, 118, 110, 0.08), 0 12px 28px rgba(15, 118, 110, 0.06);
+}
+
+.admin-shell .bg-white {
+  border-color: rgba(148, 163, 184, 0.28);
+}
