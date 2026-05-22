@@ -22,7 +22,7 @@ interface Props {
 }
 
 export default function TransactionCalendar({ transactions }: Props) {
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 4, 1))
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
 
@@ -35,8 +35,14 @@ export default function TransactionCalendar({ transactions }: Props) {
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
   const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => i)
 
-  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1))
-  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1))
+  const prevMonth = () => {
+    if (year === 2026 && month <= 4) return
+    setCurrentDate(new Date(year, month - 1, 1))
+  }
+  const nextMonth = () => {
+    if (year === 2026 && month >= 9) return
+    setCurrentDate(new Date(year, month + 1, 1))
+  }
 
   // 날짜 형식 지정 (YYYY-MM-DD)
   const formatDate = (d: number) => {
@@ -54,13 +60,23 @@ export default function TransactionCalendar({ transactions }: Props) {
     <div className="flex flex-col gap-6">
       {/* 달력 컨트롤 */}
       <div className="flex items-center justify-between bg-white rounded-3xl p-4 ring-1 ring-zinc-200 shadow-sm">
-        <button onClick={prevMonth} className="p-3 rounded-2xl bg-zinc-50 hover:bg-zinc-100 active:bg-zinc-200 transition-colors" aria-label="이전 달">
+        <button 
+          onClick={prevMonth} 
+          disabled={year === 2026 && month <= 4}
+          className="p-3 rounded-2xl bg-zinc-50 hover:bg-zinc-100 active:bg-zinc-200 transition-colors disabled:opacity-30 disabled:pointer-events-none" 
+          aria-label="이전 달"
+        >
           <span className="text-xl">◀</span>
         </button>
         <h2 className="text-xl font-black text-zinc-900">
           {year}년 {month + 1}월
         </h2>
-        <button onClick={nextMonth} className="p-3 rounded-2xl bg-zinc-50 hover:bg-zinc-100 active:bg-zinc-200 transition-colors" aria-label="다음 달">
+        <button 
+          onClick={nextMonth} 
+          disabled={year === 2026 && month >= 9}
+          className="p-3 rounded-2xl bg-zinc-50 hover:bg-zinc-100 active:bg-zinc-200 transition-colors disabled:opacity-30 disabled:pointer-events-none" 
+          aria-label="다음 달"
+        >
           <span className="text-xl">▶</span>
         </button>
       </div>

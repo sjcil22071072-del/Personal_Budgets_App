@@ -127,8 +127,6 @@ export default async function Home() {
   const effectivePrefs = uiPreferences ?? DEFAULT_PREFERENCES;
 
   // 3개 독립 쿼리 병렬 실행
-  const sixMonthsAgo = new Date(year, month - 5, 1).toISOString().split("T")[0];
-
   const [recentTxData, dailyTxData, { data: allMonthTxs }] = await Promise.all([
     adminClient
       .from("transactions")
@@ -151,8 +149,8 @@ export default async function Home() {
       .from("transactions")
       .select("id, amount, date, activity_name, category")
       .eq("participant_id", participantId)
-      .gte("date", sixMonthsAgo)
-      .lte("date", lastDayOfMonth)
+      .gte("date", "2026-05-01")
+      .lte("date", "2026-10-31")
       .order("date", { ascending: true }),
   ]);
 
@@ -220,9 +218,8 @@ export default async function Home() {
     participant.monthly_budget_default ||
     0;
 
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(year, month - i, 1);
-    const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  for (let mIdx = 5; mIdx <= 10; mIdx++) {
+    const m = `2026-${String(mIdx).padStart(2, "0")}`;
 
     const monthTxs = (allMonthTxs || []).filter((t: any) =>
       t.date.startsWith(m),
