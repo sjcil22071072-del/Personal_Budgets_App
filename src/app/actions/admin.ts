@@ -147,6 +147,8 @@ export async function createParticipant(formData: {
     name: string
     monthlyBudget: number
     yearlyBudget: number
+    startDate?: string | null
+    endDate?: string | null
   }>
 }) {
   try {
@@ -240,6 +242,8 @@ export async function createParticipant(formData: {
             yearly_budget: fs.yearlyBudget,
             current_month_balance: fs.monthlyBudget,
             current_year_balance: fs.yearlyBudget,
+            start_date: fs.startDate || null,
+            end_date: fs.endDate || null,
           }))
         )
 

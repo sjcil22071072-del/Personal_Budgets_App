@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import MoreMenuClient from '@/components/layout/MoreMenuClient'
@@ -20,17 +20,39 @@ export default async function MorePage({
     redirect('/login')
   }
 
-  // 당사자 정보 및 파일 링크 조회
-  const { data: profile } = await supabase
+  const adminClient = createAdminClient()
+
+  // 1. 당사자 정보(participants) 조회
+  const userEmail = user.email?.trim().toLowerCase() || null
+  let participantData = await adminClient
+    .from('participants')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!participantData.data && userEmail) {
+    participantData = await adminClient
+      .from('participants')
+      .select('*')
+      .eq('email', userEmail)
+      .maybeSingle()
+  }
+
+  const participant = participantData.data
+  const participantId = participant?.id ?? user.id
+
+  // 2. profiles 조회 (maybeSingle로 안전하게 처리)
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
-  const { data: fileLinks } = await supabase
+  // 3. 파일 링크 조회 (participantId 기준)
+  const { data: fileLinks } = await adminClient
     .from('file_links')
     .select('*')
-    .eq('participant_id', user.id)
+    .eq('participant_id', participantId)
     .order('created_at', { ascending: false })
 
   const signedFileLinks = fileLinks ? await Promise.all(
@@ -65,8 +87,12 @@ export default async function MorePage({
         {/* 프로필 요약 */}
         <section className="flex items-center gap-4 p-6 rounded-[2rem] bg-white ring-1 ring-zinc-200 shadow-sm">
           <div className="flex flex-col">
-            <span className="text-xl font-black text-zinc-900">{profile?.name} 님</span>
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{profile?.role === 'admin' ? '관리자' : '당사자'}</span>
+            <span className="text-xl font-black text-zinc-900">
+              {participant?.name || profile?.name || '사용자'} 님
+            </span>
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+              {profile?.role === 'admin' ? '관리자' : '당사자'}
+            </span>
           </div>
         </section>
 

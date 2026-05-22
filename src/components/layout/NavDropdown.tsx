@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/family-registration', icon: '📄', label: '가족관계증명서' },
   { href: '/calendar', icon: '📅', label: '달력' },
   { href: '/gallery', icon: '🖼️', label: '사진 모아보기' },
+  { href: '/more?open=files', icon: '📁', label: '내 서류함' },
 ]
 
 export default function NavDropdown() {

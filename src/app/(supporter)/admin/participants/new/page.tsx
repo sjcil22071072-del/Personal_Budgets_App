@@ -10,6 +10,8 @@ interface FundingSourceInput {
   name: string
   monthly_budget: string
   yearly_budget: string
+  start_date?: string
+  end_date?: string
 }
 
 export default function NewParticipantPage() {
@@ -23,14 +25,14 @@ export default function NewParticipantPage() {
   const [alertThreshold, setAlertThreshold] = useState('15000')
   const [fundingSourceCount, setFundingSourceCount] = useState(1)
   const [fundingSources, setFundingSources] = useState<FundingSourceInput[]>([
-    { name: '주 자원', monthly_budget: '150000', yearly_budget: '1500000' },
+    { name: '주 자원', monthly_budget: '150000', yearly_budget: '1500000', start_date: '', end_date: '' },
   ])
 
   function handleFundingSourceCountChange(count: number) {
     setFundingSourceCount(count)
     const newSources = [...fundingSources]
     while (newSources.length < count) {
-      newSources.push({ name: `자원 ${newSources.length + 1}`, monthly_budget: '0', yearly_budget: '0' })
+      newSources.push({ name: `자원 ${newSources.length + 1}`, monthly_budget: '0', yearly_budget: '0', start_date: '', end_date: '' })
     }
     while (newSources.length > count) {
       newSources.pop()
@@ -72,6 +74,8 @@ export default function NewParticipantPage() {
           name: fs.name,
           monthlyBudget: Number(fs.monthly_budget),
           yearlyBudget: Number(fs.yearly_budget),
+          startDate: fs.start_date || null,
+          endDate: fs.end_date || null,
         })),
       })
 
@@ -238,6 +242,26 @@ export default function NewParticipantPage() {
                       onChange={(e) => updateFundingSource(i, 'yearly_budget', e.target.value)} 
                       className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-sm font-black bg-white" 
                       required 
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-1">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-zinc-450 block mb-0.5">지원 시작일</label>
+                    <input 
+                      type="date" 
+                      value={fs.start_date || ''} 
+                      onChange={(e) => updateFundingSource(i, 'start_date', e.target.value)} 
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-xs font-semibold bg-white" 
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-zinc-450 block mb-0.5">지원 종료일</label>
+                    <input 
+                      type="date" 
+                      value={fs.end_date || ''} 
+                      onChange={(e) => updateFundingSource(i, 'end_date', e.target.value)} 
+                      className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-300 text-xs font-semibold bg-white" 
                     />
                   </div>
                 </div>
