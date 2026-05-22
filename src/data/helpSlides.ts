@@ -29,7 +29,7 @@ export const HELP_SECTIONS: Record<string, HelpSection> = {
       {
         icon: '⚙️',
         title: '화면 구성 편집',
-        body: '오른쪽 위 설정 버튼을 누르면 내가 자주 보고 싶은 항목을 선택해서 화면에 표시할 수 있어요.',
+        body: '오른쪽 위 설정 버튼을 누르면 글자 크기나 화면 색을 설정할 수 있어요.',
       },
     ],
   },
@@ -66,7 +66,7 @@ export const HELP_SECTIONS: Record<string, HelpSection> = {
       {
         icon: '✍️',
         title: '내용 입력하기',
-        body: '영수증을 올린 후 어디서 무엇을 샀는지, 얼마를 썼는지 입력해요. 꼭 다 채울 필요는 없어요.',
+        body: '영수증을 올린 후 어디서 무엇을 샀는지, 얼마를 썼는지 입력해요.',
       },
       {
         icon: '📤',
