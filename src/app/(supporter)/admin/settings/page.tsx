@@ -28,18 +28,29 @@ export default async function AdminSettingsPage() {
     .select('id, name, email, created_at')
     .order('created_at', { ascending: false })
 
+  const normalizeEmail = (email: string | null | undefined) =>
+    email?.trim().toLowerCase() ?? ''
+
   const profileIds = new Set((allProfiles || []).map((profile) => profile.id))
+  const profileEmails = new Set(
+    (allProfiles || [])
+      .map((profile) => normalizeEmail(profile.email))
+      .filter(Boolean),
+  )
   const users = [
     ...((allProfiles || []).map((profile) => ({
       id: profile.id,
       name: profile.name,
-      email: null,
+      email: profile.email,
       role: profile.role,
       created_at: profile.created_at,
       source: 'profile' as const,
     }))),
     ...((participants || [])
-      .filter((participant) => !profileIds.has(participant.id))
+      .filter((participant) => {
+        const email = normalizeEmail(participant.email)
+        return !profileIds.has(participant.id) && (!email || !profileEmails.has(email))
+      })
       .map((participant) => ({
         id: participant.id,
         name: participant.name,
