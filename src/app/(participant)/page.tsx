@@ -22,13 +22,29 @@ function monthDiff(from: Date, to: Date): number {
   );
 }
 
+function isFundingSourceActiveInMonth(fs: any, monthStart: Date) {
+  if (fs.start_date) {
+    const startMonth = toMonthStart(fs.start_date);
+    if (startMonth && startMonth > monthStart) return false;
+  }
+  if (fs.end_date) {
+    const endMonth = toMonthStart(fs.end_date);
+    if (endMonth && endMonth < monthStart) return false;
+  }
+  return true;
+}
+
 function calculateDisplayFundingSources(participant: any, transactions: any[]) {
   const fundingSources = participant.funding_sources || [];
   const currentDate = new Date();
   const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const participantStart =
     toMonthStart(participant.budget_start_date) || currentMonth;
-  const onlyFundingSource = fundingSources.length === 1;
+  const fundingSourceIds = new Set(fundingSources.map((fs: any) => fs.id));
+  const fallbackFundingSourceId =
+    fundingSources.find((fs: any) => isFundingSourceActiveInMonth(fs, currentMonth))?.id ||
+    fundingSources[0]?.id ||
+    null;
 
   return fundingSources.map((fs: any) => {
     const startMonth = fs.start_date
@@ -53,8 +69,10 @@ function calculateDisplayFundingSources(participant: any, transactions: any[]) {
 
       const txFundingSourceId = tx.funding_source_id || null;
       const belongsToSource = txFundingSourceId === fs.id;
-      const isLegacyUnassigned = onlyFundingSource && !txFundingSourceId;
-      return belongsToSource || isLegacyUnassigned
+      const shouldFallbackToSource =
+        (!txFundingSourceId || !fundingSourceIds.has(txFundingSourceId)) &&
+        fallbackFundingSourceId === fs.id;
+      return belongsToSource || shouldFallbackToSource
         ? sum + Number(tx.amount || 0)
         : sum;
     }, 0);

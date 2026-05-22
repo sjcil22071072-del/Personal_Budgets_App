@@ -89,13 +89,29 @@ export async function createTransaction(formData: FormData) {
   const amount = is_expense ? rawAmount : -Math.abs(rawAmount)
 
   if (!funding_source_id) {
-    const { data: defaultFundingSource } = await adminClient
+    const transactionMonth = new Date(date)
+    const transactionMonthStart = Number.isNaN(transactionMonth.getTime())
+      ? null
+      : new Date(transactionMonth.getFullYear(), transactionMonth.getMonth(), 1)
+    const { data: defaultFundingSources } = await adminClient
       .from('funding_sources')
-      .select('id')
+      .select('id, start_date, end_date')
       .eq('participant_id', participant_id)
-      .limit(1)
-      .maybeSingle()
-    funding_source_id = defaultFundingSource?.id ?? null
+    const activeFundingSource = (defaultFundingSources || []).find((fs: any) => {
+      if (!transactionMonthStart) return true
+      if (fs.start_date) {
+        const start = new Date(fs.start_date)
+        const startMonth = new Date(start.getFullYear(), start.getMonth(), 1)
+        if (startMonth > transactionMonthStart) return false
+      }
+      if (fs.end_date) {
+        const end = new Date(fs.end_date)
+        const endMonth = new Date(end.getFullYear(), end.getMonth(), 1)
+        if (endMonth < transactionMonthStart) return false
+      }
+      return true
+    })
+    funding_source_id = activeFundingSource?.id ?? defaultFundingSources?.[0]?.id ?? null
   }
 
   const receipt_image_urls: string[] = []

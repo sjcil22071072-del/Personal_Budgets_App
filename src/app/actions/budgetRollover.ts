@@ -20,6 +20,24 @@ type ParticipantRow = {
   funding_sources?: FundingSourceRow[]
 }
 
+function toMonthStart(value: string | Date): Date | null {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+function isFundingSourceActiveInMonth(fs: FundingSourceRow, monthStart: Date) {
+  if (fs.start_date) {
+    const startMonth = toMonthStart(fs.start_date)
+    if (startMonth && startMonth > monthStart) return false
+  }
+  if (fs.end_date) {
+    const endMonth = toMonthStart(fs.end_date)
+    if (endMonth && endMonth < monthStart) return false
+  }
+  return true
+}
+
 export async function ensureMonthlyBudgetRollover(participantId?: string, force = false) {
   const supabase = createAdminClient()
 
@@ -45,6 +63,11 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
     const startDate = participant.budget_start_date || new Date().toISOString().split('T')[0]
     const startMonth = new Date(startDate)
     const resolvedStartMonth = Number.isNaN(startMonth.getTime()) ? currentMonth : new Date(startMonth.getFullYear(), startMonth.getMonth(), 1)
+    const fundingSourceIds = new Set((participant.funding_sources || []).map((fs) => fs.id))
+    const fallbackFundingSourceId =
+      (participant.funding_sources || []).find((fs) => isFundingSourceActiveInMonth(fs, currentMonth))?.id ||
+      participant.funding_sources?.[0]?.id ||
+      null
 
     for (const fundingSource of participant.funding_sources || []) {
       // 해당 지원금의 시작일이 있다면 이를 최우선 적용, 없으면 참여자 시작일 적용
@@ -69,12 +92,13 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
         continue
       }
 
-      const onlyFundingSource = (participant.funding_sources || []).length === 1
       const totalSpent = (spentData || []).reduce((sum, tx) => {
         const txFundingSourceId = tx.funding_source_id || null
         const belongsToSource = txFundingSourceId === fundingSource.id
-        const isLegacyUnassigned = onlyFundingSource && !txFundingSourceId
-        return belongsToSource || isLegacyUnassigned ? sum + Number(tx.amount || 0) : sum
+        const shouldFallbackToSource =
+          (!txFundingSourceId || !fundingSourceIds.has(txFundingSourceId)) &&
+          fallbackFundingSourceId === fundingSource.id
+        return belongsToSource || shouldFallbackToSource ? sum + Number(tx.amount || 0) : sum
       }, 0)
 
       const rollover = calculateFundingSourceRollover(
