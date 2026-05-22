@@ -153,21 +153,6 @@ export default function ReceiptUploadForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {toast && toast.type === "error" && (
-        <div className="p-4 rounded-2xl text-sm font-bold animate-fade-in-up bg-red-50 text-red-700 ring-1 ring-red-200">
-          <div className="flex justify-between items-center">
-            <span>{toast.message}</span>
-            <button
-              type="button"
-              onClick={() => setToast(null)}
-              className="text-lg ml-2"
-              aria-label="알림 닫기"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* 1. 영수증 사진 */}
       <div className="flex flex-col gap-2">
@@ -456,6 +441,22 @@ export default function ReceiptUploadForm({
           className="w-full p-4 rounded-2xl bg-white ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-lg font-bold transition-all"
         />
       </div>
+
+      {toast && toast.type === "error" && (
+        <div className="p-4 rounded-2xl text-sm font-bold animate-fade-in-up bg-red-50 text-red-700 ring-1 ring-red-200">
+          <div className="flex justify-between items-center">
+            <span>{toast.message}</span>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="text-lg ml-2"
+              aria-label="알림 닫기"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 제출 버튼 */}
       <button

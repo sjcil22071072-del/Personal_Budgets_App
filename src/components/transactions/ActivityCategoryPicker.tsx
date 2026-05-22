@@ -44,10 +44,6 @@ export const ACTIVITY_CATEGORY_GROUPS = [
     major: "바우처 유연화",
     items: ["발달재활", "기타"],
   },
-  {
-    major: "기타",
-    items: ["기타"],
-  },
 ] as const;
 
 export function getActivityMajor(value: string) {
@@ -120,13 +116,9 @@ export default function ActivityCategoryPicker({ value, onChange, className = ""
                   type="button"
                   onClick={() => {
                     setSelectedMajor(group.major);
-                    setIsCustomMode(group.major === "기타");
+                    setIsCustomMode(false);
                     setCustomText("");
-                    if (group.major === "기타") {
-                      onChange("기타 - ");
-                    } else {
-                      onChange("");
-                    }
+                    onChange("");
                   }}
                   className={`w-full rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ${
                     active
