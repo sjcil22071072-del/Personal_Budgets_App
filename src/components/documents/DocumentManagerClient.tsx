@@ -83,7 +83,7 @@ export default function DocumentManagerClient({
       } else {
         // URL만 등록하는 경우
         const result = await uploadDocument(formData)
-        if (!result.success) throw new Error('저장 실패')
+        if ('error' in result) throw new Error(result.error)
       }
 
       alert('서류가 성공적으로 등록되었습니다.')
@@ -98,10 +98,13 @@ export default function DocumentManagerClient({
   async function handleDelete(id: string) {
     if (!confirm('정말 삭제하시겠습니까?')) return
     try {
-      await deleteDocument(id)
+      const result = await deleteDocument(id)
+      if (result && 'error' in result) {
+        throw new Error(result.error)
+      }
       setDocuments(documents.filter(d => d.id !== id))
-    } catch (error) {
-      alert('삭제 실패')
+    } catch (error: any) {
+      alert(error.message || '삭제 실패')
     }
   }
 
