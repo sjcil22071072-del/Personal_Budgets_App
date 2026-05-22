@@ -58,7 +58,7 @@ export function SupporterLayoutClient({
 
       {/* 모바일 상단 헤더 + 햄버거 */}
       <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 bg-gradient-to-r from-emerald-600 to-sky-600 text-white border-b border-white/20 print:hidden shadow-lg"
+        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 bg-slate-800 text-white border-b border-slate-700 print:hidden shadow-lg"
         data-print-hide
       >
         <button
