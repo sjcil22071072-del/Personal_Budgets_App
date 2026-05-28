@@ -16,6 +16,7 @@ interface Transaction {
   category?: string | null
   receipt_image_url?: string | null
   activity_image_url?: string | null
+  memo?: string | null
 }
 
 interface Props {

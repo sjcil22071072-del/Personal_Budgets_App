@@ -43,6 +43,7 @@ interface DailyTransaction {
   status: "pending" | "confirmed" | "rejected";
   receipt_image_url?: string | null;
   activity_image_url?: string | null;
+  memo?: string | null;
 }
 
 interface MonthlyTx {
