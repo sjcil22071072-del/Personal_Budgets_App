@@ -551,22 +551,22 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <fieldset className="flex flex-col gap-2">
+                <fieldset className="min-w-0 flex flex-col gap-2">
                   <label className="text-xs font-black text-zinc-500">날짜</label>
                   <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                    className="p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none" required />
+                    className="w-full min-w-0 p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none" required />
                 </fieldset>
-                <fieldset className="flex flex-col gap-2">
+                <fieldset className="min-w-0 flex flex-col gap-2">
                   <label className="text-xs font-black text-zinc-500">금액 (원)</label>
                   <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
-                    className="p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-bold focus:ring-zinc-400 focus:outline-none" required min="0" />
+                    className="w-full min-w-0 p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-bold focus:ring-zinc-400 focus:outline-none" required min="0" />
                 </fieldset>
               </div>
 
-              <fieldset className="flex flex-col gap-2">
+              <fieldset className="min-w-0 flex flex-col gap-2">
                 <label className="text-xs font-black text-zinc-500">활동 내용</label>
                 <input type="text" value={activityName} onChange={e => setActivityName(e.target.value)}
-                  className="p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none" required />
+                  className="w-full min-w-0 p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none" required />
               </fieldset>
 
               <fieldset className="flex flex-col gap-2">
@@ -589,7 +589,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
               <fieldset className="flex flex-col gap-2">
                 <label className="text-xs font-black text-zinc-500">메모</label>
                 <textarea value={memo} onChange={e => setMemo(e.target.value)} rows={2}
-                  className="p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none resize-none" />
+                  className="w-full min-w-0 p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none resize-none" />
               </fieldset>
 
               <div className="h-px bg-zinc-200 my-2" />
