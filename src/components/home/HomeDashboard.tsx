@@ -331,8 +331,14 @@ export default function HomeDashboard({
                       const txText = recentTransactions
                         .slice(0, 3)
                         .map(
-                          (tx: any) =>
-                            `${tx.activity_name} ${formatCurrency(tx.amount)}원`,
+                          (tx: any) => {
+                            const displayName = tx.category && tx.category.includes(' - ')
+                              ? tx.category
+                              : (tx.activity_name && tx.activity_name.includes(' - ')
+                                  ? tx.activity_name
+                                  : tx.category ? `${tx.category} - 기타` : '기타')
+                            return `${displayName} ${formatCurrency(tx.amount)}원`
+                          }
                         )
                         .join(", ");
                       speak(`최근 사용 내역입니다. ${txText}`);
@@ -386,15 +392,15 @@ export default function HomeDashboard({
                         </span>
                       </div>
                     )}
-                    <div>
-                      <p className="font-bold text-zinc-800 text-sm">
+                    <div className="flex flex-col gap-0.5">
+                      <p className="font-black text-zinc-800 text-base">
                         {tx.category && tx.category.includes(' - ')
                           ? tx.category
                           : (tx.activity_name && tx.activity_name.includes(' - ')
                               ? tx.activity_name
-                              : tx.category || tx.activity_name || '기타')}
+                              : tx.category ? `${tx.category} - 기타` : '기타')}
                       </p>
-                      <p className="text-xs text-zinc-450">
+                      <p className="text-xs text-zinc-400 font-bold">
                         {tx.date}
                       </p>
                     </div>

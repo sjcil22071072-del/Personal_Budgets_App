@@ -74,7 +74,7 @@ export default function GalleryClient({ items, currentMonth, months }: Props) {
                     ? item.category
                     : (item.activity_name && item.activity_name.includes(' - ')
                         ? item.activity_name
-                        : item.category || item.activity_name || '기타')
+                        : item.category ? `${item.category} - 기타` : '기타')
 
                   if (item.receipt_image_url) {
                     cards.push(

@@ -221,7 +221,7 @@ export default function TransactionCalendar({ transactions }: Props) {
                           ? tx.category
                           : (tx.activity_name && tx.activity_name.includes(' - ')
                               ? tx.activity_name
-                              : tx.category || tx.activity_name || '기타')
+                              : tx.category ? `${tx.category} - 기타` : '기타')
                         return `${displayName} ${formatCurrency(tx.amount)}원`
                       })
                       .join(', ')
@@ -261,10 +261,10 @@ export default function TransactionCalendar({ transactions }: Props) {
                         {tx.status === 'confirmed' ? '✓' : '⏳'}
                       </div>
                     )}
-                    <div className="flex flex-col">
-                      <p className="font-bold text-zinc-900 text-lg">{displayName}</p>
-                      <p className={`text-xs font-bold ${tx.status === 'confirmed' ? 'text-green-600' : 'text-orange-500'}`}>
-                        {tx.status === 'confirmed'
+                    <div className="flex flex-col gap-0.5">
+                      <p className="font-black text-zinc-900 text-base">{displayName}</p>
+                      <p className="text-xs text-zinc-400 font-bold">
+                        {tx.date} · {tx.status === 'confirmed'
                           ? <EasyTerm formal="예산 반영 완료" easy="돈에서 뺐어요" />
                           : <EasyTerm formal="확인 대기 중" easy="선생님이 확인하고 있어요" />
                         }
