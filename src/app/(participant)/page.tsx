@@ -177,7 +177,7 @@ export default async function Home() {
     adminClient
       .from("transactions")
       .select(
-        "id, date, amount, activity_name, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls",
+        "id, date, amount, activity_name, status, memo, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls",
       )
       .eq("participant_id", participantId)
       .gte("date", firstDayOfMonth)
