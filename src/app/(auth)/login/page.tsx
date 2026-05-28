@@ -32,14 +32,14 @@ function GoogleLoginContent() {
       setIsInAppBrowser(true);
       const targetUrl = window.location.href;
 
-      // 1. 안드로이드인 경우 기본 인터넷 브라우저 실행
-      if (/android/i.test(userAgent)) {
+      // 1. 카카오톡인 경우 (Android & iOS 공통) 외부 브라우저 열기 스킴 실행
+      if (isKakao) {
+        window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(targetUrl)}`;
+      } 
+      // 2. 그 외 안드로이드 인앱 브라우저인 경우 기본 인터넷 브라우저 실행
+      else if (/android/i.test(userAgent)) {
         const schemeUrl = targetUrl.replace(/https?:\/\//i, "");
         window.location.href = `intent://${schemeUrl}#Intent;scheme=https;end`;
-      } 
-      // 2. iOS이면서 카카오톡인 경우 아웃링크 스킴 실행
-      else if (/iphone|ipad|ipod/i.test(userAgent) && isKakao) {
-        window.location.href = `kakaotalk://web/openExternalApp?url=${encodeURIComponent(targetUrl)}`;
       }
     }
   }, []);
