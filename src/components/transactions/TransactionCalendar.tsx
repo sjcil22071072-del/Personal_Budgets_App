@@ -242,7 +242,7 @@ export default function TransactionCalendar({ transactions }: Props) {
                     ? tx.activity_name
                     : tx.category ? `${tx.category} - 기타` : '기타')
               return (
-                <a key={tx.id} href={`/transactions/${tx.id}`} className="bg-white rounded-3xl p-5 ring-1 ring-zinc-200 shadow-sm flex flex-col gap-4 hover:ring-zinc-300 hover:shadow-md active:scale-[0.99] transition-all">
+                <div key={tx.id} className="bg-white rounded-3xl p-5 ring-1 ring-zinc-200 shadow-sm flex flex-col gap-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                     <div className="flex items-start sm:items-center gap-4">
                       {(tx.activity_image_url || tx.receipt_image_url) && tx.status !== 'rejected' ? (
@@ -281,7 +281,7 @@ export default function TransactionCalendar({ transactions }: Props) {
                       <p className="font-black text-zinc-900 text-lg">-{formatCurrency(tx.amount)}원</p>
                     </div>
                   </div>
-                </a>
+                </div>
               )
             })}
 
