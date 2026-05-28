@@ -388,10 +388,14 @@ export default function HomeDashboard({
                     )}
                     <div>
                       <p className="font-bold text-zinc-800 text-sm">
-                        {tx.activity_name}
+                        {tx.category && tx.category.includes(' - ')
+                          ? tx.category
+                          : (tx.activity_name && tx.activity_name.includes(' - ')
+                              ? tx.activity_name
+                              : tx.category || tx.activity_name || '기타')}
                       </p>
                       <p className="text-xs text-zinc-450">
-                        {tx.date} · {tx.category || "종류 없음"}
+                        {tx.date}
                       </p>
                     </div>
                   </div>

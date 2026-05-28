@@ -13,6 +13,7 @@ interface Transaction {
   amount: number
   activity_name: string
   status: 'pending' | 'confirmed'
+  category?: string | null
   receipt_image_url?: string | null
   activity_image_url?: string | null
 }
@@ -215,7 +216,14 @@ export default function TransactionCalendar({ transactions }: Props) {
                 <button
                   onClick={() => {
                     const txText = selectedTransactions
-                      .map((tx: any) => `${tx.activity_name} ${formatCurrency(tx.amount)}원`)
+                      .map((tx: any) => {
+                        const displayName = tx.category && tx.category.includes(' - ')
+                          ? tx.category
+                          : (tx.activity_name && tx.activity_name.includes(' - ')
+                              ? tx.activity_name
+                              : tx.category || tx.activity_name || '기타')
+                        return `${displayName} ${formatCurrency(tx.amount)}원`
+                      })
                       .join(', ')
                     speak(`${selectedDate?.split('-')[1]}월 ${selectedDate?.split('-')[2]}일에 쓴 돈이에요. ${txText}. 합계 ${formatCurrency(selectedTotal)}원을 썼어요.`)
                   }}
@@ -226,42 +234,49 @@ export default function TransactionCalendar({ transactions }: Props) {
             </div>
 
             {/* 개별 내역 리스트 */}
-            {selectedTransactions.map(tx => (
-              <div key={tx.id} className="bg-white rounded-3xl p-5 ring-1 ring-zinc-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start sm:items-center gap-4">
-                  {(tx.activity_image_url || tx.receipt_image_url) ? (
-                    <button
-                      className="w-12 h-12 rounded-2xl overflow-hidden shadow-sm shrink-0 cursor-zoom-in"
-                      onClick={() => setLightboxSrc((tx.activity_image_url || tx.receipt_image_url)!)}
-                    >
-                      <img
-                        src={(tx.activity_image_url || tx.receipt_image_url)!}
-                        alt="활동"
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ) : (
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black shrink-0 ${
-                      tx.status === 'confirmed' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-500'
-                    }`}>
-                      {tx.status === 'confirmed' ? '✓' : '⏳'}
+            {selectedTransactions.map(tx => {
+              const displayName = tx.category && tx.category.includes(' - ')
+                ? tx.category
+                : (tx.activity_name && tx.activity_name.includes(' - ')
+                    ? tx.activity_name
+                    : tx.category || tx.activity_name || '기타')
+              return (
+                <div key={tx.id} className="bg-white rounded-3xl p-5 ring-1 ring-zinc-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start sm:items-center gap-4">
+                    {(tx.activity_image_url || tx.receipt_image_url) ? (
+                      <button
+                        className="w-12 h-12 rounded-2xl overflow-hidden shadow-sm shrink-0 cursor-zoom-in"
+                        onClick={() => setLightboxSrc((tx.activity_image_url || tx.receipt_image_url)!)}
+                      >
+                        <img
+                          src={(tx.activity_image_url || tx.receipt_image_url)!}
+                          alt="활동"
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black shrink-0 ${
+                        tx.status === 'confirmed' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-500'
+                      }`}>
+                        {tx.status === 'confirmed' ? '✓' : '⏳'}
+                      </div>
+                    )}
+                    <div className="flex flex-col">
+                      <p className="font-bold text-zinc-900 text-lg">{displayName}</p>
+                      <p className={`text-xs font-bold ${tx.status === 'confirmed' ? 'text-green-600' : 'text-orange-500'}`}>
+                        {tx.status === 'confirmed'
+                          ? <EasyTerm formal="예산 반영 완료" easy="돈에서 뺐어요" />
+                          : <EasyTerm formal="확인 대기 중" easy="선생님이 확인하고 있어요" />
+                        }
+                      </p>
                     </div>
-                  )}
-                  <div className="flex flex-col">
-                    <p className="font-bold text-zinc-900 text-lg">{tx.activity_name}</p>
-                    <p className={`text-xs font-bold ${tx.status === 'confirmed' ? 'text-green-600' : 'text-orange-500'}`}>
-                      {tx.status === 'confirmed'
-                        ? <EasyTerm formal="예산 반영 완료" easy="돈에서 뺐어요" />
-                        : <EasyTerm formal="확인 대기 중" easy="선생님이 확인하고 있어요" />
-                      }
-                    </p>
+                  </div>
+                  <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-auto">
+                    <p className="font-black text-zinc-900 text-lg">-{formatCurrency(tx.amount)}원</p>
                   </div>
                 </div>
-                <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-auto">
-                  <p className="font-black text-zinc-900 text-lg">-{formatCurrency(tx.amount)}원</p>
-                </div>
-              </div>
-            ))}
+              )
+            })}
             
           </div>
         )}

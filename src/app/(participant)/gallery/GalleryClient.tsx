@@ -70,16 +70,22 @@ export default function GalleryClient({ items, currentMonth, months }: Props) {
               <div className="grid grid-cols-2 gap-2">
                 {grouped[date].flatMap(item => {
                   const cards = []
+                  const displayCategory = item.category && item.category.includes(' - ')
+                    ? item.category
+                    : (item.activity_name && item.activity_name.includes(' - ')
+                        ? item.activity_name
+                        : item.category || item.activity_name || '기타')
+
                   if (item.receipt_image_url) {
                     cards.push(
                       <button
                         key={`${item.id}-receipt`}
-                        onClick={() => setLightbox({ src: item.receipt_image_url!, label: `${item.activity_name} — 영수증` })}
+                        onClick={() => setLightbox({ src: item.receipt_image_url!, label: `${displayCategory} — 영수증` })}
                         className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-100 active:scale-[0.97] transition-transform group"
                       >
-                        <Image src={item.receipt_image_url} alt={item.activity_name} fill sizes="(max-width:600px) 33vw, 200px" className="object-cover" />
+                        <Image src={item.receipt_image_url} alt={displayCategory} fill sizes="(max-width:600px) 33vw, 200px" className="object-cover" />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                          <p className="text-white text-xs font-black truncate">{item.activity_name}</p>
+                          <p className="text-white text-xs font-black truncate">{displayCategory}</p>
                           <p className="text-white/70 text-[10px] font-bold">{formatCurrency(item.amount)}원 · 🧾 영수증</p>
                         </div>
                       </button>
@@ -89,12 +95,12 @@ export default function GalleryClient({ items, currentMonth, months }: Props) {
                     cards.push(
                       <button
                         key={`${item.id}-activity`}
-                        onClick={() => setLightbox({ src: item.activity_image_url!, label: `${item.activity_name} — 활동 사진` })}
+                        onClick={() => setLightbox({ src: item.activity_image_url!, label: `${displayCategory} — 활동 사진` })}
                         className="relative aspect-video rounded-2xl overflow-hidden bg-zinc-100 active:scale-[0.97] transition-transform group col-span-2"
                       >
-                        <Image src={item.activity_image_url} alt={item.activity_name} fill sizes="(max-width:600px) 66vw, 400px" className="object-cover" />
+                        <Image src={item.activity_image_url} alt={displayCategory} fill sizes="(max-width:600px) 66vw, 400px" className="object-cover" />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                          <p className="text-white text-xs font-black truncate">{item.activity_name}</p>
+                          <p className="text-white text-xs font-black truncate">{displayCategory}</p>
                           <p className="text-white/70 text-[10px] font-bold">{formatCurrency(item.amount)}원 · 📷 활동 사진</p>
                         </div>
                       </button>

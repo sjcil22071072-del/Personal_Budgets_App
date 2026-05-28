@@ -39,7 +39,7 @@ export default async function CalendarPage() {
   // 당사자의 전체 사용 내역 조회
   const { data: rawTransactions } = await adminClient
     .from('transactions')
-    .select('id, date, amount, activity_name, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls')
+    .select('id, date, amount, activity_name, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, category')
     .eq('participant_id', participantId)
     .order('date', { ascending: false })
 
