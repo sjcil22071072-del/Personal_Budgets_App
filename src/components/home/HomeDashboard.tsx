@@ -72,6 +72,7 @@ interface HomeDashboardProps {
   dailyTransactions?: DailyTransaction[];
   monthlyTrend?: MonthlyData[];
   uiPreferences?: UIPreferences | null;
+  rejectedTransactionIds?: string[];
 }
 
 export default function HomeDashboard({
@@ -85,9 +86,11 @@ export default function HomeDashboard({
   dailyTransactions = [],
   monthlyTrend = [],
   uiPreferences,
+  rejectedTransactionIds = [],
 }: HomeDashboardProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [unseenRejectedIds, setUnseenRejectedIds] = useState<string[]>([]);
   const [localPreferences, setLocalPreferences] = useState<UIPreferences>(
     () => {
       const prefs = uiPreferences ?? DEFAULT_PREFERENCES;
@@ -111,6 +114,23 @@ export default function HomeDashboard({
       ),
     });
   }, [uiPreferences]);
+
+  // 거절된 거래 중 아직 확인 안 한 것 필터링
+  useEffect(() => {
+    const checkUnseen = () => {
+      try {
+        const raw = localStorage.getItem('seen_rejected_txs')
+        const seen: string[] = raw ? JSON.parse(raw) : []
+        const unseen = rejectedTransactionIds.filter(id => !seen.includes(id))
+        setUnseenRejectedIds(unseen)
+      } catch {
+        setUnseenRejectedIds(rejectedTransactionIds)
+      }
+    }
+    checkUnseen()
+    window.addEventListener('seen_rejected_updated', checkUnseen)
+    return () => window.removeEventListener('seen_rejected_updated', checkUnseen)
+  }, [rejectedTransactionIds]);
 
   // 통합 계산 및 노출용 활성 재원 필터링
   const now = new Date();
@@ -365,16 +385,16 @@ export default function HomeDashboard({
               </div>
             ) : (
               recentTransactions.map((tx: any) => (
-                <div
+                <Link
                   key={tx.id}
-                  className="p-4 rounded-2xl bg-white border border-zinc-200/80 flex flex-col gap-2.5 shadow-[0_2px_12px_rgba(0,0,0,0.01)]"
+                  href={`/transactions/${tx.id}`}
+                  className="p-4 rounded-2xl bg-white border border-zinc-200/80 flex flex-col gap-2.5 shadow-[0_2px_12px_rgba(0,0,0,0.01)] hover:border-zinc-300 hover:shadow-md active:scale-[0.99] transition-all"
                 >
                   <div className="flex justify-between items-center w-full">
                     <div className="flex items-center gap-3">
                       {tx.receipt_image_url && tx.status !== 'rejected' ? (
-                        <button
-                          className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-zinc-200 cursor-zoom-in"
-                          onClick={() => setLightboxSrc(tx.receipt_image_url)}
+                        <div
+                          className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-zinc-200"
                         >
                           <Image
                             src={tx.receipt_image_url}
@@ -383,7 +403,7 @@ export default function HomeDashboard({
                             sizes="40px"
                             className="object-cover"
                           />
-                        </button>
+                        </div>
                       ) : (
                         <div className="flex items-center gap-1.5 shrink-0">
                           <div
@@ -431,13 +451,13 @@ export default function HomeDashboard({
                       </span>
                     </div>
                   </div>
-                  {tx.status === "rejected" && tx.memo && (
-                    <div className="w-full bg-red-50/70 border border-red-100 rounded-xl p-3 text-xs font-medium text-red-700 animate-fade-in-up">
-                      <p className="font-black text-red-800 mb-0.5">⚠️ 승인 거절 사유</p>
-                      <p className="leading-relaxed">{tx.memo}</p>
+                  {tx.status === "rejected" && (
+                    <div className="w-full bg-red-50 border border-red-100 rounded-xl px-3 py-2 flex items-center gap-2">
+                      <span className="text-red-500 text-xs">❌</span>
+                      <p className="text-xs font-bold text-red-700">탭해서 거절 사유 확인하기 →</p>
                     </div>
                   )}
-                </div>
+                </Link>
               ))
             )}
           </section>
@@ -518,6 +538,27 @@ export default function HomeDashboard({
       </header>
 
       <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
+        {/* 거절 알림 배너 */}
+        {unseenRejectedIds.length > 0 && (
+          <Link
+            href={`/transactions/${unseenRejectedIds[0]}`}
+            className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border-2 border-red-200 hover:bg-red-100 active:scale-[0.99] transition-all shadow-sm animate-fade-in-up"
+          >
+            <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center shrink-0">
+              <span className="text-xl">❌</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-red-800 text-sm">
+                거절처리된 영수증이 있어요!
+              </p>
+              <p className="text-xs text-red-500 font-bold mt-0.5">
+                {unseenRejectedIds.length}건 미확인 · 탭해서 확인해주세요
+              </p>
+            </div>
+            <span className="text-red-300 text-lg font-bold">▸</span>
+          </Link>
+        )}
+
         <section className="p-6 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
           <div className="flex items-center gap-3 mb-1.5">
             <span className="text-2xl">👋</span>

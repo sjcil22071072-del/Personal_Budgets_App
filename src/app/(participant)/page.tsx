@@ -165,8 +165,8 @@ export default async function Home() {
 
   const effectivePrefs = uiPreferences ?? DEFAULT_PREFERENCES;
 
-  // 3개 독립 쿼리 병렬 실행
-  const [recentTxData, dailyTxData, { data: allMonthTxs }] = await Promise.all([
+  // 4개 독립 쿼리 병렬 실행
+  const [recentTxData, dailyTxData, { data: allMonthTxs }, rejectedTxData] = await Promise.all([
     adminClient
       .from("transactions")
       .select("*")
@@ -191,6 +191,12 @@ export default async function Home() {
       .gte("date", "2026-05-01")
       .lte("date", "2026-10-31")
       .order("date", { ascending: true }),
+
+    adminClient
+      .from("transactions")
+      .select("id")
+      .eq("participant_id", participantId)
+      .eq("status", "rejected"),
   ]);
 
   const rawRecent = recentTxData.data || [];
@@ -301,6 +307,8 @@ export default async function Home() {
       })),
     });
   }
+  const rejectedTransactionIds = (rejectedTxData.data || []).map((t: any) => t.id);
+
   return (
     <HomeDashboard
       participant={participant}
@@ -313,6 +321,7 @@ export default async function Home() {
       dailyTransactions={dailyTransactions || []}
       monthlyTrend={monthlyTrend}
       uiPreferences={uiPreferences}
+      rejectedTransactionIds={rejectedTransactionIds}
     />
   );
 }
