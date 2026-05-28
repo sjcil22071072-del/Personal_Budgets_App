@@ -41,6 +41,7 @@ export default async function CalendarPage() {
     .from('transactions')
     .select('id, date, amount, activity_name, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, category')
     .eq('participant_id', participantId)
+    .neq('status', 'rejected')
     .order('date', { ascending: false })
 
   // 영수증·활동사진 signed URL 변환 (private 버킷)
