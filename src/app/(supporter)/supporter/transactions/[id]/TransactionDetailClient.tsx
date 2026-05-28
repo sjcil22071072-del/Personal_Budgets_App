@@ -50,7 +50,26 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
 
   const [activityName, setActivityName] = useState(tx.activity_name)
   const [amount, setAmount] = useState(String(Math.abs(tx.amount)))
-  const [category, setCategory] = useState(tx.category || '')
+
+  // 중분류가 정상적으로 포함되어 있는지 확인하는 함수 (형식: "대분류 - 중분류")
+  const hasMinorCategory = (cat: string | null) => {
+    if (!cat) return false
+    const parts = cat.split(' - ')
+    return parts.length >= 2 && parts[0].trim() !== '' && parts[1].trim() !== ''
+  }
+
+  // 초기 카테고리값 설정: 기존 카테고리에 중분류가 없으면 당사자가 작성한 활동명(activity_name)에서 추출
+  const getInitialCategory = () => {
+    if (hasMinorCategory(tx.category)) {
+      return tx.category as string
+    }
+    if (hasMinorCategory(tx.activity_name)) {
+      return tx.activity_name
+    }
+    return tx.category || ''
+  }
+
+  const [category, setCategory] = useState(getInitialCategory)
   const [memo, setMemo] = useState(tx.memo || '')
   const [date, setDate] = useState(tx.date)
   const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>(
