@@ -1,6 +1,7 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
+import { isFundingSourceActiveInMonth } from '@/utils/budget-rollover'
 
 interface Alert {
   type: 'low_balance' | 'pending_receipt'
@@ -19,15 +20,24 @@ export default async function AlertPanel() {
     { data: participants },
     { data: pendingTxs },
   ] = await Promise.all([
-    adminClient.from('participants').select('id, name, alert_threshold, funding_sources(monthly_budget, current_month_balance)'),
+    adminClient.from('participants').select('id, name, alert_threshold, funding_sources(monthly_budget, current_month_balance, start_date, end_date)'),
     adminClient.from('transactions').select('participant_id, participants!transactions_participant_id_fkey(name)').eq('status', 'pending'),
   ])
+
+  const now = new Date()
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
   // 1. 잔액 경고 — current_month_balance / monthly_budget < alert_threshold
   for (const p of participants ?? []) {
     const threshold = (p as any).alert_threshold ?? 20
     const sources: any[] = (p as any).funding_sources ?? []
-    for (const fs of sources) {
+    
+    // 이번 달에 활성화된 재원만 필터링
+    const activeSources = sources.filter((fs) =>
+      isFundingSourceActiveInMonth(fs, currentMonthStart)
+    )
+
+    for (const fs of activeSources) {
       const budget = Number(fs.monthly_budget)
       if (budget <= 0) continue
       const balance = Number(fs.current_month_balance)
