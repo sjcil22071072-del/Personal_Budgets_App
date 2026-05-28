@@ -10,7 +10,7 @@ interface DailyTransaction {
   date: string
   amount: number
   activity_name: string
-  status: 'pending' | 'confirmed'
+  status: 'pending' | 'confirmed' | 'rejected'
   receipt_image_url?: string | null
   activity_image_url?: string | null
 }
@@ -45,7 +45,7 @@ export default function WeeklyChartBlock({ dailyTransactions, themeColor }: Prop
   })
 
   const dailyTotals = last7Days.map(date => {
-    const txs = dailyTransactions.filter(t => t.date === date)
+    const txs = dailyTransactions.filter(t => t.date === date && t.status !== 'rejected')
     return {
       date,
       label: `${Number(date.split('-')[1])}/${Number(date.split('-')[2])}`,

@@ -40,7 +40,7 @@ interface DailyTransaction {
   date: string;
   amount: number;
   activity_name: string;
-  status: "pending" | "confirmed";
+  status: "pending" | "confirmed" | "rejected";
   receipt_image_url?: string | null;
   activity_image_url?: string | null;
 }

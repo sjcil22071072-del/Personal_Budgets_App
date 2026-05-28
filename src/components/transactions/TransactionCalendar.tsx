@@ -12,7 +12,7 @@ interface Transaction {
   date: string
   amount: number
   activity_name: string
-  status: 'pending' | 'confirmed'
+  status: 'pending' | 'confirmed' | 'rejected'
   category?: string | null
   receipt_image_url?: string | null
   activity_image_url?: string | null
