@@ -6,13 +6,12 @@ import GalleryClient from './GalleryClient'
 import { getSignedImageUrls } from '@/app/actions/storage'
 import NavDropdown from '@/components/layout/NavDropdown'
 
-function getRecentMonths(count: number) {
+// 2026년 5월~10월 고정, 현재 달 기준으로 기본값 설정
+function getFixedMonths() {
   const months = []
-  const now = new Date()
-  for (let i = 0; i < count; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = `${d.getFullYear()}년 ${d.getMonth() + 1}월`
+  for (let m = 5; m <= 10; m++) {
+    const value = `2026-${String(m).padStart(2, '0')}`
+    const label = `2026년 ${m}월`
     months.push({ value, label })
   }
   return months
@@ -49,8 +48,14 @@ export default async function GalleryPage({
 
   const participantId = participantData.data?.id ?? user.id
 
-  const months = getRecentMonths(6)
-  const currentMonth = params.month || months[0].value
+  const months = getFixedMonths()
+
+  // 현재 달을 5~10월 범위로 클램핑
+  const now = new Date()
+  const nowValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const validValues = months.map(m => m.value)
+  const defaultMonth = validValues.includes(nowValue) ? nowValue : months[months.length - 1].value
+  const currentMonth = validValues.includes(params.month || '') ? params.month! : defaultMonth
 
   // 해당 월의 시작/끝 날짜 계산
   const [year, month] = currentMonth.split('-').map(Number)
