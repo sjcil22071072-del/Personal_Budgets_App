@@ -38,7 +38,7 @@ export default async function AdminParticipantsPage() {
     participantIds.length > 0
       ? await adminClient
           .from('funding_sources')
-          .select('id, participant_id, name, monthly_budget, current_month_balance')
+          .select('id, participant_id, name, monthly_budget, current_month_balance, start_date, end_date')
           .in('participant_id', participantIds)
       : { data: [], error: null as any }
 

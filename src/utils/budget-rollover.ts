@@ -17,7 +17,7 @@ export interface FundingSourceRolloverUpdate {
   months_added: number
 }
 
-function toMonthStart(value: string | Date): Date | null {
+export function toMonthStart(value: string | Date): Date | null {
   const date = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(date.getTime())) return null
   return new Date(date.getFullYear(), date.getMonth(), 1)
@@ -29,6 +29,32 @@ function formatMonthStart(date: Date): string {
 
 function monthDiff(from: Date, to: Date): number {
   return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth())
+}
+
+export function isFundingSourceActiveInMonth(
+  fs: { start_date?: string | null; end_date?: string | null },
+  monthStart: Date
+): boolean {
+  if (fs.start_date) {
+    const startMonth = toMonthStart(fs.start_date)
+    if (startMonth && startMonth > monthStart) return false
+  }
+  if (fs.end_date) {
+    const endMonth = toMonthStart(fs.end_date)
+    if (endMonth && endMonth < monthStart) return false
+  }
+  return true
+}
+
+export function getFallbackFundingSourceIdForDate(
+  dateStr: string,
+  fundingSources: any[]
+): string | null {
+  const txDate = toMonthStart(dateStr)
+  if (!txDate) return fundingSources[0]?.id || null
+
+  const activeFs = fundingSources.find((fs) => isFundingSourceActiveInMonth(fs, txDate))
+  return activeFs ? activeFs.id : (fundingSources[0]?.id || null)
 }
 
 export function calculateFundingSourceRollover(

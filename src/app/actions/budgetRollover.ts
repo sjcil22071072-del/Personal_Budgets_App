@@ -1,7 +1,11 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/server'
-import { calculateFundingSourceRollover } from '@/utils/budget-rollover'
+import {
+  isFundingSourceActiveInMonth,
+  getFallbackFundingSourceIdForDate,
+  toMonthStart
+} from '@/utils/budget-rollover'
 
 type FundingSourceRow = {
   id: string
@@ -20,22 +24,8 @@ type ParticipantRow = {
   funding_sources?: FundingSourceRow[]
 }
 
-function toMonthStart(value: string | Date): Date | null {
-  const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return new Date(date.getFullYear(), date.getMonth(), 1)
-}
-
-function isFundingSourceActiveInMonth(fs: FundingSourceRow, monthStart: Date) {
-  if (fs.start_date) {
-    const startMonth = toMonthStart(fs.start_date)
-    if (startMonth && startMonth > monthStart) return false
-  }
-  if (fs.end_date) {
-    const endMonth = toMonthStart(fs.end_date)
-    if (endMonth && endMonth < monthStart) return false
-  }
-  return true
+function formatMonthStart(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`
 }
 
 export async function ensureMonthlyBudgetRollover(participantId?: string, force = false) {
@@ -63,55 +53,48 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
     const startDate = participant.budget_start_date || new Date().toISOString().split('T')[0]
     const startMonth = new Date(startDate)
     const resolvedStartMonth = Number.isNaN(startMonth.getTime()) ? currentMonth : new Date(startMonth.getFullYear(), startMonth.getMonth(), 1)
-    const fundingSourceIds = new Set((participant.funding_sources || []).map((fs) => fs.id))
-    const fallbackFundingSourceId =
-      (participant.funding_sources || []).find((fs) => isFundingSourceActiveInMonth(fs, currentMonth))?.id ||
-      participant.funding_sources?.[0]?.id ||
-      null
 
-    for (const fundingSource of participant.funding_sources || []) {
-      // 해당 지원금의 시작일이 있다면 이를 최우선 적용, 없으면 참여자 시작일 적용
+    // 당사자의 모든 거래 내역 조회 (재원 매칭 및 계산용)
+    const { data: spentData, error: spentError } = await supabase
+      .from('transactions')
+      .select('amount, funding_source_id, date')
+      .eq('participant_id', participant.id)
+
+    if (spentError) {
+      console.error('[budgetRollover] spent query failed:', spentError)
+      continue
+    }
+
+    // 재원 목록을 시작일 기준 시간순 정렬
+    const sortedFundingSources = [...(participant.funding_sources || [])].sort((a, b) => {
+      const aDate = a.start_date || startDate
+      const bDate = b.start_date || startDate
+      return aDate.localeCompare(bDate)
+    })
+
+    const fundingSourceIds = new Set(sortedFundingSources.map((fs) => fs.id))
+    let carryoverAmount = 0
+    let carryoverYearAmount = 0
+
+    for (const fundingSource of sortedFundingSources) {
       const effectiveStartDate = fundingSource.start_date || startDate
 
-      // Balance should reflect every recorded transaction. The review status is
-      // only for receipt/admin workflow, not for excluding spending from budget math.
-      let spentQuery = supabase
-        .from('transactions')
-        .select('amount, funding_source_id')
-        .eq('participant_id', participant.id)
-        .gte('date', effectiveStartDate)
+      // 해당 재원에 매칭되는 거래 내역 필터링 (날짜 범위 및 fallback 고려)
+      const fsTransactions = (spentData || []).filter((tx) => {
+        if (tx.date < effectiveStartDate) return false
+        if (fundingSource.end_date && tx.date > fundingSource.end_date) return false
 
-      if (fundingSource.end_date) {
-        spentQuery = spentQuery.lte('date', fundingSource.end_date)
-      }
-
-      const { data: spentData, error: spentError } = await spentQuery
-
-      if (spentError) {
-        console.error('[budgetRollover] spent query failed:', spentError)
-        continue
-      }
-
-      const totalSpent = (spentData || []).reduce((sum, tx) => {
         const txFundingSourceId = tx.funding_source_id || null
-        const belongsToSource = txFundingSourceId === fundingSource.id
-        const shouldFallbackToSource =
-          (!txFundingSourceId || !fundingSourceIds.has(txFundingSourceId)) &&
-          fallbackFundingSourceId === fundingSource.id
-        return belongsToSource || shouldFallbackToSource ? sum + Number(tx.amount || 0) : sum
-      }, 0)
+        if (txFundingSourceId === fundingSource.id) return true
+        if (!txFundingSourceId || !fundingSourceIds.has(txFundingSourceId)) {
+          return getFallbackFundingSourceIdForDate(tx.date, sortedFundingSources) === fundingSource.id
+        }
+        return false
+      })
 
-      const rollover = calculateFundingSourceRollover(
-        participant,
-        {
-          ...fundingSource,
-          total_spent: totalSpent
-        },
-        currentDate,
-        force
-      )
+      const totalSpent = fsTransactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
 
-      // 지원금 날짜를 반영한 연도 계산용 시작/종료월 도출
+      // 활성 월 계산 및 한계 월 도출
       const fsStart = fundingSource.start_date ? new Date(fundingSource.start_date) : null
       const fsResolvedStartMonth = fsStart && !Number.isNaN(fsStart.getTime()) 
         ? new Date(fsStart.getFullYear(), fsStart.getMonth(), 1) 
@@ -123,7 +106,22 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
         : null
       const limitMonth = fsResolvedEndMonth && fsResolvedEndMonth < currentMonth ? fsResolvedEndMonth : currentMonth
 
-      // Calculate stateless yearly balance
+      // 이번 달 기준 종료 여부 판단
+      const isEnded = fsResolvedEndMonth && fsResolvedEndMonth < currentMonth
+
+      // 활성 개월 수 계산
+      let monthsActive = 0
+      if (fsResolvedStartMonth <= limitMonth) {
+        monthsActive = ((limitMonth.getFullYear() - fsResolvedStartMonth.getFullYear()) * 12) + (limitMonth.getMonth() - fsResolvedStartMonth.getMonth()) + 1
+      }
+      const monthsActiveClamped = monthsActive < 0 ? 0 : monthsActive
+      const monthlyBudget = Number(fundingSource.monthly_budget || 0)
+      const remainingBalance = monthsActiveClamped === 0 ? 0 : (monthlyBudget * monthsActiveClamped) - totalSpent
+
+      // 이월 금액 합산
+      const targetBalance = remainingBalance + carryoverAmount
+
+      // 연도별 예산 계산
       const startYear = fsResolvedStartMonth.getFullYear()
       const currentYear = limitMonth.getFullYear()
       let yearsActive = 0
@@ -132,44 +130,50 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       }
       const yearsActiveClamped = yearsActive < 0 ? 0 : yearsActive
       const yearlyBudget = Number(fundingSource.yearly_budget || 0)
-      const targetYearBalance = yearsActiveClamped === 0 ? 0 : (yearlyBudget * yearsActiveClamped) - totalSpent
+      const remainingYearBalance = yearsActiveClamped === 0 ? 0 : (yearlyBudget * yearsActiveClamped) - totalSpent
+      const targetYearBalance = remainingYearBalance + carryoverYearAmount
 
-      if (!rollover && !force) continue
-
-      const updateData: any = {
-        current_year_balance: targetYearBalance,
+      // 종료된 재원이면 잔액을 이월 변수에 저장하고 다음 루프로 전달, 활성 재원이면 이월을 흡수하고 이월변수 초기화
+      if (isEnded) {
+        carryoverAmount = targetBalance
+        carryoverYearAmount = targetYearBalance
+      } else {
+        carryoverAmount = 0
+        carryoverYearAmount = 0
       }
 
-      if (rollover) {
-        updateData.current_month_balance = rollover.current_month_balance
-        updateData.last_rollover_month = rollover.last_rollover_month
-      } else if (force) {
-        // If force is true, we should also update current_month_balance in case it was out of sync
-        // even if rollover was null (which happens if last_rollover_month is already currentMonth)
-        const monthlyBudget = Number(fundingSource.monthly_budget || 0)
-        let monthsActive = 0
-        if (fsResolvedStartMonth <= limitMonth) {
-          monthsActive = ((limitMonth.getFullYear() - fsResolvedStartMonth.getFullYear()) * 12) + (limitMonth.getMonth() - fsResolvedStartMonth.getMonth()) + 1
+      // 강제 업데이트(force=true) 혹은 월 이월이 실제로 필요한 경우에만 업데이트
+      const currentDbBalance = Number(fundingSource.current_month_balance || 0)
+      const currentDbYearBalance = Number(fundingSource.current_year_balance || 0)
+      const currentDbLastRollover = fundingSource.last_rollover_month || ''
+      const targetLastRollover = formatMonthStart(limitMonth)
+
+      const needsUpdate =
+        force ||
+        currentDbBalance !== targetBalance ||
+        currentDbYearBalance !== targetYearBalance ||
+        currentDbLastRollover !== targetLastRollover
+
+      if (needsUpdate) {
+        const updateData = {
+          current_month_balance: targetBalance,
+          current_year_balance: targetYearBalance,
+          last_rollover_month: targetLastRollover,
         }
-        const monthsActiveClamped = monthsActive < 0 ? 0 : monthsActive
-        updateData.current_month_balance = monthsActiveClamped === 0 ? 0 : (monthlyBudget * monthsActiveClamped) - totalSpent
-        updateData.last_rollover_month = `${limitMonth.getFullYear()}-${String(limitMonth.getMonth() + 1).padStart(2, '0')}-01`
+
+        const { error: updateError } = await supabase
+          .from('funding_sources')
+          .update(updateData)
+          .eq('id', fundingSource.id)
+
+        if (updateError) {
+          console.error('[budgetRollover] funding source update failed:', updateError)
+          continue
+        }
+        updated += 1
       }
-
-      const { error: updateError } = await supabase
-        .from('funding_sources')
-        .update(updateData)
-        .eq('id', fundingSource.id)
-
-      if (updateError) {
-        console.error('[budgetRollover] funding source update failed:', updateError)
-        continue
-      }
-
-      updated += 1
     }
   }
 
   return { updated }
 }
-

@@ -6,6 +6,7 @@ import { formatCurrency } from "@/utils/budget-visuals";
 import { isStaffRole, isSupporterRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
 import { ensureMonthlyBudgetRollover } from "@/app/actions/budgetRollover";
+import { isFundingSourceActiveInMonth } from "@/utils/budget-rollover";
 
 export default async function ParticipantsOverviewPage() {
   const supabase = await createClient();
@@ -26,7 +27,7 @@ export default async function ParticipantsOverviewPage() {
   let query = adminClient
     .from("participants")
     .select(
-      "id, name, funding_sources ( id, name, monthly_budget, current_month_balance )",
+      "id, name, funding_sources ( id, name, monthly_budget, current_month_balance, start_date, end_date )",
     );
 
   if (isSupporterRole(authProfile.role)) {
@@ -57,7 +58,11 @@ export default async function ParticipantsOverviewPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {(participants || []).map((p: any) => {
-              const fsList = p.funding_sources || [];
+              const now = new Date();
+              const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+              const fsList = (p.funding_sources || []).filter((fs: any) =>
+                isFundingSourceActiveInMonth(fs, currentMonthStart)
+              );
               const totalBudget = fsList.reduce(
                 (a: number, fs: any) => a + Number(fs.monthly_budget || 0),
                 0,

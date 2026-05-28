@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { calculateFundingSourceRollover } from './budget-rollover'
+import {
+  calculateFundingSourceRollover,
+  isFundingSourceActiveInMonth,
+  getFallbackFundingSourceIdForDate
+} from './budget-rollover'
 
 describe('calculateFundingSourceRollover', () => {
   it('adds missed monthly budgets from the participant start month', () => {
@@ -151,6 +155,54 @@ describe('calculateFundingSourceRollover', () => {
       current_month_balance: 200000,
       last_rollover_month: '2026-04-01', // 종료월(4월)로 고정
       months_added: 1,
+    })
+  })
+
+  describe('isFundingSourceActiveInMonth', () => {
+    it('returns true if date falls within funding source start/end date range', () => {
+      const active = isFundingSourceActiveInMonth(
+        { start_date: '2026-03-01', end_date: '2026-04-30' },
+        new Date('2026-03-15T00:00:00+09:00')
+      )
+      expect(active).toBe(true)
+    })
+
+    it('returns false if date is before start_date', () => {
+      const active = isFundingSourceActiveInMonth(
+        { start_date: '2026-03-01', end_date: '2026-04-30' },
+        new Date('2026-02-15T00:00:00+09:00')
+      )
+      expect(active).toBe(false)
+    })
+
+    it('returns false if date is after end_date', () => {
+      const active = isFundingSourceActiveInMonth(
+        { start_date: '2026-03-01', end_date: '2026-04-30' },
+        new Date('2026-05-15T00:00:00+09:00')
+      )
+      expect(active).toBe(false)
+    })
+  })
+
+  describe('getFallbackFundingSourceIdForDate', () => {
+    const fundingSources = [
+      { id: 'fs-1', start_date: '2026-03-01', end_date: '2026-04-30' },
+      { id: 'fs-2', start_date: '2026-05-01', end_date: '2026-10-31' },
+    ]
+
+    it('resolves correct funding source for transaction in March', () => {
+      const id = getFallbackFundingSourceIdForDate('2026-03-15', fundingSources)
+      expect(id).toBe('fs-1')
+    })
+
+    it('resolves correct funding source for transaction in May', () => {
+      const id = getFallbackFundingSourceIdForDate('2026-05-10', fundingSources)
+      expect(id).toBe('fs-2')
+    })
+
+    it('falls back to the first funding source if no active period matches', () => {
+      const id = getFallbackFundingSourceIdForDate('2026-02-28', fundingSources)
+      expect(id).toBe('fs-1')
     })
   })
 })

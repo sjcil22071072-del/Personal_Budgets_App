@@ -3,6 +3,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { formatCurrency } from '@/utils/budget-visuals'
 import Link from 'next/link'
 import { ensureMonthlyBudgetRollover } from '@/app/actions/budgetRollover'
+import { isFundingSourceActiveInMonth } from '@/utils/budget-rollover'
 
 export default async function AdminParticipantBoard() {
   const adminClient = createAdminClient()
@@ -24,7 +25,7 @@ export default async function AdminParticipantBoard() {
   ] = await Promise.all([
     adminClient
       .from('participants')
-      .select('id, name, monthly_budget_default, funding_sources(monthly_budget, current_month_balance)')
+      .select('id, name, monthly_budget_default, funding_sources(monthly_budget, current_month_balance, start_date, end_date)')
       .order('name', { ascending: true }),
     adminClient
       .from('transactions')
@@ -38,11 +39,16 @@ export default async function AdminParticipantBoard() {
   ])
 
   const rows = (participants || []).map((p: any) => {
+    const currentMonthStart = new Date(year, month - 1, 1)
+    const activeFs = (p.funding_sources || []).filter((fs: any) =>
+      isFundingSourceActiveInMonth(fs, currentMonthStart)
+    )
+
     const budget =
-      p.funding_sources?.reduce((a: number, fs: any) => a + Number(fs.monthly_budget || 0), 0) ||
+      activeFs.reduce((a: number, fs: any) => a + Number(fs.monthly_budget || 0), 0) ||
       Number(p.monthly_budget_default || 0)
     const balance =
-      p.funding_sources?.reduce((a: number, fs: any) => a + Number(fs.current_month_balance || 0), 0) || budget
+      activeFs.reduce((a: number, fs: any) => a + Number(fs.current_month_balance || 0), 0) || budget
     const spent = Math.max(0, budget - balance)
     const pct = budget > 0 ? Math.round((balance / budget) * 100) : 100
 

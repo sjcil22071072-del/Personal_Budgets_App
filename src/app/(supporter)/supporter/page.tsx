@@ -5,6 +5,7 @@ import { formatCurrency } from '@/utils/budget-visuals'
 import { isStaffRole, isSupporterRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 import { ensureMonthlyBudgetRollover } from '@/app/actions/budgetRollover'
+import { isFundingSourceActiveInMonth } from '@/utils/budget-rollover'
 
 export default async function SupporterPage() {
   const supabase = await createClient()
@@ -25,7 +26,7 @@ export default async function SupporterPage() {
     .from('participants')
     .select(`
       *,
-      funding_sources ( id, name, monthly_budget, current_month_balance, current_year_balance )
+      funding_sources ( id, name, monthly_budget, current_month_balance, current_year_balance, start_date, end_date )
     `)
 
   if (isSupporterRole(authProfile.role)) {
@@ -86,7 +87,11 @@ export default async function SupporterPage() {
             </div>
           ) : (
             participants.map((p: any) => {
-              const fsList = p.funding_sources || []
+              const now = new Date()
+              const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+              const fsList = (p.funding_sources || []).filter((fs: any) =>
+                isFundingSourceActiveInMonth(fs, currentMonthStart)
+              )
               const totalBalance = fsList.reduce((acc: number, fs: any) => acc + Number(fs.current_month_balance), 0)
               const totalBudget = fsList.reduce((acc: number, fs: any) => acc + Number(fs.monthly_budget), 0)
               const percentage = totalBudget > 0 ? Math.round((totalBalance / totalBudget) * 100) : 0

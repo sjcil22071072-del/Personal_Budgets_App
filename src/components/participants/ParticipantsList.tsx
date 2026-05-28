@@ -1,12 +1,15 @@
 'use client'
 
 import Link from 'next/link'
+import { isFundingSourceActiveInMonth } from '@/utils/budget-rollover'
 
 interface FundingSource {
   id: string
   name: string
   monthly_budget: number
   current_month_balance: number
+  start_date?: string | null
+  end_date?: string | null
 }
 
 interface Participant {
@@ -32,11 +35,16 @@ export default function ParticipantsList({ participants }: ParticipantsListProps
   return (
     <>
       {participants.map((p) => {
-        const totalBalance = (p.funding_sources || []).reduce(
+        const now = new Date()
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        const activeFs = (p.funding_sources || []).filter((fs) =>
+          isFundingSourceActiveInMonth(fs, currentMonthStart)
+        )
+        const totalBalance = activeFs.reduce(
           (acc, fs) => acc + Number(fs.current_month_balance),
           0
         )
-        const totalBudget = (p.funding_sources || []).reduce(
+        const totalBudget = activeFs.reduce(
           (acc, fs) => acc + Number(fs.monthly_budget),
           0
         )
