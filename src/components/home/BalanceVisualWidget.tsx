@@ -85,14 +85,12 @@ function SimulationSection({
   simValue,
   simBalance,
   isSimOver,
-  displayBalance,
 }: {
   simAmount: string;
   setSimAmount: (v: string) => void;
   simValue: number;
   simBalance: number;
   isSimOver: boolean;
-  displayBalance: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -480,7 +478,6 @@ export default function BalanceVisualWidget({
   const receiptInputRef = useRef<HTMLInputElement>(null);
   const activityInputRef = useRef<HTMLInputElement>(null);
   const secondFileRef = useRef<HTMLInputElement>(null);
-  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const [uploadMode, setUploadMode] = useState<UploadMode | null>(null);
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -846,7 +843,6 @@ export default function BalanceVisualWidget({
         simValue={simValue}
         simBalance={simBalance}
         isSimOver={isSimOver}
-        displayBalance={displayBalance}
       />
 
       {/* 상태 메시지 */}

@@ -111,7 +111,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     setUploadingReceipt(true)
     setUploadError('')
     try {
-      const result = await addReceiptImage(tx.id, tx.participant_id ?? '', file)
+      const result = await addReceiptImage(tx.id, file)
       if (result.error) {
         setUploadError(result.error)
       } else if (result.url) {
@@ -261,10 +261,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
           memo: memo || null,
           payment_method: paymentMethod,
           status,
-        },
-        tx.status,
-        Math.abs(tx.amount),
-        tx.funding_source_id
+        }
       )
       router.push('/supporter/transactions')
       router.refresh()

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 // GET: 예산 조회
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
@@ -87,7 +87,7 @@ export async function PATCH(
 
 // DELETE: 예산 삭제 (관리자 전용)
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params

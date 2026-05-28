@@ -2,9 +2,7 @@
 
 import { createAdminClient } from '@/utils/supabase/server'
 import {
-  isFundingSourceActiveInMonth,
   getFallbackFundingSourceIdForDate,
-  toMonthStart
 } from '@/utils/budget-rollover'
 
 type FundingSourceRow = {

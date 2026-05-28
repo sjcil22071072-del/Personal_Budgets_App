@@ -18,13 +18,7 @@ export async function getParticipantsWithFundingSources(): Promise<ParticipantWi
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data: profile } = await adminClient
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  let query = adminClient
+  const query = adminClient
     .from('participants')
     .select('id, name, funding_sources ( id, name )')
 
@@ -277,10 +271,7 @@ export async function updateTransactionDetail(
     place_name?: string | null
     place_lat?: number | null
     place_lng?: number | null
-  },
-  oldStatus: 'pending' | 'confirmed' | 'rejected',
-  oldAmount: number,
-  fundingSourceId: string | null
+  }
 ) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
@@ -553,7 +544,6 @@ export async function removeEvidenceImage(
  */
 export async function addReceiptImage(
   transactionId: string,
-  participantId: string,
   file: File
 ): Promise<{ success?: boolean; error?: string; url?: string }> {
   const supabase = await createClient()

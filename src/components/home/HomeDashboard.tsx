@@ -19,7 +19,6 @@ import {
 } from "@/types/ui-preferences";
 import NavDropdown from "@/components/layout/NavDropdown";
 import HelpButton from "@/components/help/HelpButton";
-import FaqButton from "@/components/ui/FaqButton";
 
 import EasyModeOnboarding from "./EasyModeOnboarding";
 import HelpAutoTrigger from "@/components/help/HelpAutoTrigger";
@@ -513,11 +512,6 @@ export default function HomeDashboard({
               sectionKey="home"
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-650 hover:bg-white hover:shadow-sm transition-all active:scale-95"
               text={<span className="text-xs font-bold">📖 사용법</span>}
-            />
-            <div className="w-px h-3 bg-zinc-300" aria-hidden="true" />
-            <FaqButton
-              variant="inline"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-zinc-650 hover:bg-white hover:shadow-sm transition-all active:scale-95"
             />
             <div className="w-px h-3 bg-zinc-300" aria-hidden="true" />
             <button

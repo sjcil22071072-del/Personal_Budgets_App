@@ -2,39 +2,14 @@
 import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import HomeDashboard from "@/components/home/HomeDashboard";
-import { UIPreferences, DEFAULT_PREFERENCES } from "@/types/ui-preferences";
+import { UIPreferences } from "@/types/ui-preferences";
 import { getSignedImageUrls } from "@/app/actions/storage";
 import { ensureMonthlyBudgetRollover } from "@/app/actions/budgetRollover";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function toMonthStart(value: string | Date): Date | null {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function monthDiff(from: Date, to: Date): number {
-  return (
-    (to.getFullYear() - from.getFullYear()) * 12 +
-    (to.getMonth() - from.getMonth())
-  );
-}
-
-function isFundingSourceActiveInMonth(fs: any, monthStart: Date) {
-  if (fs.start_date) {
-    const startMonth = toMonthStart(fs.start_date);
-    if (startMonth && startMonth > monthStart) return false;
-  }
-  if (fs.end_date) {
-    const endMonth = toMonthStart(fs.end_date);
-    if (endMonth && endMonth < monthStart) return false;
-  }
-  return true;
-}
-
-function calculateDisplayFundingSources(participant: any, transactions: any[]) {
+function calculateDisplayFundingSources(participant: any) {
   const fundingSources = participant.funding_sources || [];
   return fundingSources.map((fs: any) => {
     return {
@@ -163,8 +138,6 @@ export default async function Home() {
     ? { enabled_blocks: rawPrefs.enabled_blocks }
     : null;
 
-  const effectivePrefs = uiPreferences ?? DEFAULT_PREFERENCES;
-
   // 4개 독립 쿼리 병렬 실행
   const [recentTxData, dailyTxData, { data: allMonthTxs }, rejectedTxData] = await Promise.all([
     adminClient
@@ -201,10 +174,7 @@ export default async function Home() {
 
   const rawRecent = recentTxData.data || [];
   const rawDaily = dailyTxData.data || [];
-  const displayFundingSources = calculateDisplayFundingSources(
-    participant,
-    allMonthTxs || [],
-  );
+  const displayFundingSources = calculateDisplayFundingSources(participant);
   participant = { ...participant, funding_sources: displayFundingSources };
 
   // 영수증·활동사진 signed URL 변환

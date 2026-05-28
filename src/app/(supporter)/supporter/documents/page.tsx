@@ -23,7 +23,7 @@ export default async function SupporterDocumentsPage({
   }
 
   // 담당 당사자 목록 조회
-  let participantsQuery = adminClient
+  const participantsQuery = adminClient
     .from('participants')
     .select('id, name')
 

@@ -18,7 +18,6 @@ export default function NewTransactionPage() {
 
   const [participants, setParticipants] = useState<ParticipantWithFundingSources[]>([])
   const [selectedParticipant, setSelectedParticipant] = useState('')
-  const [selectedFundingSource, setSelectedFundingSource] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [activityName, setActivityName] = useState('')
   const [amount, setAmount] = useState('')
@@ -44,9 +43,6 @@ export default function NewTransactionPage() {
       setParticipants(data)
       if (data.length === 1) {
         setSelectedParticipant(data[0].id)
-        if (data[0].funding_sources.length === 1) {
-          setSelectedFundingSource(data[0].funding_sources[0].id)
-        }
       }
     } catch (e) {
       console.error(e)
@@ -54,8 +50,6 @@ export default function NewTransactionPage() {
       setLoading(false)
     }
   }
-
-  const currentParticipant = participants.find(p => p.id === selectedParticipant)
 
   const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -71,8 +65,8 @@ export default function NewTransactionPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedParticipant || !activityName || !amount || !selectedFundingSource) {
-      setError('필수 항목(당사자, 재원, 활동, 금액)을 모두 입력하세요.')
+    if (!selectedParticipant || !activityName || !amount) {
+      setError('필수 항목(당사자, 활동, 금액)을 모두 입력하세요.')
       return
     }
 
@@ -82,7 +76,6 @@ export default function NewTransactionPage() {
     try {
       const formData = new FormData()
       formData.append('participant_id', selectedParticipant)
-      formData.append('funding_source_id', selectedFundingSource)
       formData.append('amount', amount)
       formData.append('date', date)
       formData.append('description', activityName)
@@ -163,7 +156,6 @@ export default function NewTransactionPage() {
                   value={selectedParticipant}
                   onChange={(e) => {
                     setSelectedParticipant(e.target.value)
-                    setSelectedFundingSource('')
                   }}
                   className="p-4 rounded-2xl bg-zinc-50 ring-1 ring-zinc-200 text-zinc-800 font-bold focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all appearance-none"
                   required
@@ -343,7 +335,7 @@ export default function NewTransactionPage() {
           {/* 최종 등록 버튼 */}
           <button
             type="submit"
-            disabled={saving || !selectedParticipant || !activityName || !amount || !selectedFundingSource}
+            disabled={saving || !selectedParticipant || !activityName || !amount}
             className={`p-6 rounded-[2rem] text-white font-black text-xl transition-all active:scale-95 disabled:bg-zinc-300 shadow-2xl mt-4 ${
               isExpense ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-blue-600 hover:bg-blue-700'
             }`}

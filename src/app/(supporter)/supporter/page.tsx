@@ -1,15 +1,14 @@
-import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
-import { isStaffRole, isSupporterRole } from '@/utils/user-role'
+import { isStaffRole } from '@/utils/user-role'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 import { ensureMonthlyBudgetRollover } from '@/app/actions/budgetRollover'
 import { isFundingSourceActiveInMonth } from '@/utils/budget-rollover'
 
 export default async function SupporterPage() {
   const supabase = await createClient()
-  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
@@ -28,10 +27,6 @@ export default async function SupporterPage() {
       *,
       funding_sources ( id, name, monthly_budget, current_month_balance, current_year_balance, start_date, end_date )
     `)
-
-  if (isSupporterRole(authProfile.role)) {
-    query = query.eq('assigned_supporter_id', user.id)
-  }
 
   const { data: participants } = await query.order('created_at', { ascending: false })
 

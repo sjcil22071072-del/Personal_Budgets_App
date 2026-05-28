@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { formatCurrency } from '@/utils/budget-visuals'
 import { isFundingSourceActiveInMonth } from '@/utils/budget-rollover'
@@ -11,7 +11,6 @@ interface Alert {
 }
 
 export default async function AlertPanel() {
-  const supabase = await createClient()
   const adminClient = createAdminClient()
   const alerts: Alert[] = []
 

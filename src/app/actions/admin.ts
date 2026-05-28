@@ -110,7 +110,7 @@ export async function assignRoleForFirstUser() {
     if (!error) {
       revalidatePath('/')
     }
-  } catch (e) {
+  } catch {
     // RPC 함수가 없으면 폴백: 관리자가 없으면 업데이트
     // (이 방식도 경합 조건이 있지만, DB 트리거가 최종 보호)
     const { count } = await supabase

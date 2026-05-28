@@ -26,7 +26,6 @@ interface Participant { id: string; name: string }
 interface TransactionTableClientProps {
   transactions: Transaction[]
   participants: Participant[]
-  participantFundingSources?: Record<string, { id: string; name: string }[]>
   paymentMethods: string[]
   currentFilters: {
     participant?: string; status?: string; categoryMajor?: string; category?: string
@@ -65,7 +64,7 @@ function formatCategoryLabel(category?: string) {
 }
 
 export default function TransactionTableClient({
-  transactions, participants, participantFundingSources = {},
+  transactions, participants,
   paymentMethods, currentFilters,
 }: TransactionTableClientProps) {
   const router = useRouter()
@@ -141,7 +140,11 @@ export default function TransactionTableClient({
   function toggleOne(id: string) {
     setSelected(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
       return next
     })
   }

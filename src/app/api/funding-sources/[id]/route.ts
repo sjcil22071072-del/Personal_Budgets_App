@@ -55,7 +55,7 @@ export async function PATCH(
 
 // DELETE: 재원 삭제
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params

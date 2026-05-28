@@ -8,6 +8,7 @@ export function isAdminRole(role: unknown): boolean {
 }
 
 export function isSupporterRole(_role: unknown): boolean {
+  void _role
   return false
 }
 

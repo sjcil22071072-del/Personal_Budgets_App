@@ -65,14 +65,6 @@ DO $$ BEGIN
           WHERE p.id = auth.uid()
             AND p.role = 'admin'
         )
-        OR EXISTS (
-          SELECT 1
-          FROM public.profiles p
-          JOIN public.participants participant ON participant.id = card_registrations.participant_id
-          WHERE p.id = auth.uid()
-            AND p.role = 'supporter'
-            AND participant.assigned_supporter_id = auth.uid()
-        )
       );
   END IF;
 END $$;

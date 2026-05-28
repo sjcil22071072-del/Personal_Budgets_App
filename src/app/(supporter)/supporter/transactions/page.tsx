@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import TransactionTableClient from "@/components/transactions/TransactionTableClient";
-import { isStaffRole, isSupporterRole } from "@/utils/user-role";
+import { isStaffRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
 import { getSignedImageUrls } from "@/app/actions/storage";
 
@@ -37,28 +37,11 @@ export default async function TransactionsPage({
     redirect("/");
   }
 
-  let participantsQuery = adminClient
+  const participantsQuery = adminClient
     .from("participants")
-    .select("id, name, funding_sources ( id, name )");
-
-  if (isSupporterRole(authProfile.role)) {
-    participantsQuery = participantsQuery.eq("assigned_supporter_id", user.id);
-  }
+    .select("id, name");
 
   const { data: participants } = await participantsQuery;
-
-  const participantFundingSources: Record<
-    string,
-    { id: string; name: string }[]
-  > = {};
-  for (const p of participants || []) {
-    participantFundingSources[(p as any).id] = (
-      (p as any).funding_sources || []
-    ).map((fs: any) => ({
-      id: fs.id,
-      name: fs.name,
-    }));
-  }
 
   let txQuery = adminClient
     .from("transactions")
@@ -103,13 +86,6 @@ export default async function TransactionsPage({
   else txQuery = txQuery.order("date", { ascending: false });
 
   txQuery = txQuery.limit(100);
-
-  if (isSupporterRole(authProfile.role)) {
-    const myParticipantIds = (participants || []).map((p: any) => p.id);
-    if (myParticipantIds.length > 0) {
-      txQuery = txQuery.in("participant_id", myParticipantIds);
-    }
-  }
 
   const { data: rawTransactions } = await txQuery;
 
@@ -223,7 +199,6 @@ export default async function TransactionsPage({
             id: p.id,
             name: p.name || "이름없음",
           }))}
-          participantFundingSources={participantFundingSources}
           paymentMethods={paymentMethods}
           currentFilters={params}
         />

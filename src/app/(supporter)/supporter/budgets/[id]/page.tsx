@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import BudgetDetailsView from '@/components/budgets/BudgetDetailsView'
 import { isStaffRole } from '@/utils/user-role'
@@ -7,7 +7,6 @@ import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 export default async function BudgetDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {

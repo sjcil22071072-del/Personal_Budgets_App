@@ -1,5 +1,3 @@
-import FaqButton from '@/components/ui/FaqButton'
-
 export default function ParticipantLayout({
   children,
 }: {
