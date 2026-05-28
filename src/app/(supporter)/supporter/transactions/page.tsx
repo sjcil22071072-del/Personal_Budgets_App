@@ -2,7 +2,7 @@
 import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { formatCurrency } from "@/utils/budget-visuals";
+
 import TransactionTableClient from "@/components/transactions/TransactionTableClient";
 import { isStaffRole, isSupporterRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
@@ -148,13 +148,12 @@ export default async function TransactionsPage({
     .filter((t: any) => !params.paymentMethod || t.payment_method === params.paymentMethod);
 
   const totalCount = transactions?.length || 0;
+  const rejectedCount =
+    transactions?.filter((t: any) => t.status === "rejected").length || 0;
   const pendingCount =
     transactions?.filter((t: any) => t.status === "pending").length || 0;
   const confirmedCount =
     transactions?.filter((t: any) => t.status === "confirmed").length || 0;
-  const totalAmount =
-    transactions?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) ||
-    0;
 
   const paymentMethods = ["카드", "계좌이체"];
 
@@ -185,10 +184,22 @@ export default async function TransactionsPage({
             </p>
           </div>
           <div
+            className={`p-5 rounded-xl ring-1 text-center shadow-sm ${rejectedCount > 0 ? "bg-red-50 ring-red-200" : "bg-white ring-zinc-200"}`}
+          >
+            <p className="text-xs font-black text-red-400 uppercase tracking-widest">
+              거절 처리
+            </p>
+            <p
+              className={`text-3xl font-black mt-1 ${rejectedCount > 0 ? "text-red-600" : "text-zinc-900"}`}
+            >
+              {rejectedCount}
+            </p>
+          </div>
+          <div
             className={`p-5 rounded-xl ring-1 text-center shadow-sm ${pendingCount > 0 ? "bg-orange-50 ring-orange-200" : "bg-white ring-zinc-200"}`}
           >
             <p className="text-xs font-black text-orange-400 uppercase tracking-widest">
-              임시대기
+              임시 대기
             </p>
             <p
               className={`text-3xl font-black mt-1 ${pendingCount > 0 ? "text-orange-600" : "text-zinc-900"}`}
@@ -202,14 +213,6 @@ export default async function TransactionsPage({
             </p>
             <p className="text-3xl font-black text-green-600 mt-1">
               {confirmedCount}
-            </p>
-          </div>
-          <div className="p-5 rounded-xl bg-white ring-1 ring-zinc-200 text-center shadow-sm">
-            <p className="text-xs font-black text-blue-400 uppercase tracking-widest">
-              합계 금액
-            </p>
-            <p className="text-2xl font-black text-zinc-900 mt-1">
-              {formatCurrency(totalAmount)}원
             </p>
           </div>
         </div>
