@@ -44,10 +44,107 @@ function GoogleLoginContent() {
     }
   }, []);
 
+  const handleOpenExternal = () => {
+    if (typeof window === "undefined") return;
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isKakao = userAgent.includes("kakaotalk");
+    const targetUrl = window.location.href;
+    if (isKakao) {
+      window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(targetUrl)}`;
+    } else if (/android/i.test(userAgent)) {
+      const schemeUrl = targetUrl.replace(/https?:\/\//i, "");
+      window.location.href = `intent://${schemeUrl}#Intent;scheme=https;end`;
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     window.location.href = "/auth/login";
   };
+
+  if (isInAppBrowser) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-slate-50">
+        <div className="flex w-full max-w-md flex-col gap-8 rounded-3xl bg-white p-8 md:p-10 shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-zinc-200/80">
+          {/* 로고 */}
+          <div className="flex flex-col items-center gap-5 text-center">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-3xl bg-zinc-100/50 blur-xl"></div>
+              <div className="relative w-20 h-20 rounded-[1.5rem] overflow-hidden flex items-center justify-center border border-zinc-200/60 shadow-md">
+                <img
+                  src="https://pbs.twimg.com/profile_images/1588913576349401089/GkEk9byS_400x400.jpg"
+                  alt="로고"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black text-zinc-500 bg-zinc-100 border border-zinc-200/40 px-2.5 py-0.5 rounded-full tracking-wider uppercase">
+                중랑구청
+              </span>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight text-zinc-800">
+                외부 브라우저로 이동 중
+              </h2>
+            </div>
+          </div>
+
+          {/* 안내 배너 */}
+          <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-5 text-xs text-amber-950 leading-relaxed shadow-sm flex flex-col gap-3">
+            <div className="flex items-center gap-2 font-bold text-amber-800">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+              간편 로그인 이용 안내
+            </div>
+            <p className="text-zinc-700 font-semibold">
+              구글 보안 정책으로 인해 카카오톡 등 앱 내부 브라우저에서는 로그인이 불가능합니다.
+            </p>
+            <p className="text-zinc-500">
+              외부 브라우저(Safari, Chrome 등)가 자동으로 실행되지 않았거나 닫힌 경우, 아래 버튼을 눌러 다시 열어주세요.
+            </p>
+          </div>
+
+          {/* 외부 브라우저로 열기 버튼 */}
+          <button
+            onClick={handleOpenExternal}
+            className="flex items-center justify-center gap-3 w-full py-4 px-6 rounded-2xl border border-zinc-200 bg-zinc-900 hover:bg-zinc-800 active:scale-[0.99] transition-all font-bold text-white text-base shadow-md min-h-[54px]"
+          >
+            <svg
+              className="w-5 h-5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+            외부 브라우저로 열기
+          </button>
+
+          {/* 수동 방법 안내 */}
+          <div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-200/50 flex flex-col gap-2 text-xs text-zinc-500 leading-relaxed">
+            <p className="font-bold text-zinc-700">💡 수동으로 이동하는 방법:</p>
+            <div className="pl-2 relative">
+              <span className="absolute left-0 text-zinc-400 font-bold">•</span>
+              <span className="pl-2.5 block text-zinc-650">
+                <strong>아이폰 (iOS):</strong> 화면 우측 하단/상단의 <strong>더보기(점 3개)</strong> 또는 <strong>공유</strong> 버튼을 누른 후, <strong className="text-zinc-700">"다른 브라우저로 열기"</strong> 또는 <strong className="text-zinc-700">"Safari로 열기"</strong>를 선택해 주세요.
+              </span>
+            </div>
+            <div className="pl-2 relative">
+              <span className="absolute left-0 text-zinc-400 font-bold">•</span>
+              <span className="pl-2.5 block text-zinc-650">
+                <strong>안드로이드 (Android):</strong> 우측 상단의 <strong>더보기(점 3개)</strong> 버튼을 누른 후, <strong className="text-zinc-700">"다른 브라우저로 열기"</strong>를 선택해 주세요.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
