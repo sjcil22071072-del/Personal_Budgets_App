@@ -184,7 +184,7 @@ export interface Database {
           receipt_image_urls: string[]
           activity_image_urls: string[]
           evidence_image_urls: string[]
-          status: 'pending' | 'confirmed'
+          status: 'pending' | 'confirmed' | 'rejected'
           creator_id: string | null
           created_at: string
           updated_at: string
@@ -207,7 +207,7 @@ export interface Database {
           receipt_image_urls?: string[]
           activity_image_urls?: string[]
           evidence_image_urls?: string[]
-          status?: 'pending' | 'confirmed'
+          status?: 'pending' | 'confirmed' | 'rejected'
           creator_id?: string | null
           created_at?: string
           updated_at?: string
@@ -230,7 +230,7 @@ export interface Database {
           receipt_image_urls?: string[]
           activity_image_urls?: string[]
           evidence_image_urls?: string[]
-          status?: 'pending' | 'confirmed'
+          status?: 'pending' | 'confirmed' | 'rejected'
           creator_id?: string | null
           created_at?: string
           updated_at?: string

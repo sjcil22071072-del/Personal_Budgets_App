@@ -59,6 +59,7 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       .from('transactions')
       .select('amount, funding_source_id, date')
       .eq('participant_id', participant.id)
+      .neq('status', 'rejected')
 
     if (spentError) {
       console.error('[budgetRollover] spent query failed:', spentError)

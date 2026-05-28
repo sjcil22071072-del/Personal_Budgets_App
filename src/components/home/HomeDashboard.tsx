@@ -366,59 +366,76 @@ export default function HomeDashboard({
               recentTransactions.map((tx: any) => (
                 <div
                   key={tx.id}
-                  className="p-4 rounded-2xl bg-white border border-zinc-200/80 flex justify-between items-center shadow-[0_2px_12px_rgba(0,0,0,0.01)]"
+                  className="p-4 rounded-2xl bg-white border border-zinc-200/80 flex flex-col gap-2.5 shadow-[0_2px_12px_rgba(0,0,0,0.01)]"
                 >
-                  <div className="flex items-center gap-3">
-                    {tx.receipt_image_url ? (
-                      <button
-                        className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-zinc-200 cursor-zoom-in"
-                        onClick={() => setLightboxSrc(tx.receipt_image_url)}
-                      >
-                        <Image
-                          src={tx.receipt_image_url}
-                          alt="영수증"
-                          fill
-                          sizes="40px"
-                          className="object-cover"
-                        />
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <div
-                          className={`w-2 h-2 rounded-full ${tx.status === "confirmed" ? "bg-green-500" : "bg-orange-400"}`}
-                        />
-                        <span className="text-xs font-bold text-zinc-550">
-                          {tx.status === "confirmed" ? "✓" : "⏳"}
-                        </span>
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-3">
+                      {tx.receipt_image_url && tx.status !== 'rejected' ? (
+                        <button
+                          className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-zinc-200 cursor-zoom-in"
+                          onClick={() => setLightboxSrc(tx.receipt_image_url)}
+                        >
+                          <Image
+                            src={tx.receipt_image_url}
+                            alt="영수증"
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                          />
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              tx.status === "confirmed" ? "bg-green-500" :
+                              tx.status === "rejected" ? "bg-red-500" : "bg-orange-400"
+                            }`}
+                          />
+                          <span className="text-xs font-bold text-zinc-550">
+                            {tx.status === "confirmed" ? "✓" :
+                             tx.status === "rejected" ? "✕" : "⏳"}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-0.5">
+                        <p className="font-black text-zinc-800 text-base">
+                          {tx.category && tx.category.includes(' - ')
+                            ? tx.category
+                            : (tx.activity_name && tx.activity_name.includes(' - ')
+                                ? tx.activity_name
+                                : tx.category ? `${tx.category} - 기타` : '기타')}
+                        </p>
+                        <p className="text-xs text-zinc-450">
+                          {tx.date}
+                        </p>
                       </div>
-                    )}
-                    <div className="flex flex-col gap-0.5">
-                      <p className="font-black text-zinc-800 text-base">
-                        {tx.category && tx.category.includes(' - ')
-                          ? tx.category
-                          : (tx.activity_name && tx.activity_name.includes(' - ')
-                              ? tx.activity_name
-                              : tx.category ? `${tx.category} - 기타` : '기타')}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-zinc-900 text-sm hc-amount">
+                        -{formatCurrency(tx.amount)}원
                       </p>
-                      <p className="text-xs text-zinc-400 font-bold">
-                        {tx.date}
-                      </p>
+                      <span
+                        className={`text-xs font-bold ${
+                          tx.status === "confirmed" ? "text-green-600" :
+                          tx.status === "rejected" ? "text-red-500" : "text-orange-500"
+                        }`}
+                      >
+                        {tx.status === "confirmed" ? (
+                          <EasyTerm formal="확정" easy="확인됨" />
+                        ) : tx.status === "rejected" ? (
+                          <EasyTerm formal="승인 거절" easy="승인 거절" />
+                        ) : (
+                          <EasyTerm formal="임시" easy="확인 중" />
+                        )}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-zinc-900 text-sm hc-amount">
-                      -{formatCurrency(tx.amount)}원
-                    </p>
-                    <span
-                      className={`text-xs font-bold ${tx.status === "confirmed" ? "text-green-600" : "text-orange-500"}`}
-                    >
-                      {tx.status === "confirmed" ? (
-                        <EasyTerm formal="확정" easy="확인됨" />
-                      ) : (
-                        <EasyTerm formal="임시" easy="확인 중" />
-                      )}
-                    </span>
-                  </div>
+                  {tx.status === "rejected" && tx.memo && (
+                    <div className="w-full bg-red-50/70 border border-red-100 rounded-xl p-3 text-xs font-medium text-red-700 animate-fade-in-up">
+                      <p className="font-black text-red-800 mb-0.5">⚠️ 승인 거절 사유</p>
+                      <p className="leading-relaxed">{tx.memo}</p>
+                    </div>
+                  )}
                 </div>
               ))
             )}

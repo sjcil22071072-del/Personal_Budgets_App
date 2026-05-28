@@ -13,6 +13,7 @@ interface GalleryItem {
   receipt_image_url: string | null
   activity_image_url: string | null
   category: string | null
+  status?: string | null
 }
 
 interface Props {
@@ -69,6 +70,7 @@ export default function GalleryClient({ items, currentMonth, months }: Props) {
               </h3>
               <div className="grid grid-cols-2 gap-2">
                 {grouped[date].flatMap(item => {
+                  if (item.status === 'rejected') return []
                   const cards = []
                   const displayCategory = item.category && item.category.includes(' - ')
                     ? item.category

@@ -239,41 +239,54 @@ export default function TransactionCalendar({ transactions }: Props) {
                 ? tx.category
                 : (tx.activity_name && tx.activity_name.includes(' - ')
                     ? tx.activity_name
-                    : tx.category || tx.activity_name || '기타')
+                    : tx.category ? `${tx.category} - 기타` : '기타')
               return (
-                <div key={tx.id} className="bg-white rounded-3xl p-5 ring-1 ring-zinc-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-start sm:items-center gap-4">
-                    {(tx.activity_image_url || tx.receipt_image_url) ? (
-                      <button
-                        className="w-12 h-12 rounded-2xl overflow-hidden shadow-sm shrink-0 cursor-zoom-in"
-                        onClick={() => setLightboxSrc((tx.activity_image_url || tx.receipt_image_url)!)}
-                      >
-                        <img
-                          src={(tx.activity_image_url || tx.receipt_image_url)!}
-                          alt="활동"
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ) : (
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black shrink-0 ${
-                        tx.status === 'confirmed' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-500'
-                      }`}>
-                        {tx.status === 'confirmed' ? '✓' : '⏳'}
+                <div key={tx.id} className="bg-white rounded-3xl p-5 ring-1 ring-zinc-200 shadow-sm flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+                    <div className="flex items-start sm:items-center gap-4">
+                      {(tx.activity_image_url || tx.receipt_image_url) && tx.status !== 'rejected' ? (
+                        <button
+                          className="w-12 h-12 rounded-2xl overflow-hidden shadow-sm shrink-0 cursor-zoom-in"
+                          onClick={() => setLightboxSrc((tx.activity_image_url || tx.receipt_image_url)!)}
+                        >
+                          <img
+                            src={(tx.activity_image_url || tx.receipt_image_url)!}
+                            alt="활동"
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ) : (
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black shrink-0 ${
+                          tx.status === 'confirmed' ? 'bg-green-50 text-green-600' :
+                          tx.status === 'rejected' ? 'bg-red-50 text-red-500' : 'bg-orange-50 text-orange-500'
+                        }`}>
+                          {tx.status === 'confirmed' ? '✓' :
+                           tx.status === 'rejected' ? '✕' : '⏳'}
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-0.5">
+                        <p className="font-black text-zinc-900 text-base">{displayName}</p>
+                        <p className="text-xs text-zinc-400 font-bold">
+                          {tx.date} · {tx.status === 'confirmed' ? (
+                            <EasyTerm formal="예산 반영 완료" easy="돈에서 뺐어요" />
+                          ) : tx.status === 'rejected' ? (
+                            <EasyTerm formal="승인 거절" easy="승인 거절" />
+                          ) : (
+                            <EasyTerm formal="확인 대기 중" easy="선생님이 확인하고 있어요" />
+                          )}
+                        </p>
                       </div>
-                    )}
-                    <div className="flex flex-col gap-0.5">
-                      <p className="font-black text-zinc-900 text-base">{displayName}</p>
-                      <p className="text-xs text-zinc-400 font-bold">
-                        {tx.date} · {tx.status === 'confirmed'
-                          ? <EasyTerm formal="예산 반영 완료" easy="돈에서 뺐어요" />
-                          : <EasyTerm formal="확인 대기 중" easy="선생님이 확인하고 있어요" />
-                        }
-                      </p>
+                    </div>
+                    <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-auto">
+                      <p className="font-black text-zinc-900 text-lg">-{formatCurrency(tx.amount)}원</p>
                     </div>
                   </div>
-                  <div className="text-left sm:text-right mt-2 sm:mt-0 sm:ml-auto">
-                    <p className="font-black text-zinc-900 text-lg">-{formatCurrency(tx.amount)}원</p>
-                  </div>
+                  {tx.status === 'rejected' && tx.memo && (
+                    <div className="w-full bg-red-50/70 border border-red-100 rounded-xl p-3 text-xs font-medium text-red-700 animate-fade-in-up">
+                      <p className="font-black text-red-800 mb-0.5">⚠️ 승인 거절 사유</p>
+                      <p className="leading-relaxed">{tx.memo}</p>
+                    </div>
+                  )}
                 </div>
               )
             })}

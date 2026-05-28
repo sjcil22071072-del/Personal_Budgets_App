@@ -60,7 +60,7 @@ export default async function GalleryPage({
 
   const { data: transactions } = await adminClient
     .from('transactions')
-    .select('id, activity_name, date, amount, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, category')
+    .select('id, activity_name, date, amount, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, category, status')
     .eq('participant_id', participantId)
     .gte('date', startDate)
     .lt('date', endDate)
@@ -99,6 +99,7 @@ export default async function GalleryPage({
       receipt_image_url: signedUrls[t.id]?.receipt ?? receipt,
       activity_image_url: signedUrls[t.id]?.activity ?? activity,
       category: t.category,
+      status: t.status,
     };
   })
 

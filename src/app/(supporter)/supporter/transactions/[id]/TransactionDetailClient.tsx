@@ -28,7 +28,7 @@ interface Tx {
   category: string | null
   memo: string | null
   payment_method: string | null
-  status: 'pending' | 'confirmed'
+  status: 'pending' | 'confirmed' | 'rejected'
   receipt_image_urls?: string[] | null
   activity_image_urls?: string[] | null
   evidence_image_urls?: string[] | null
@@ -75,7 +75,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>(
     tx.payment_method === '계좌이체' ? '계좌이체' : '카드'
   )
-  const [status, setStatus] = useState<'pending' | 'confirmed'>(tx.status)
+  const [status, setStatus] = useState<'pending' | 'confirmed' | 'rejected'>(tx.status)
 
   // 이미지 상태 (최대 5장씩)
   const [receiptUrls, setReceiptUrls] = useState<string[]>(tx.receipt_image_urls || [])
@@ -239,6 +239,12 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     const parts = (category || '').split(" - ");
     if (parts.length < 2 || !parts[0].trim() || !parts[1].trim()) {
       setError("대분류와 중분류를 모두 선택하거나 직접 입력해 주세요.");
+      return;
+    }
+
+    // 거절 사유(메모) 입력 확인
+    if (status === 'rejected' && !memo.trim()) {
+      setError("승인 거절 시에는 메모란에 거절 사유를 반드시 입력해 주세요.");
       return;
     }
 
@@ -602,6 +608,12 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                       status === 'pending' ? 'bg-orange-50 ring-orange-300 text-orange-700' : 'bg-zinc-50 ring-zinc-200 text-zinc-500 hover:bg-zinc-100'
                     }`}>
                     <span className="text-lg block mb-1">⏳</span>임시 대기
+                  </button>
+                  <button type="button" onClick={() => setStatus('rejected')}
+                    className={`flex-1 p-4 rounded-xl text-sm font-bold transition-all ring-1 ${
+                      status === 'rejected' ? 'bg-red-50 ring-red-300 text-red-700' : 'bg-zinc-50 ring-zinc-200 text-zinc-500 hover:bg-zinc-100'
+                    }`}>
+                    <span className="text-lg block mb-1">❌</span>거절 처리
                   </button>
                 </div>
               </fieldset>

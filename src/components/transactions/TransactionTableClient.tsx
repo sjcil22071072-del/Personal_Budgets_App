@@ -185,7 +185,7 @@ export default function TransactionTableClient({
         formatCategoryLabel(t.category),
         t.activity_name,
         t.amount,
-        t.status === 'confirmed' ? '확정' : '대기',
+        t.status === 'confirmed' ? '확정' : t.status === 'rejected' ? '거절' : '대기',
         t.payment_method || '',
         t.memo || '',
       ]),
@@ -208,7 +208,7 @@ export default function TransactionTableClient({
         <td>${formatCategoryLabel(t.category)}</td>
         <td>${t.activity_name}${t.memo ? `<br/><small>${t.memo}</small>` : ''}</td>
         <td style="text-align:right">${t.amount.toLocaleString()}원</td>
-        <td>${t.status === 'confirmed' ? '확정' : '대기'}</td>
+        <td>${t.status === 'confirmed' ? '확정' : t.status === 'rejected' ? '거절' : '대기'}</td>
         <td>${t.payment_method || '-'}</td>
       </tr>`).join('')
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
@@ -514,6 +514,8 @@ export default function TransactionTableClient({
                           <td className="px-4 py-3">
                             {tx.status === 'confirmed' ? (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">확정</span>
+                            ) : tx.status === 'rejected' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">거절</span>
                             ) : (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700">대기</span>
                             )}

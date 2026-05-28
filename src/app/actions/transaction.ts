@@ -200,7 +200,7 @@ export async function createTransaction(formData: FormData) {
   return { success: true }
 }
 
-export async function updateTransactionStatus(transactionId: string, newStatus: 'pending' | 'confirmed') {
+export async function updateTransactionStatus(transactionId: string, newStatus: 'pending' | 'confirmed' | 'rejected') {
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
@@ -273,12 +273,12 @@ export async function updateTransactionDetail(
     category: string | null
     memo: string | null
     payment_method: string | null
-    status: 'pending' | 'confirmed'
+    status: 'pending' | 'confirmed' | 'rejected'
     place_name?: string | null
     place_lat?: number | null
     place_lng?: number | null
   },
-  oldStatus: 'pending' | 'confirmed',
+  oldStatus: 'pending' | 'confirmed' | 'rejected',
   oldAmount: number,
   fundingSourceId: string | null
 ) {

@@ -158,6 +158,10 @@ export default async function TransactionsPage({
                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                            확정됨
                          </span>
+                      ) : t.status === 'rejected' ? (
+                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                           거절됨
+                         </span>
                       ) : (
                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                            임시저장

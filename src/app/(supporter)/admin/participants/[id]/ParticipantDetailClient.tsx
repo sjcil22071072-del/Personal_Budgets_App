@@ -511,8 +511,12 @@ export default function ParticipantDetailClient({
                   </div>
                   <div className="text-right flex flex-col items-end gap-1">
                     <p className="font-black text-zinc-800 text-sm">{formatCurrency(tx.amount)}원</p>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${tx.status === 'confirmed' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>
-                      {tx.status === 'confirmed' ? '확정' : '임시'}
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                      tx.status === 'confirmed' ? 'bg-green-50 text-green-600 border-green-200' :
+                      tx.status === 'rejected' ? 'bg-red-50 text-red-600 border-red-200' :
+                      'bg-orange-50 text-orange-600 border-orange-200'
+                    }`}>
+                      {tx.status === 'confirmed' ? '확정' : tx.status === 'rejected' ? '거절' : '임시'}
                     </span>
                   </div>
                 </Link>
