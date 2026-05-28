@@ -281,12 +281,6 @@ export default function TransactionCalendar({ transactions }: Props) {
                       <p className="font-black text-zinc-900 text-lg">-{formatCurrency(tx.amount)}원</p>
                     </div>
                   </div>
-                  {tx.status === 'rejected' && (
-                    <div className="w-full bg-red-50 border border-red-100 rounded-xl px-3 py-2 flex items-center gap-2">
-                      <span className="text-red-500 text-xs">❌</span>
-                      <p className="text-xs font-bold text-red-700">탭해서 거절 사유 확인하기 →</p>
-                    </div>
-                  )}
                 </a>
               )
             })}
