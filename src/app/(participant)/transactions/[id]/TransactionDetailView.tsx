@@ -115,41 +115,83 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
 
         {/* 핵심 정보 카드 */}
         <div className="p-5 rounded-2xl bg-white border border-zinc-200 shadow-sm flex flex-col gap-4">
-          <div>
-            <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">분류</p>
-            <p className="text-2xl font-black text-zinc-900">{displayCategory}</p>
-          </div>
-          <div className="h-px bg-zinc-100" />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">날짜</p>
-              <p className="font-bold text-zinc-800 text-base">{tx.date}</p>
-            </div>
-            <div>
-              <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">금액</p>
-              <p className="font-black text-zinc-900 text-lg">{formatCurrency(Math.abs(tx.amount))}원</p>
-            </div>
-            <div>
-              <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">결제 수단</p>
-              <p className="font-bold text-zinc-800">{tx.payment_method || '카드'}</p>
-            </div>
-            {tx.place_name && (
-              <div>
-                <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">장소</p>
-                <p className="font-bold text-zinc-800 text-sm">{tx.place_name}</p>
+          {isEditing ? (
+            <div className="flex flex-col gap-4">
+              {error && (
+                <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold border border-red-100 animate-fade-in-up">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-450 font-black">📅 언제인가요? (날짜)</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full p-4 rounded-2xl bg-zinc-50 border border-zinc-200 text-lg font-bold transition-all focus:ring-2 focus:ring-primary outline-none"
+                  required
+                />
               </div>
-            )}
-          </div>
-          {tx.activity_name && (
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-450 font-black">💰 얼마인가요? (금액)</label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={editAmount}
+                  onChange={(e) => setEditAmount(e.target.value)}
+                  className="w-full p-4 rounded-2xl bg-zinc-50 border border-zinc-200 text-lg font-bold transition-all focus:ring-2 focus:ring-primary outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-450 font-black">📝 무엇을 했나요? (분류)</label>
+                <ActivityCategoryPicker
+                  value={editDescription}
+                  onChange={setEditDescription}
+                />
+              </div>
+            </div>
+          ) : (
             <>
-              <div className="h-px bg-zinc-100" />
               <div>
-                <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">활동 내용</p>
-                <p className="font-medium text-zinc-700 text-sm leading-relaxed">{tx.activity_name}</p>
+                <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">분류</p>
+                <p className="text-2xl font-black text-zinc-900">{displayCategory}</p>
               </div>
+              <div className="h-px bg-zinc-100" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">날짜</p>
+                  <p className="font-bold text-zinc-800 text-base">{tx.date}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">금액</p>
+                  <p className="font-black text-zinc-900 text-lg">{formatCurrency(Math.abs(tx.amount))}원</p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">결제 수단</p>
+                  <p className="font-bold text-zinc-800">{tx.payment_method || '카드'}</p>
+                </div>
+                {tx.place_name && (
+                  <div>
+                    <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">장소</p>
+                    <p className="font-bold text-zinc-800 text-sm">{tx.place_name}</p>
+                  </div>
+                )}
+              </div>
+              {tx.activity_name && (
+                <>
+                  <div className="h-px bg-zinc-100" />
+                  <div>
+                    <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">활동 내용</p>
+                    <p className="font-medium text-zinc-700 text-sm leading-relaxed">{tx.activity_name}</p>
+                  </div>
+                </>
+              )}
             </>
           )}
-
         </div>
 
         {/* 사진 뷰어 */}
@@ -227,6 +269,51 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
               )}
             </div>
           </div>
+        )}
+
+        {/* 수정 모드 버튼들 */}
+        {isEditing ? (
+          <div className="flex gap-3 mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(false);
+                setEditDate(tx.date);
+                setEditAmount(String(Math.abs(tx.amount)));
+                setEditDescription(displayCategory);
+                setError(null);
+              }}
+              disabled={saving}
+              className="flex-1 p-4 rounded-2xl bg-zinc-100 border border-zinc-200 text-zinc-700 font-black text-center text-sm hover:bg-zinc-200 active:scale-[0.99] transition-all disabled:opacity-50"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 p-4 rounded-2xl bg-green-600 text-white font-black text-center text-sm hover:bg-green-700 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+            >
+              {saving ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  저장 중...
+                </>
+              ) : (
+                "저장하기"
+              )}
+            </button>
+          </div>
+        ) : (
+          tx.status === 'pending' && (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="w-full mt-2 p-4 rounded-2xl bg-blue-600 text-white font-black text-center text-sm hover:bg-blue-700 active:scale-[0.99] transition-all shadow-md"
+            >
+              기록 수정하기
+            </button>
+          )
         )}
 
         {/* 뒤로 버튼 */}
