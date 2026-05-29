@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/utils/budget-visuals'
 import { EasyTerm } from '@/components/ui/EasyTerm'
+import ActivityCategoryPicker, {
+  getActivityMajor,
+} from "@/components/transactions/ActivityCategoryPicker"
+import { updateTransaction } from '@/app/actions/transaction'
 
 interface Tx {
   id: string
@@ -21,9 +26,57 @@ interface Tx {
 }
 
 export default function TransactionDetailView({ tx }: { tx: Tx }) {
+  const router = useRouter()
   const receiptUrls = tx.receipt_image_urls || []
   const activityUrls = tx.activity_image_urls || []
   const evidenceUrls = tx.evidence_image_urls || []
+
+  const displayCategory =
+    tx.category && tx.category.includes(' - ')
+      ? tx.category
+      : tx.activity_name && tx.activity_name.includes(' - ')
+      ? tx.activity_name
+      : tx.category
+      ? tx.category
+      : '기타'
+
+  const [isEditing, setIsEditing] = useState(false)
+  const [editDate, setEditDate] = useState(tx.date)
+  const [editAmount, setEditAmount] = useState(String(Math.abs(tx.amount)))
+  const [editDescription, setEditDescription] = useState(displayCategory)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSave() {
+    const parts = editDescription.split(" - ");
+    if (parts.length < 2 || !parts[0].trim() || !parts[1].trim()) {
+      setError("대분류와 중분류를 모두 선택해 주세요.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const originalSign = Math.sign(tx.amount) || -1;
+      const finalAmount = Number(editAmount) * originalSign;
+
+      const result = await updateTransaction(tx.id, {
+        date: editDate,
+        amount: finalAmount,
+        activity_name: editDescription,
+        category: getActivityMajor(editDescription),
+      });
+
+      if (result.success) {
+        setIsEditing(false);
+        router.refresh();
+      }
+    } catch (err: any) {
+      setError(err.message || "저장 중 오류가 발생했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const initialTab =
     receiptUrls.length === 0 && activityUrls.length > 0 ? 'activity' : 'receipt'
@@ -60,14 +113,7 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
     rejected: { label: '승인 거절', bg: 'bg-red-100', text: 'text-red-700', icon: '❌', border: 'border-red-200' },
   }[tx.status]
 
-  const displayCategory =
-    tx.category && tx.category.includes(' - ')
-      ? tx.category
-      : tx.activity_name && tx.activity_name.includes(' - ')
-      ? tx.activity_name
-      : tx.category
-      ? tx.category
-      : '기타'
+
 
   const hasPhotos =
     receiptUrls.length > 0 || activityUrls.length > 0 || evidenceUrls.length > 0
