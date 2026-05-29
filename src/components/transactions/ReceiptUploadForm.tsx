@@ -49,7 +49,7 @@ export default function ReceiptUploadForm({
   const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || []);
     if (!newFiles.length) return;
-    const remaining = 5 - receiptFiles.length;
+    const remaining = 20 - receiptFiles.length;
     const toAdd = newFiles.slice(0, remaining);
     setReceiptFiles((prev) => [...prev, ...toAdd]);
     toAdd.forEach((file) => {
@@ -159,9 +159,9 @@ export default function ReceiptUploadForm({
         <div className="flex items-center justify-between">
           <label className="text-sm font-bold text-zinc-500 ml-1">
             🧾 <EasyTerm formal="영수증 사진" easy="물건 산 종이 사진" />{" "}
-            <span className="text-zinc-300 font-medium">(선택, 최대 5장)</span>
+            <span className="text-zinc-300 font-medium">(선택, 최대 20장)</span>
           </label>
-          {receiptFiles.length < 5 && (
+          {receiptFiles.length < 20 && (
             <label className="text-xs font-bold text-blue-600 cursor-pointer">
               + 추가
               <input
@@ -195,7 +195,7 @@ export default function ReceiptUploadForm({
                 </button>
               </div>
             ))}
-            {receiptFiles.length < 5 && (
+            {receiptFiles.length < 20 && (
               <label className="aspect-square rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-zinc-400 transition-colors">
                 <span className="text-2xl">📸</span>
                 <span className="text-xs text-zinc-400 font-bold">추가</span>
@@ -213,7 +213,7 @@ export default function ReceiptUploadForm({
           <label className="flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 cursor-pointer hover:border-zinc-300 transition-colors active:scale-[0.98]">
             <span className="text-2xl">🧾</span>
             <span className="text-sm font-bold text-zinc-500">
-              영수증 사진 선택 (최대 5장)
+              영수증 사진 선택 (최대 20장)
             </span>
             <input
               type="file"
@@ -370,6 +370,19 @@ export default function ReceiptUploadForm({
         )}
       </div>
 
+      {/* 날짜 */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-bold text-zinc-500 ml-1">
+          📅 언제인가요?
+        </label>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="w-full p-4 rounded-2xl bg-white ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-lg font-bold transition-all"
+        />
+      </div>
+
       {/* 활동 내용 */}
       <div className="flex flex-col gap-2">
         <label className="text-sm font-bold text-zinc-500 ml-1">
@@ -428,19 +441,6 @@ export default function ReceiptUploadForm({
           </select>
         </div>
       )}
-
-      {/* 날짜 */}
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-bold text-zinc-500 ml-1">
-          📅 언제인가요?
-        </label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="w-full p-4 rounded-2xl bg-white ring-1 ring-zinc-200 focus:ring-2 focus:ring-primary outline-none text-lg font-bold transition-all"
-        />
-      </div>
 
       {toast && toast.type === "error" && (
         <div className="p-4 rounded-2xl text-sm font-bold animate-fade-in-up bg-red-50 text-red-700 ring-1 ring-red-200">
