@@ -59,9 +59,9 @@ export async function createTransaction(formData: FormData) {
   const place_lat = formData.get('place_lat') ? Number(formData.get('place_lat')) : null
   const place_lng = formData.get('place_lng') ? Number(formData.get('place_lng')) : null
 
-  // 영수증 사진 목록 (최대 5장)
+  // 영수증 사진 목록 (최대 20장)
   const receiptFiles: File[] = []
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 20; i++) {
     const f = formData.get(`receipt_${i}`) as File | null
     if (f && f.size > 0) receiptFiles.push(f)
   }
@@ -570,8 +570,8 @@ export async function addReceiptImage(
     .single()
 
   const currentUrls: string[] = (tx?.receipt_image_urls as string[]) || []
-  if (currentUrls.length >= 5) {
-    return { error: '영수증 사진은 최대 5장까지 첨부할 수 있습니다.' }
+  if (currentUrls.length >= 20) {
+    return { error: '영수증 사진은 최대 20장까지 첨부할 수 있습니다.' }
   }
 
   const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()

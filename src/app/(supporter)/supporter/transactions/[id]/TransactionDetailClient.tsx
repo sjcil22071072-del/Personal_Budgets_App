@@ -106,23 +106,30 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     receiptUrls.length === 0 && activityUrls.length > 0 ? 'activity' : 'receipt'
   )
 
-  async function handleReceiptUpload(file: File) {
-    if (receiptUrls.length >= 5) {
-      setUploadError('영수증 사진은 최대 5장까지 첨부할 수 있습니다.')
+  async function handleReceiptUpload(files: FileList) {
+    const fileList = Array.from(files)
+    if (fileList.length === 0) return
+
+    if (receiptUrls.length + fileList.length > 20) {
+      setUploadError('영수증 사진은 최대 20장까지 첨부할 수 있습니다.')
       return
     }
     setUploadingReceipt(true)
     setUploadError('')
     try {
-      const result = await addReceiptImage(tx.id, file)
-      if (result.error) {
-        setUploadError(result.error)
-      } else if (result.url) {
-        const next = [...receiptUrls, result.url]
-        setReceiptUrls(next)
-        setReceiptIdx(next.length - 1)
-        setViewTab('receipt')
+      const nextUrls = [...receiptUrls]
+      for (const file of fileList) {
+        const result = await addReceiptImage(tx.id, file)
+        if (result.error) {
+          setUploadError(result.error)
+          break
+        } else if (result.url) {
+          nextUrls.push(result.url)
+        }
       }
+      setReceiptUrls(nextUrls)
+      setReceiptIdx(nextUrls.length - 1)
+      setViewTab('receipt')
     } catch {
       setUploadError('업로드 중 오류가 발생했습니다.')
     } finally {
@@ -325,7 +332,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                   viewTab === 'receipt' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
                 }`}
               >
-                🧾 영수증{hasReceipt ? ` (${receiptUrls.length}/5)` : ''}
+                🧾 영수증{hasReceipt ? ` (${receiptUrls.length}/20)` : ''}
               </button>
               <button
                 onClick={() => setViewTab('activity')}
@@ -346,19 +353,19 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
             </div>
             {/* 업로드 버튼 */}
             <div className="flex gap-2">
-              <input ref={receiptInputRef} type="file" accept="image/*" className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleReceiptUpload(f); e.target.value = '' }} />
+              <input ref={receiptInputRef} type="file" accept="image/*" multiple className="hidden"
+                onChange={e => { const files = e.target.files; if (files) handleReceiptUpload(files); e.target.value = '' }} />
               <input ref={activityInputRef} type="file" accept="image/*" className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleActivityUpload(f); e.target.value = '' }} />
               <input ref={evidenceInputRef} type="file" accept="image/*,application/pdf" className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleEvidenceUpload(f); e.target.value = '' }} />
 
-              {viewTab === 'receipt' && receiptUrls.length < 5 && (
+              {viewTab === 'receipt' && receiptUrls.length < 20 && (
                 <button type="button" onClick={() => receiptInputRef.current?.click()} disabled={uploadingReceipt}
                   className="px-3 py-1.5 text-xs font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors disabled:opacity-50 flex items-center gap-1">
                   {uploadingReceipt
                     ? <><span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" /> 업로드 중...</>
-                    : <>📎 추가 ({receiptUrls.length}/5)</>}
+                    : <>📎 추가 ({receiptUrls.length}/20)</>}
                 </button>
               )}
               {viewTab === 'activity' && activityUrls.length < 5 && (
@@ -429,7 +436,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                   <p className="font-medium text-sm">첨부된 영수증이 없습니다.</p>
                   <button type="button" onClick={() => receiptInputRef.current?.click()}
                     className="px-4 py-2 text-sm font-bold bg-zinc-900 text-white rounded-lg hover:bg-zinc-700 transition-colors">
-                    📎 영수증 첨부 (최대 5장)
+                    📎 영수증 첨부 (최대 20장)
                   </button>
                 </div>
               )

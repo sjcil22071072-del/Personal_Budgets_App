@@ -231,11 +231,11 @@ export default function TransactionForm({
           />
         </div>
 
-        {/* 1. 영수증 사진 (최대 5장) */}
+        {/* 1. 영수증 사진 (최대 20장) */}
         <div className="space-y-2 md:col-span-2">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-bold text-zinc-500 ml-1">🧾 영수증 사진 <span className="text-zinc-400 font-medium">(선택, 최대 5장)</span></label>
-            {receiptFiles.length > 0 && receiptFiles.length < 5 && (
+            <label className="text-sm font-bold text-zinc-500 ml-1">🧾 영수증 사진 <span className="text-zinc-400 font-medium">(선택, 최대 20장)</span></label>
+            {receiptFiles.length > 0 && receiptFiles.length < 20 && (
               <label className="text-xs font-bold text-blue-600 cursor-pointer">
                 + 추가
                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleReceiptChange} />
@@ -254,7 +254,7 @@ export default function TransactionForm({
                   >✕</button>
                 </div>
               ))}
-              {receiptFiles.length < 5 && (
+              {receiptFiles.length < 20 && (
                 <label className="aspect-square rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-zinc-400 transition-colors">
                   <span className="text-xl">📸</span>
                   <span className="text-xs text-zinc-400">추가</span>
@@ -265,7 +265,7 @@ export default function TransactionForm({
           ) : (
             <label className="flex items-center justify-center gap-3 p-5 rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 cursor-pointer hover:border-zinc-300 transition-colors">
               <span className="text-2xl">🧾</span>
-              <span className="text-sm font-bold text-zinc-500">영수증 사진 첨부 (이미지, 최대 5장)</span>
+              <span className="text-sm font-bold text-zinc-500">영수증 사진 첨부 (이미지, 최대 20장)</span>
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleReceiptChange} />
             </label>
           )}
