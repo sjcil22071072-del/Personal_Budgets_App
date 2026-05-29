@@ -76,7 +76,7 @@ export default async function Home() {
   const participantId = participant?.id ?? user.id;
 
   if (participant) {
-    const rollover = await ensureMonthlyBudgetRollover(participant.id, true);
+    const rollover = await ensureMonthlyBudgetRollover(participant.id, false);
     if (rollover.updated > 0) {
       const refreshedParticipantData = await adminClient
         .from("participants")

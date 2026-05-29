@@ -46,8 +46,19 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
   let updated = 0
   const currentDate = new Date()
   const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+  const targetLastRollover = formatMonthStart(currentMonth)
 
   for (const participant of participants as ParticipantRow[]) {
+    // force가 아닐 때, 모든 재원의 last_rollover_month가 이미 당월(targetLastRollover)과 같다면 Skip
+    if (!force) {
+      const needsRollover = (participant.funding_sources || []).some(
+        (fs) => fs.last_rollover_month !== targetLastRollover
+      )
+      if (!needsRollover) {
+        continue
+      }
+    }
+
     const startDate = participant.budget_start_date || new Date().toISOString().split('T')[0]
     const startMonth = new Date(startDate)
     const resolvedStartMonth = Number.isNaN(startMonth.getTime()) ? currentMonth : new Date(startMonth.getFullYear(), startMonth.getMonth(), 1)
