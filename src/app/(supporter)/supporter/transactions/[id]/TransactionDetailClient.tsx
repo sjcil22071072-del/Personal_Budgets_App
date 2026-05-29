@@ -39,6 +39,7 @@ interface Tx {
   place_name?: string | null
   place_lat?: number | null
   place_lng?: number | null
+  receipt_reviewed?: boolean | null
 }
 
 export default function TransactionDetailClient({ tx }: { tx: Tx }) {
@@ -76,6 +77,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     tx.payment_method === '계좌이체' ? '계좌이체' : '카드'
   )
   const [status, setStatus] = useState<'pending' | 'confirmed' | 'rejected'>(tx.status)
+  const [receiptReviewed, setReceiptReviewed] = useState(tx.receipt_reviewed ?? false)
 
   // 이미지 상태 (최대 5장씩)
   const [receiptUrls, setReceiptUrls] = useState<string[]>(tx.receipt_image_urls || [])
@@ -261,6 +263,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
           memo: memo || null,
           payment_method: paymentMethod,
           status,
+          receipt_reviewed: status === 'pending' ? receiptReviewed : false,
         }
       )
       router.push('/supporter/transactions')
@@ -614,6 +617,24 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                   </button>
                 </div>
               </fieldset>
+
+              {status === 'pending' && (
+                <fieldset className="flex flex-col gap-2">
+                  <label className="text-xs font-black text-zinc-500">검토 상태</label>
+                  <label className="flex items-center gap-3 p-4 rounded-xl bg-zinc-50 ring-1 ring-zinc-200 cursor-pointer hover:bg-zinc-100 transition-all select-none">
+                    <input
+                      type="checkbox"
+                      checked={receiptReviewed}
+                      onChange={e => setReceiptReviewed(e.target.checked)}
+                      className="w-4 h-4 rounded border-zinc-300 text-green-600 focus:ring-green-500"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-zinc-700">1차 검토 완료 처리</span>
+                      <span className="text-xs text-zinc-400">대기열 우측에 ✔️ 검토완료 표시가 나타납니다.</span>
+                    </div>
+                  </label>
+                </fieldset>
+              )}
 
               <button type="submit" disabled={saving}
                 className="mt-4 p-4 rounded-xl bg-zinc-900 text-white font-bold text-base hover:bg-zinc-800 transition-colors disabled:opacity-50 shadow-md flex items-center justify-center gap-2">

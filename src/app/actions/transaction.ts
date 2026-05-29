@@ -208,9 +208,14 @@ export async function updateTransactionStatus(transactionId: string, newStatus: 
     .single()
   const participant_id = tx?.participant_id
 
+  const updatePayload: any = { status: newStatus }
+  if (newStatus === 'confirmed' || newStatus === 'rejected') {
+    updatePayload.receipt_reviewed = false
+  }
+
   const { error } = await adminClient
     .from('transactions')
-    .update({ status: newStatus })
+    .update(updatePayload)
     .eq('id', transactionId)
 
   if (error) {
@@ -271,12 +276,18 @@ export async function updateTransactionDetail(
     place_name?: string | null
     place_lat?: number | null
     place_lng?: number | null
+    receipt_reviewed?: boolean | null
   }
 ) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
+
+  // 승인(confirmed) 또는 거절(rejected) 상태일 때는 검토 완료 표시를 제거(false)
+  if (updates.status === 'confirmed' || updates.status === 'rejected') {
+    updates.receipt_reviewed = false
+  }
 
   const { data: tx } = await adminClient
     .from('transactions')

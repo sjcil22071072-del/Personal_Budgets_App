@@ -191,6 +191,7 @@ export interface Database {
           place_name: string | null
           place_lat: number | null
           place_lng: number | null
+          receipt_reviewed: boolean
         }
         Insert: {
           id?: string
@@ -214,6 +215,7 @@ export interface Database {
           place_name?: string | null
           place_lat?: number | null
           place_lng?: number | null
+          receipt_reviewed?: boolean
         }
         Update: {
           id?: string
@@ -237,6 +239,7 @@ export interface Database {
           place_name?: string | null
           place_lat?: number | null
           place_lng?: number | null
+          receipt_reviewed?: boolean
         }
       }
       file_links: {

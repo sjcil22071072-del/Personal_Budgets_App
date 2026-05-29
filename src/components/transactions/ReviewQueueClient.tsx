@@ -8,6 +8,7 @@ interface ReviewTransaction {
   date: string
   category: string
   funding_source_name: string | null
+  receipt_reviewed: boolean
 }
 
 interface Props {
@@ -42,6 +43,11 @@ export default function ReviewQueueClient({ transactions }: Props) {
                 {tx.date} · {tx.category || '기타'} · {tx.funding_source_name ?? '재원 미지정'}
               </p>
             </div>
+            {tx.receipt_reviewed && (
+              <span className="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-1 shrink-0">
+                ✔️ 검토완료
+              </span>
+            )}
             <span className="text-zinc-300">›</span>
           </div>
         </Link>

@@ -36,6 +36,7 @@ export default async function ReviewQueuePage() {
       participant_id,
       date,
       category,
+      receipt_reviewed,
       participants!transactions_participant_id_fkey ( name ),
       funding_sources!transactions_funding_source_id_fkey ( name )
     `)
@@ -54,6 +55,7 @@ export default async function ReviewQueuePage() {
     date: t.date,
     category: t.category ?? '기타',
     funding_source_name: t.funding_sources?.name ?? null,
+    receipt_reviewed: t.receipt_reviewed ?? false,
   }))
 
   return (
