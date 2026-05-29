@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/utils/supabase/server'
+import { extractStoragePath } from '@/utils/supabase/storage'
 
 const BUCKET_NAME = 'family-relation-photos'
 
@@ -118,4 +119,80 @@ export async function saveFamilyRegistration(formData: FormData) {
   revalidatePath('/family-registration')
 
   return { success: true }
+}
+
+export async function deleteFamilyRegistration(participantId: string) {
+  try {
+    const supabase = await createClient()
+    const admin = createAdminClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: '로그인이 필요합니다.' }
+
+    // 사용자 권한 확인 (관리자이거나 해당 당사자 본인인지 검증)
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const role = String(profile?.role ?? '').trim().toLowerCase()
+    const isAdminOrStaff = role === 'admin' || role === 'superadmin' || role === 'super_admin'
+
+    // 본인이거나 관리자여야 함
+    if (!isAdminOrStaff && participantId !== user.id) {
+      const { data: participant } = await admin
+        .from('participants')
+        .select('id')
+        .eq('email', user.email || '')
+        .maybeSingle()
+
+      if (!participant || participantId !== participant.id) {
+        return { success: false, error: '삭제 권한이 없습니다.' }
+      }
+    }
+
+    const { data: existing } = await admin
+      .from('family_registrations')
+      .select('image_url')
+      .eq('participant_id', participantId)
+      .maybeSingle()
+
+    if (!existing) {
+      return { success: false, error: '존재하지 않는 가족관계증명서 정보입니다.' }
+    }
+
+    // 1. Storage에서 이미지 삭제
+    if (existing.image_url) {
+      const path = extractStoragePath(existing.image_url, BUCKET_NAME)
+      if (path) {
+        const { error: storageError } = await admin.storage
+          .from(BUCKET_NAME)
+          .remove([path])
+        if (storageError) {
+          console.error('Failed to delete family relation photo from storage:', storageError)
+        }
+      }
+    }
+
+    // 2. DB에서 레코드 삭제
+    const { error: dbError } = await admin
+      .from('family_registrations')
+      .delete()
+      .eq('participant_id', participantId)
+
+    if (dbError) {
+      console.error('Failed to delete family registration from DB:', dbError)
+      return { success: false, error: '증명서 정보 삭제에 실패했습니다.' }
+    }
+
+    revalidatePath('/')
+    revalidatePath('/family-registration')
+    revalidatePath('/admin/submitted-documents')
+
+    return { success: true }
+  } catch (e: any) {
+    console.error('deleteFamilyRegistration exception:', e)
+    return { success: false, error: e?.message || '증명서 삭제 중 오류가 발생했습니다.' }
+  }
 }

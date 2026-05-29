@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteCardRegistration } from '@/app/actions/cardRegistration'
+import { deleteFamilyRegistration } from '@/app/actions/familyRegistration'
 
 interface CardRegistration {
   id: string
@@ -41,6 +42,27 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
       const res = await deleteCardRegistration(cardId)
       if (res.success) {
         alert('카드 정보가 성공적으로 삭제되었습니다.')
+        router.refresh()
+      } else {
+        alert(res.error || '삭제 중 오류가 발생했습니다.')
+      }
+    } catch (err: any) {
+      console.error(err)
+      alert(err?.message || '삭제 중 오류가 발생했습니다.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const handleDeleteFamily = async (participantId: string) => {
+    if (!window.confirm('이 가족관계증명서 정보를 완전히 삭제하시겠습니까? 등록된 증명서 사진 파일도 함께 삭제됩니다.')) {
+      return
+    }
+    setDeletingId(participantId)
+    try {
+      const res = await deleteFamilyRegistration(participantId)
+      if (res.success) {
+        alert('가족관계증명서가 성공적으로 삭제되었습니다.')
         router.refresh()
       } else {
         alert(res.error || '삭제 중 오류가 발생했습니다.')
@@ -132,11 +154,22 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                   <div className="p-5 rounded-2xl bg-zinc-50/40 border border-zinc-200/50">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xs font-black text-zinc-700">📄 가족관계증명서</span>
-                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                        hasFamily ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-650 border-red-100'
-                      }`}>
-                        {hasFamily ? '제출 완료' : '미등록'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          hasFamily ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-650 border-red-100'
+                        }`}>
+                          {hasFamily ? '제출 완료' : '미등록'}
+                        </span>
+                        {hasFamily && (
+                          <button
+                            onClick={() => handleDeleteFamily(p.id)}
+                            disabled={deletingId !== null}
+                            className="text-[9px] text-red-500 hover:text-red-700 disabled:text-zinc-300 font-bold border border-red-100 disabled:border-zinc-100 hover:bg-red-50/60 disabled:bg-transparent rounded px-1.5 py-0.5 transition-colors"
+                          >
+                            {deletingId === p.id ? '삭제 중...' : '삭제'}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {hasFamily ? (

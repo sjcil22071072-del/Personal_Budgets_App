@@ -5,6 +5,7 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getSignedImageUrl } from './storage'
 import { ensureMonthlyBudgetRollover } from './budgetRollover'
+import { extractStoragePath } from '@/utils/supabase/storage'
 
 export interface ParticipantWithFundingSources {
   id: string
@@ -230,6 +231,33 @@ export async function updateTransactionStatus(transactionId: string, newStatus: 
   return { success: true }
 }
 
+async function deleteTransactionImages(adminClient: any, tx: any) {
+  const deleteFiles = async (urls: string[] | null | undefined, bucket: string) => {
+    if (!urls || urls.length === 0) return
+    const paths = urls
+      .map((url) => extractStoragePath(url, bucket))
+      .filter((path): path is string => !!path)
+
+    if (paths.length > 0) {
+      const { error } = await adminClient.storage.from(bucket).remove(paths)
+      if (error) {
+        console.error(`Failed to delete files from bucket ${bucket}:`, error)
+      }
+    }
+  }
+
+  const receiptUrls = [...(tx.receipt_image_urls || [])]
+  if (tx.receipt_image_url) receiptUrls.push(tx.receipt_image_url)
+  await deleteFiles(receiptUrls, 'receipts')
+
+  const activityUrls = [...(tx.activity_image_urls || [])]
+  if (tx.activity_image_url) activityUrls.push(tx.activity_image_url)
+  await deleteFiles(activityUrls, 'activity-photos')
+
+  const evidenceUrls = [...(tx.evidence_image_urls || [])]
+  await deleteFiles(evidenceUrls, 'evidence-documents')
+}
+
 export async function deleteTransaction(transactionId: string) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
@@ -239,11 +267,51 @@ export async function deleteTransaction(transactionId: string) {
 
   const { data: tx } = await adminClient
     .from('transactions')
-    .select('participant_id')
+    .select('participant_id, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, evidence_image_urls')
     .eq('id', transactionId)
     .single()
-  const participant_id = tx?.participant_id
 
+  if (!tx) throw new Error('Transaction not found')
+  const participant_id = tx.participant_id
+
+  // 권한 확인 (관리자이거나 당사자 본인인 경우)
+  const { data: profile } = await adminClient
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const role = String(profile?.role ?? '').trim().toLowerCase()
+  const isAdminOrStaff = role === 'admin' || role === 'superadmin' || role === 'super_admin'
+
+  if (!isAdminOrStaff) {
+    // 본인 거래 내역인지 검증
+    let isOwner = participant_id === user.id
+    if (!isOwner) {
+      const { data: participant } = await adminClient
+        .from('participants')
+        .select('id')
+        .eq('email', user.email || '')
+        .maybeSingle()
+      if (participant && participant.id === participant_id) {
+        isOwner = true
+      }
+    }
+
+    if (!isOwner) {
+      throw new Error('Permission denied')
+    }
+
+    // 당사자일 때는 오직 'pending' 상태만 삭제 가능
+    if (tx.status !== 'pending') {
+      throw new Error('임시대기 상태인 영수증 내역만 삭제할 수 있습니다.')
+    }
+  }
+
+  // 1. Storage에서 이미지 삭제
+  await deleteTransactionImages(adminClient, tx)
+
+  // 2. DB 레코드 삭제
   const { error } = await adminClient
     .from('transactions')
     .delete()
@@ -260,6 +328,7 @@ export async function deleteTransaction(transactionId: string) {
 
   revalidatePath('/')
   revalidatePath('/calendar')
+  revalidatePath('/supporter/transactions')
   return { success: true }
 }
 
@@ -320,12 +389,15 @@ export async function deleteTransactionWithBalance(transactionId: string) {
 
   const { data: tx } = await adminClient
     .from('transactions')
-    .select('participant_id')
+    .select('participant_id, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, evidence_image_urls')
     .eq('id', transactionId)
     .single()
   const participant_id = tx?.participant_id
 
-  // Balance is updated automatically by the database trigger calculate_funding_source_balance
+  // 1. Storage에서 이미지 삭제
+  if (tx) {
+    await deleteTransactionImages(adminClient, tx)
+  }
 
   const { error } = await adminClient.from('transactions').delete().eq('id', transactionId)
   if (error) throw new Error('Failed to delete transaction')
@@ -336,6 +408,7 @@ export async function deleteTransactionWithBalance(transactionId: string) {
 
   revalidatePath('/supporter/transactions')
   revalidatePath('/')
+  revalidatePath('/calendar')
   return { success: true }
 }
 

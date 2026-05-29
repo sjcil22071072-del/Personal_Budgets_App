@@ -8,7 +8,7 @@ import { EasyTerm } from '@/components/ui/EasyTerm'
 import ActivityCategoryPicker, {
   getActivityMajor,
 } from "@/components/transactions/ActivityCategoryPicker"
-import { updateTransaction } from '@/app/actions/transaction'
+import { updateTransaction, deleteTransaction } from '@/app/actions/transaction'
 
 interface Tx {
   id: string
@@ -46,6 +46,25 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
   const [editDescription, setEditDescription] = useState(displayCategory)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDelete() {
+    if (!window.confirm('이 영수증 내역을 정말 삭제하시겠습니까? 등록된 모든 사진 파일도 함께 삭제됩니다.')) {
+      return
+    }
+    setDeleting(true)
+    try {
+      const result = await deleteTransaction(tx.id)
+      if (result.success) {
+        alert('영수증 내역이 정상적으로 삭제되었습니다.')
+        router.push('/')
+      }
+    } catch (err: any) {
+      alert(err.message || '삭제 중 오류가 발생했습니다.')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   async function handleSave() {
     const parts = editDescription.split(" - ");
@@ -352,13 +371,30 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
           </div>
         ) : (
           tx.status === 'pending' && (
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="w-full mt-2 p-4 rounded-2xl bg-blue-600 text-white font-black text-center text-sm hover:bg-blue-700 active:scale-[0.99] transition-all shadow-md"
-            >
-              기록 수정하기
-            </button>
+            <div className="flex flex-col gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="w-full p-4 rounded-2xl bg-blue-600 text-white font-black text-center text-sm hover:bg-blue-700 active:scale-[0.99] transition-all shadow-md"
+              >
+                기록 수정하기
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="w-full p-4 rounded-2xl border border-red-200 bg-red-50/50 hover:bg-red-50 text-red-650 font-black text-center text-sm active:scale-[0.99] transition-all flex items-center justify-center gap-1.5"
+              >
+                {deleting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-red-650/40 border-t-red-650 rounded-full animate-spin" />
+                    삭제 중...
+                  </>
+                ) : (
+                  "삭제하기"
+                )}
+              </button>
+            </div>
           )
         )}
 
