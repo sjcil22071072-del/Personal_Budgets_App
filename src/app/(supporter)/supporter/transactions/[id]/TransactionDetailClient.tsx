@@ -78,6 +78,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   )
   const [status, setStatus] = useState<'pending' | 'confirmed' | 'rejected'>(tx.status)
   const [receiptReviewed, setReceiptReviewed] = useState(tx.receipt_reviewed ?? false)
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
 
   // 이미지 상태 (최대 5장씩)
   const [receiptUrls, setReceiptUrls] = useState<string[]>(tx.receipt_image_urls || [])
@@ -392,7 +393,8 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     <img
                       src={receiptUrls[receiptIdx]}
                       alt={`영수증 ${receiptIdx + 1}`}
-                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block"
+                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => setZoomImageUrl(receiptUrls[receiptIdx])}
                     />
                     <button
                       type="button"
@@ -438,7 +440,8 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     <img
                       src={activityUrls[activityIdx]}
                       alt={`활동사진 ${activityIdx + 1}`}
-                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block"
+                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => setZoomImageUrl(activityUrls[activityIdx])}
                     />
                     <button
                       type="button"
@@ -485,7 +488,8 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     <img
                       src={evidenceUrls[evidenceIdx]}
                       alt={`증빙서류 ${evidenceIdx + 1}`}
-                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block"
+                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => setZoomImageUrl(evidenceUrls[evidenceIdx])}
                     />
                     <button
                       type="button"
@@ -671,6 +675,29 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                   : '삭제하기'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {zoomImageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 cursor-zoom-out animate-in fade-in duration-200"
+          onClick={() => setZoomImageUrl(null)}
+        >
+          <div className="relative max-w-5xl max-h-[90vh] flex items-center justify-center">
+            <img
+              src={zoomImageUrl}
+              alt="확대된 이미지"
+              className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl cursor-default animate-in zoom-in-95 duration-200"
+              onClick={e => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setZoomImageUrl(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:text-zinc-300 text-3xl font-light transition-colors"
+              title="닫기"
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}
