@@ -123,7 +123,7 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
       {/* 헤더 */}
       <header className="flex h-14 items-center gap-3 px-4 sticky top-0 bg-white/90 backdrop-blur-md border-b border-zinc-150/80 z-10">
         <Link
-          href="/calendar"
+          href="/"
           className="text-zinc-400 hover:text-zinc-700 text-xl font-bold transition-colors px-1"
           aria-label="뒤로 가기"
         >
@@ -362,13 +362,7 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
           )
         )}
 
-        {/* 뒤로 버튼 */}
-        <Link
-          href="/calendar"
-          className="w-full mt-2 p-4 rounded-2xl bg-zinc-900 text-white font-black text-center text-sm hover:bg-zinc-800 active:scale-[0.99] transition-all shadow-md"
-        >
-          달력으로 돌아가기
-        </Link>
+
       </main>
     </div>
   )
