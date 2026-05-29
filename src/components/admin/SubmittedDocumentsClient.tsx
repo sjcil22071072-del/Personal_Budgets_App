@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { deleteCardRegistration } from '@/app/actions/cardRegistration'
 
 interface CardRegistration {
+  id: string
   imageUrls: string[]
   createdAt: string | null
 }
@@ -23,9 +26,32 @@ interface SubmittedDocumentsClientProps {
 }
 
 export default function SubmittedDocumentsClient({ initialData }: SubmittedDocumentsClientProps) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [activeImage, setActiveImage] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleDeleteCard = async (cardId: string) => {
+    if (!window.confirm('이 카드 정보를 완전히 삭제하시겠습니까? 등록된 카드 사진 파일도 함께 삭제됩니다.')) {
+      return
+    }
+    setDeletingId(cardId)
+    try {
+      const res = await deleteCardRegistration(cardId)
+      if (res.success) {
+        alert('카드 정보가 성공적으로 삭제되었습니다.')
+        router.refresh()
+      } else {
+        alert(res.error || '삭제 중 오류가 발생했습니다.')
+      }
+    } catch (err: any) {
+      console.error(err)
+      alert(err?.message || '삭제 중 오류가 발생했습니다.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const filtered = initialData.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -152,10 +178,19 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                     {totalCards > 0 ? (
                       <div className="space-y-4">
                         {p.cardRegistrations.map((card, cardIdx) => (
-                          <div key={cardIdx} className="space-y-3">
+                          <div key={card.id || cardIdx} className="space-y-3">
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-bold text-zinc-500">카드 #{cardIdx + 1}</span>
-                              <span className="text-[9px] text-zinc-400 font-medium">등록일: {formatDate(card.createdAt)}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] text-zinc-400 font-medium">등록일: {formatDate(card.createdAt)}</span>
+                                <button
+                                  onClick={() => handleDeleteCard(card.id)}
+                                  disabled={deletingId !== null}
+                                  className="text-[9px] text-red-500 hover:text-red-700 disabled:text-zinc-300 font-bold border border-red-100 disabled:border-zinc-100 hover:bg-red-50/60 disabled:bg-transparent rounded px-1.5 py-0.5 transition-colors"
+                                >
+                                  {deletingId === card.id ? '삭제 중...' : '삭제'}
+                                </button>
+                              </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2.5 max-w-sm">
                               {card.imageUrls.map((url, imgIdx) => (

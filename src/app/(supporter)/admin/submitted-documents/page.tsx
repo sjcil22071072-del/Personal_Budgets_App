@@ -29,7 +29,7 @@ export default async function SubmittedDocumentsPage() {
   ] = await Promise.all([
     adminClient.from('participants').select('id, name').order('name', { ascending: true }),
     adminClient.from('family_registrations').select('participant_id, image_url, created_at'),
-    adminClient.from('card_registrations').select('participant_id, image_urls, created_at').order('created_at', { ascending: false }),
+    adminClient.from('card_registrations').select('id, participant_id, image_urls, created_at').order('created_at', { ascending: false }),
   ])
 
   // 가족관계증명서 이미지 signed URL 생성
@@ -52,7 +52,7 @@ export default async function SubmittedDocumentsPage() {
   }
 
   // 카드 등록 이미지 signed URL 생성 (당사자당 복수 건 지원)
-  const cardMap = new Map<string, { imageUrls: string[]; createdAt: string | null }[]>()
+  const cardMap = new Map<string, { id: string; imageUrls: string[]; createdAt: string | null }[]>()
   for (const cr of cardRegs ?? []) {
     const pid = (cr as any).participant_id
     const rawUrls: string[] = (cr as any).image_urls ?? []
@@ -69,7 +69,7 @@ export default async function SubmittedDocumentsPage() {
       }
     }
     const list = cardMap.get(pid) ?? []
-    list.push({ imageUrls: signedUrls, createdAt: (cr as any).created_at })
+    list.push({ id: (cr as any).id, imageUrls: signedUrls, createdAt: (cr as any).created_at })
     cardMap.set(pid, list)
   }
 
@@ -86,6 +86,7 @@ export default async function SubmittedDocumentsPage() {
         createdAt: family?.createdAt ?? null,
       },
       cardRegistrations: cards.map(c => ({
+        id: c.id,
         imageUrls: c.imageUrls,
         createdAt: c.createdAt,
       })),
