@@ -4,6 +4,7 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { UserRole } from '@/types/database'
+import { extractStoragePath } from '@/utils/supabase/storage'
 import { OPERATION_END_DATE, OPERATION_START_DATE } from '@/constants/operation-period'
 
 /**
@@ -608,3 +609,159 @@ export async function registerStaffUser(formData: {
   revalidatePath('/admin/users/new')
   return { success: true, mode: 'registered' }
 }
+
+export async function deleteUsers(
+  selectedUsers: { id: string; source: 'profile' | 'participant'; role: string }[]
+) {
+  const { supabase } = await verifyAdmin()
+
+  try {
+    for (const u of selectedUsers) {
+      if (u.source === 'participant' || u.role === 'participant') {
+        // 1. 당사자 이메일 확인
+        const { data: participant } = await supabase
+          .from('participants')
+          .select('email')
+          .eq('id', u.id)
+          .maybeSingle()
+        const email = participant?.email
+
+        // 2. Storage 내 거래(영수증/활동/증빙) 파일 삭제
+        const { data: txs } = await supabase
+          .from('transactions')
+          .select('receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, evidence_image_urls')
+          .eq('participant_id', u.id)
+
+        if (txs) {
+          const deleteFiles = async (urls: string[] | null | undefined, bucket: string) => {
+            if (!urls || urls.length === 0) return
+            const paths = urls
+              .map((url) => extractStoragePath(url, bucket))
+              .filter((path: string | null): path is string => !!path)
+            if (paths.length > 0) {
+              await supabase.storage.from(bucket).remove(paths)
+            }
+          }
+
+          for (const tx of txs) {
+            const receiptUrls = [...(tx.receipt_image_urls || [])]
+            if (tx.receipt_image_url) receiptUrls.push(tx.receipt_image_url)
+            await deleteFiles(receiptUrls, 'receipts')
+
+            const activityUrls = [...(tx.activity_image_urls || [])]
+            if (tx.activity_image_url) activityUrls.push(tx.activity_image_url)
+            await deleteFiles(activityUrls, 'activity-photos')
+
+            const evidenceUrls = [...(tx.evidence_image_urls || [])]
+            await deleteFiles(evidenceUrls, 'evidence-documents')
+          }
+        }
+
+        // 3. Storage 내 카드 등록 파일 삭제
+        const { data: cardRegs } = await supabase
+          .from('card_registrations')
+          .select('image_urls')
+          .eq('participant_id', u.id)
+
+        if (cardRegs) {
+          for (const cr of cardRegs) {
+            if (cr.image_urls && cr.image_urls.length > 0) {
+              const paths = cr.image_urls
+                .map((url: string) => extractStoragePath(url, 'card-photos'))
+                .filter((path: string | null): path is string => !!path)
+              if (paths.length > 0) {
+                await supabase.storage.from('card-photos').remove(paths)
+              }
+            }
+          }
+        }
+
+        // 4. Storage 내 가족관계증명서 파일 삭제
+        const { data: familyReg } = await supabase
+          .from('family_registrations')
+          .select('image_url')
+          .eq('participant_id', u.id)
+          .maybeSingle()
+
+        if (familyReg?.image_url) {
+          const path = extractStoragePath(familyReg.image_url, 'family-relation-photos')
+          if (path) {
+            await supabase.storage.from('family-relation-photos').remove([path])
+          }
+        }
+
+        // 5. DB에서 당사자 레코드 삭제 (ON DELETE CASCADE로 funding_sources, card_registrations, family_registrations 등 동반 삭제됨)
+        const { error: partErr } = await supabase
+          .from('participants')
+          .delete()
+          .eq('id', u.id)
+
+        if (partErr) {
+          console.error(`Failed to delete participant ${u.id}:`, partErr)
+          return { error: `당사자 삭제 실패: ${partErr.message}` }
+        }
+
+        // 6. DB profiles 테이블에서 삭제 및 auth.users 삭제
+        if (email) {
+          await supabase.from('profiles').delete().eq('email', email)
+          try {
+            const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
+            const matchedUser = authUsers?.find((user: any) => user.email?.toLowerCase() === email.toLowerCase())
+            if (matchedUser) {
+              await supabase.auth.admin.deleteUser(matchedUser.id)
+            }
+          } catch (authErr) {
+            console.error(`Failed to delete auth user for ${email}:`, authErr)
+          }
+        }
+      } else {
+        // 관리자 프로필 삭제
+        // 1. 프로필 이메일 획득
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', u.id)
+          .maybeSingle()
+        const email = profile?.email
+
+        // 2. DB profiles 테이블에서 삭제
+        const { error: profErr } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', u.id)
+
+        if (profErr) {
+          console.error(`Failed to delete profile ${u.id}:`, profErr)
+          return { error: `관리자 프로필 삭제 실패: ${profErr.message}` }
+        }
+
+        // 3. 초대 정보 및 auth.users 계정 삭제
+        if (email) {
+          await supabase.from('user_invitations').delete().eq('email', email)
+          try {
+            await supabase.auth.admin.deleteUser(u.id)
+          } catch (authErr) {
+            try {
+              const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
+              const matchedUser = authUsers?.find((user: any) => user.email?.toLowerCase() === email.toLowerCase())
+              if (matchedUser) {
+                await supabase.auth.admin.deleteUser(matchedUser.id)
+              }
+            } catch (authErr2) {
+              console.error(`Failed to delete auth user for admin ${email}:`, authErr2)
+            }
+          }
+        }
+      }
+    }
+
+    revalidatePath('/admin/settings')
+    revalidatePath('/admin/participants')
+    revalidatePath('/supporter')
+    return { success: true }
+  } catch (e: any) {
+    console.error('deleteUsers exception:', e)
+    return { error: e?.message || '계정 삭제 작업 중 오류가 발생했습니다.' }
+  }
+}
+
