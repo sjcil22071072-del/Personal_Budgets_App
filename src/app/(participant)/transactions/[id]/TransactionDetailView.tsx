@@ -149,15 +149,7 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
               </div>
             </>
           )}
-          {tx.memo && tx.status !== 'rejected' && (
-            <>
-              <div className="h-px bg-zinc-100" />
-              <div>
-                <p className="text-xs text-zinc-400 font-black uppercase tracking-wider mb-1">메모</p>
-                <p className="font-medium text-zinc-700 text-sm leading-relaxed">{tx.memo}</p>
-              </div>
-            </>
-          )}
+
         </div>
 
         {/* 사진 뷰어 */}
