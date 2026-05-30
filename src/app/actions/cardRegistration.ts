@@ -15,87 +15,92 @@ export interface CardRegistration {
 }
 
 export async function createCardRegistration(formData: FormData) {
-  const supabase = await createClient()
-  const admin = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  try {
+    const supabase = await createClient()
+    const admin = createAdminClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) return { success: false, error: '로그인이 필요합니다.' }
+    if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  const role = String(profile?.role ?? '').trim().toLowerCase()
-  const isAdminOrStaff = role === 'admin' || role === 'superadmin' || role === 'super_admin'
-
-  let participantId = formData.get('participant_id') as string | null
-
-  if (isAdminOrStaff && participantId) {
-    // 관리자 또는 스태프인 경우, 입력받은 participantId를 사용합니다.
-  } else {
-    const { data: participant } = await admin
-      .from('participants')
-      .select('id')
-      .or(`id.eq.${user.id},email.eq.${user.email}`)
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
       .maybeSingle()
 
-    if (!participant) {
-      return { success: false, error: '당사자 계정에서만 카드 등록을 할 수 있습니다.' }
-    }
-    participantId = participant.id
-  }
+    const role = String(profile?.role ?? '').trim().toLowerCase()
+    const isAdminOrStaff = role === 'admin' || role === 'superadmin' || role === 'super_admin'
 
-  const files = formData
-    .getAll('card_images')
-    .filter((item): item is File => item instanceof File && item.size > 0)
+    let participantId = formData.get('participant_id') as string | null
 
-  if (files.length < 2) {
-    return { success: false, error: '실물 카드의 앞뒷면을 모두 등록해주세요.' }
-  }
+    if (isAdminOrStaff && participantId) {
+      // 관리자 또는 스태프인 경우, 입력받은 participantId를 사용합니다.
+    } else {
+      const { data: participant } = await admin
+        .from('participants')
+        .select('id')
+        .or(`id.eq.${user.id},email.eq.${user.email}`)
+        .maybeSingle()
 
-  const imageUrls: string[] = []
-
-  for (const [index, file] of files.entries()) {
-    if (!file.type.startsWith('image/')) {
-      return { success: false, error: '카드 사진은 이미지 파일만 등록할 수 있습니다.' }
-    }
-
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const path = `${participantId}/${Date.now()}-${index}.${ext}`
-    const { error: uploadError } = await admin.storage
-      .from(CARD_IMAGE_BUCKET)
-      .upload(path, file, { contentType: file.type, upsert: false })
-
-    if (uploadError) {
-      console.error('Card image upload error:', uploadError)
-      return { success: false, error: '카드 사진 업로드에 실패했습니다.' }
+      if (!participant) {
+        return { success: false, error: '당사자 계정에서만 카드 등록을 할 수 있습니다.' }
+      }
+      participantId = participant.id
     }
 
-    const { data: { publicUrl } } = admin.storage
-      .from(CARD_IMAGE_BUCKET)
-      .getPublicUrl(path)
-    imageUrls.push(publicUrl)
+    const files = formData
+      .getAll('card_images')
+      .filter((item): item is File => !!item && typeof item === 'object' && 'size' in item && (item as any).size > 0)
+
+    if (files.length < 2) {
+      return { success: false, error: '실물 카드의 앞뒷면을 모두 등록해주세요.' }
+    }
+
+    const imageUrls: string[] = []
+
+    for (const [index, file] of files.entries()) {
+      if (!file.type.startsWith('image/')) {
+        return { success: false, error: '카드 사진은 이미지 파일만 등록할 수 있습니다.' }
+      }
+
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const path = `${participantId}/${Date.now()}-${index}.${ext}`
+      const { error: uploadError } = await admin.storage
+        .from(CARD_IMAGE_BUCKET)
+        .upload(path, file, { contentType: file.type, upsert: false })
+
+      if (uploadError) {
+        console.error('Card image upload error:', uploadError)
+        return { success: false, error: '카드 사진 업로드에 실패했습니다.' }
+      }
+
+      const { data: { publicUrl } } = admin.storage
+        .from(CARD_IMAGE_BUCKET)
+        .getPublicUrl(path)
+      imageUrls.push(publicUrl)
+    }
+
+    const { error } = await admin
+      .from('card_registrations')
+      .insert({
+        participant_id: participantId,
+        image_urls: imageUrls,
+      })
+
+    if (error) {
+      console.error('Card registration insert error:', error)
+      return { success: false, error: '카드 등록에 실패했습니다.' }
+    }
+
+    revalidatePath('/')
+    revalidatePath('/card-registration')
+    revalidatePath('/admin/submitted-documents')
+
+    return { success: true }
+  } catch (e: any) {
+    console.error('createCardRegistration exception:', e)
+    return { success: false, error: e?.message || '카드 등록 중 오류가 발생했습니다.' }
   }
-
-  const { error } = await admin
-    .from('card_registrations')
-    .insert({
-      participant_id: participantId,
-      image_urls: imageUrls,
-    })
-
-  if (error) {
-    console.error('Card registration insert error:', error)
-    return { success: false, error: '카드 등록에 실패했습니다.' }
-  }
-
-  revalidatePath('/')
-  revalidatePath('/card-registration')
-  revalidatePath('/admin/submitted-documents')
-
-  return { success: true }
 }
 
 export async function deleteCardRegistration(id: string) {
