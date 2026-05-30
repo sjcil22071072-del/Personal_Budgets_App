@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteCardRegistration } from '@/app/actions/cardRegistration'
-import { deleteFamilyRegistration } from '@/app/actions/familyRegistration'
+import { deleteCardRegistration, createCardRegistration } from '@/app/actions/cardRegistration'
+import { deleteFamilyRegistration, saveFamilyRegistration } from '@/app/actions/familyRegistration'
 
 interface CardRegistration {
   id: string
@@ -32,6 +32,102 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
   const [activeImage, setActiveImage] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [uploadingId, setUploadingId] = useState<string | null>(null)
+  const [selectedCardFiles, setSelectedCardFiles] = useState<{
+    [participantId: string]: {
+      front: File | null;
+      frontPreview: string | null;
+      back: File | null;
+      backPreview: string | null;
+    }
+  }>({})
+
+  const handleCardFileChange = (participantId: string, side: 'front' | 'back', file: File | null) => {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setSelectedCardFiles(prev => {
+        const current = prev[participantId] || { front: null, frontPreview: null, back: null, backPreview: null }
+        return {
+          ...prev,
+          [participantId]: {
+            ...current,
+            [side]: file,
+            [`${side}Preview`]: reader.result as string
+          }
+        }
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleUploadCard = async (participantId: string) => {
+    const data = selectedCardFiles[participantId]
+    if (!data || !data.front || !data.back) {
+      alert('카드 앞면과 뒷면 사진을 모두 등록해주세요.')
+      return
+    }
+
+    setUploadingId(participantId + '_card')
+    try {
+      const formData = new FormData()
+      formData.append('participant_id', participantId)
+      formData.append('card_images', data.front)
+      formData.append('card_images', data.back)
+
+      const res = await createCardRegistration(formData)
+      if (res.success) {
+        alert('카드가 성공적으로 등록되었습니다.')
+        setSelectedCardFiles(prev => {
+          const next = { ...prev }
+          delete next[participantId]
+          return next
+        })
+        router.refresh()
+      } else {
+        alert(res.error || '등록 중 오류가 발생했습니다.')
+      }
+    } catch (err: any) {
+      console.error(err)
+      alert(err?.message || '등록 중 오류가 발생했습니다.')
+    } finally {
+      setUploadingId(null)
+    }
+  }
+
+  const handleCancelCardUpload = (participantId: string) => {
+    setSelectedCardFiles(prev => {
+      const next = { ...prev }
+      delete next[participantId]
+      return next
+    })
+  }
+
+  const handleUploadFamily = async (participantId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingId(participantId + '_family')
+    try {
+      const formData = new FormData()
+      formData.append('participant_id', participantId)
+      formData.append('family_relation_photo', file)
+
+      const res = await saveFamilyRegistration(formData)
+      if (res.success) {
+        alert('가족관계증명서가 성공적으로 등록되었습니다.')
+        router.refresh()
+      } else {
+        alert(res.error || '등록 중 오류가 발생했습니다.')
+      }
+    } catch (err: any) {
+      console.error(err)
+      alert(err?.message || '등록 중 오류가 발생했습니다.')
+    } finally {
+      setUploadingId(null)
+      e.target.value = ''
+    }
+  }
 
   const handleDeleteCard = async (cardId: string) => {
     if (!window.confirm('이 카드 정보를 완전히 삭제하시겠습니까? 등록된 카드 사진 파일도 함께 삭제됩니다.')) {
@@ -195,6 +291,20 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                         <span className="font-semibold text-zinc-400">제출된 증명서가 없습니다.</span>
                       </div>
                     )}
+
+                    <div className="mt-3.5">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white text-[11px] font-bold rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer shadow-sm">
+                        <span>📤</span>
+                        <span>{uploadingId === p.id + '_family' ? '등록 중...' : hasFamily ? '증명서 교체' : '직접 등록'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleUploadFamily(p.id, e)}
+                          disabled={uploadingId !== null}
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   {/* 등록 카드 목록 */}
@@ -253,6 +363,90 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                         <span className="font-semibold text-zinc-400">등록된 카드가 없습니다.</span>
                       </div>
                     )}
+
+                    <div className="mt-5 pt-4 border-t border-zinc-200/60">
+                      <h4 className="text-[11px] font-black text-zinc-700 mb-3">💳 카드 직접 등록</h4>
+                      
+                      <div className="grid grid-cols-2 gap-3 max-w-sm">
+                        {/* 앞면 선택 */}
+                        <label className="block cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleCardFileChange(p.id, 'front', e.target.files?.[0] ?? null)}
+                            disabled={uploadingId !== null}
+                          />
+                          <div className="aspect-[4/3] rounded-xl border border-dashed border-zinc-205 bg-white flex flex-col items-center justify-center text-[10px] text-zinc-450 gap-1 hover:bg-zinc-50 transition-colors overflow-hidden relative">
+                            {selectedCardFiles[p.id]?.frontPreview ? (
+                              <img
+                                src={selectedCardFiles[p.id].frontPreview!}
+                                alt="앞면 미리보기"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <>
+                                <span className="text-sm">📸</span>
+                                <span className="font-bold">카드 앞면 등록</span>
+                              </>
+                            )}
+                          </div>
+                        </label>
+
+                        {/* 뒷면 선택 */}
+                        <label className="block cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleCardFileChange(p.id, 'back', e.target.files?.[0] ?? null)}
+                            disabled={uploadingId !== null}
+                          />
+                          <div className="aspect-[4/3] rounded-xl border border-dashed border-zinc-205 bg-white flex flex-col items-center justify-center text-[10px] text-zinc-450 gap-1 hover:bg-zinc-50 transition-colors overflow-hidden relative">
+                            {selectedCardFiles[p.id]?.backPreview ? (
+                              <img
+                                src={selectedCardFiles[p.id].backPreview!}
+                                alt="뒷면 미리보기"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <>
+                                <span className="text-sm">📸</span>
+                                <span className="font-bold">카드 뒷면 등록</span>
+                              </>
+                            )}
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* 등록 및 취소 버튼 */}
+                      {(selectedCardFiles[p.id]?.front || selectedCardFiles[p.id]?.back) && (
+                        <div className="flex items-center gap-2 mt-3.5 max-w-sm">
+                          <button
+                            onClick={() => handleUploadCard(p.id)}
+                            disabled={uploadingId !== null || !selectedCardFiles[p.id]?.front || !selectedCardFiles[p.id]?.back}
+                            className="flex-1 py-2 bg-zinc-900 text-white text-[11px] font-bold rounded-xl hover:bg-zinc-800 transition-colors disabled:bg-zinc-200 disabled:text-zinc-400 shadow-sm"
+                          >
+                            {uploadingId === p.id + '_card' ? '등록 중...' : '카드 등록 완료'}
+                          </button>
+                          <button
+                            onClick={() => handleCancelCardUpload(p.id)}
+                            className="px-3 py-2 bg-zinc-100 text-zinc-500 text-[11px] font-bold rounded-xl hover:bg-zinc-200 transition-colors"
+                          >
+                            취소
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* 등록을 시작하지 않았을 때 안내 */}
+                      {!(selectedCardFiles[p.id]?.front || selectedCardFiles[p.id]?.back) && (
+                        <div className="mt-3">
+                          <p className="text-[10px] text-zinc-400 font-medium leading-relaxed">
+                            * 위의 빈 카드 상자(앞면/뒷면)를 각각 클릭하여 실물 카드의 양면 사진을 선택한 후 등록할 수 있습니다.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

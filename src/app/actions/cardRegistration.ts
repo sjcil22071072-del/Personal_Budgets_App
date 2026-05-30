@@ -21,15 +21,30 @@ export async function createCardRegistration(formData: FormData) {
 
   if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
-  // user.id 또는 email로 participants 조회
-  const { data: participant } = await admin
-    .from('participants')
-    .select('id')
-    .or(`id.eq.${user.id},email.eq.${user.email}`)
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
     .maybeSingle()
 
-  if (!participant) {
-    return { success: false, error: '당사자 계정에서만 카드 등록을 할 수 있습니다.' }
+  const role = String(profile?.role ?? '').trim().toLowerCase()
+  const isAdminOrStaff = role === 'admin' || role === 'superadmin' || role === 'super_admin'
+
+  let participantId = formData.get('participant_id') as string | null
+
+  if (isAdminOrStaff && participantId) {
+    // 관리자 또는 스태프인 경우, 입력받은 participantId를 사용합니다.
+  } else {
+    const { data: participant } = await admin
+      .from('participants')
+      .select('id')
+      .or(`id.eq.${user.id},email.eq.${user.email}`)
+      .maybeSingle()
+
+    if (!participant) {
+      return { success: false, error: '당사자 계정에서만 카드 등록을 할 수 있습니다.' }
+    }
+    participantId = participant.id
   }
 
   const files = formData
@@ -48,7 +63,7 @@ export async function createCardRegistration(formData: FormData) {
     }
 
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const path = `${participant.id}/${Date.now()}-${index}.${ext}`
+    const path = `${participantId}/${Date.now()}-${index}.${ext}`
     const { error: uploadError } = await admin.storage
       .from(CARD_IMAGE_BUCKET)
       .upload(path, file, { contentType: file.type, upsert: false })
@@ -67,7 +82,7 @@ export async function createCardRegistration(formData: FormData) {
   const { error } = await admin
     .from('card_registrations')
     .insert({
-      participant_id: participant.id,
+      participant_id: participantId,
       image_urls: imageUrls,
     })
 
@@ -78,6 +93,7 @@ export async function createCardRegistration(formData: FormData) {
 
   revalidatePath('/')
   revalidatePath('/card-registration')
+  revalidatePath('/admin/submitted-documents')
 
   return { success: true }
 }

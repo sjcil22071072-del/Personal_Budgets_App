@@ -51,15 +51,30 @@ export async function saveFamilyRegistration(formData: FormData) {
 
   if (!user) return { success: false, error: '로그인이 필요합니다.' }
 
-  // user.id 또는 email로 participant 조회
-  const { data: participant } = await admin
-    .from('participants')
-    .select('id')
-    .or(`id.eq.${user.id},email.eq.${user.email}`)
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
     .maybeSingle()
 
-  if (!participant) {
-    return { success: false, error: '당사자 계정에서만 가족관계증명서를 등록할 수 있습니다.' }
+  const role = String(profile?.role ?? '').trim().toLowerCase()
+  const isAdminOrStaff = role === 'admin' || role === 'superadmin' || role === 'super_admin'
+
+  let participantId = formData.get('participant_id') as string | null
+
+  if (isAdminOrStaff && participantId) {
+    // 관리자 또는 스태프인 경우, 입력받은 participantId를 사용합니다.
+  } else {
+    const { data: participant } = await admin
+      .from('participants')
+      .select('id')
+      .or(`id.eq.${user.id},email.eq.${user.email}`)
+      .maybeSingle()
+
+    if (!participant) {
+      return { success: false, error: '당사자 계정에서만 가족관계증명서를 등록할 수 있습니다.' }
+    }
+    participantId = participant.id
   }
 
   const file = formData.get('family_relation_photo') as File | null
@@ -74,11 +89,11 @@ export async function saveFamilyRegistration(formData: FormData) {
   const { data: existing } = await admin
     .from('family_registrations')
     .select('image_url')
-    .eq('participant_id', participant.id)
+    .eq('participant_id', participantId)
     .maybeSingle()
 
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-  const path = `${participant.id}/${Date.now()}-family-relation.${ext}`
+  const path = `${participantId}/${Date.now()}-family-relation.${ext}`
   const { error: uploadError } = await admin.storage
     .from(BUCKET_NAME)
     .upload(path, file, { contentType: file.type, upsert: false })
@@ -95,7 +110,7 @@ export async function saveFamilyRegistration(formData: FormData) {
   const { error: dbError } = await admin
     .from('family_registrations')
     .upsert({
-      participant_id: participant.id,
+      participant_id: participantId,
       image_url: publicUrl,
       updated_at: new Date().toISOString()
     }, { onConflict: 'participant_id' })
@@ -117,6 +132,7 @@ export async function saveFamilyRegistration(formData: FormData) {
 
   revalidatePath('/')
   revalidatePath('/family-registration')
+  revalidatePath('/admin/submitted-documents')
 
   return { success: true }
 }
