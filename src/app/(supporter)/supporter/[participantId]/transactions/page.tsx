@@ -97,7 +97,7 @@ export default async function TransactionsPage({
           <p className="text-gray-500 mt-1">예산 및 개인비용 사용 내역을 관리합니다.</p>
         </div>
         <Link 
-          href={`/supporter/${participantId}/transactions/new`}
+          href={`/supporter/transactions/new?participantId=${participantId}`}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition"
         >
           새 내역 등록
