@@ -8,6 +8,7 @@ import { EasyTerm } from "@/components/ui/EasyTerm";
 import ActivityCategoryPicker, {
   getActivityMajor,
 } from "@/components/transactions/ActivityCategoryPicker";
+import { compressImage } from "@/utils/image-compression";
 
 interface FundingSource {
   id: string;
@@ -131,10 +132,16 @@ export default function ReceiptUploadForm({
       formData.set("category", getActivityMajor(description));
       formData.set("amount", amount);
 
-      // 파일들 주입
-      receiptFiles.forEach((file, i) => formData.set(`receipt_${i}`, file));
-      evidenceFiles.forEach((file, i) => formData.set(`evidence_${i}`, file));
-      activityFiles.forEach((file, i) => formData.set(`activity_${i}`, file));
+      // 파일들 압축 후 주입
+      const [compressedReceipts, compressedEvidences, compressedActivities] = await Promise.all([
+        Promise.all(receiptFiles.map(file => compressImage(file))),
+        Promise.all(evidenceFiles.map(file => compressImage(file))),
+        Promise.all(activityFiles.map(file => compressImage(file)))
+      ]);
+
+      compressedReceipts.forEach((file, i) => formData.set(`receipt_${i}`, file));
+      compressedEvidences.forEach((file, i) => formData.set(`evidence_${i}`, file));
+      compressedActivities.forEach((file, i) => formData.set(`activity_${i}`, file));
 
       const result = await createTransaction(formData);
       if (result.success) {

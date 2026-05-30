@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { createTransaction, getParticipantsWithFundingSources } from '@/app/actions/transaction'
 import type { ParticipantWithFundingSources } from '@/app/actions/transaction'
 import ActivityCategoryPicker from '@/components/transactions/ActivityCategoryPicker'
+import { compressImage } from '@/utils/image-compression'
 
 const PAYMENT_METHODS = ['카드', '계좌이체'] as const
 
@@ -177,10 +178,16 @@ function NewTransactionForm() {
       formData.append('is_expense', 'true') // 항상 지출
       formData.append('payment_method', paymentMethod)
 
-      // 로컬 파일 주입
-      receiptFiles.forEach((file, i) => formData.append(`receipt_${i}`, file))
-      activityFiles.forEach((file, i) => formData.append(`activity_${i}`, file))
-      evidenceFiles.forEach((file, i) => formData.append(`evidence_${i}`, file))
+      // 로컬 파일 압축 후 주입
+      const [compressedReceipts, compressedActivities, compressedEvidences] = await Promise.all([
+        Promise.all(receiptFiles.map(file => compressImage(file))),
+        Promise.all(activityFiles.map(file => compressImage(file))),
+        Promise.all(evidenceFiles.map(file => compressImage(file)))
+      ])
+
+      compressedReceipts.forEach((file, i) => formData.append(`receipt_${i}`, file))
+      compressedActivities.forEach((file, i) => formData.append(`activity_${i}`, file))
+      compressedEvidences.forEach((file, i) => formData.append(`evidence_${i}`, file))
 
       const result = await createTransaction(formData)
       if (result.success) {

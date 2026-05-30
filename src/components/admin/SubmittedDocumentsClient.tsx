@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteCardRegistration, createCardRegistration } from '@/app/actions/cardRegistration'
 import { deleteFamilyRegistration, saveFamilyRegistration } from '@/app/actions/familyRegistration'
+import { compressImage } from '@/utils/image-compression'
 
 interface CardRegistration {
   id: string
@@ -70,10 +71,15 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
 
     setUploadingId(participantId + '_card')
     try {
+      const [compressedFront, compressedBack] = await Promise.all([
+        compressImage(data.front),
+        compressImage(data.back)
+      ])
+
       const formData = new FormData()
       formData.append('participant_id', participantId)
-      formData.append('card_images', data.front)
-      formData.append('card_images', data.back)
+      formData.append('card_images', compressedFront)
+      formData.append('card_images', compressedBack)
 
       const res = await createCardRegistration(formData)
       if (res.success) {
@@ -109,9 +115,11 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
 
     setUploadingId(participantId + '_family')
     try {
+      const compressedFile = await compressImage(file)
+
       const formData = new FormData()
       formData.append('participant_id', participantId)
-      formData.append('family_relation_photo', file)
+      formData.append('family_relation_photo', compressedFile)
 
       const res = await saveFamilyRegistration(formData)
       if (res.success) {

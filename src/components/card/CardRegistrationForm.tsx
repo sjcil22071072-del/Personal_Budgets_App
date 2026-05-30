@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCardRegistration } from '@/app/actions/cardRegistration'
+import { compressImage } from '@/utils/image-compression'
 
 type CardSide = 'front' | 'back'
 
@@ -47,9 +48,14 @@ export default function CardRegistrationForm({
     setSubmitting(true)
     setMessage(null)
     try {
+      const [compressedFront, compressedBack] = await Promise.all([
+        compressImage(frontFile),
+        compressImage(backFile),
+      ])
+
       const formData = new FormData()
-      formData.append('card_images', frontFile)
-      formData.append('card_images', backFile)
+      formData.append('card_images', compressedFront)
+      formData.append('card_images', compressedBack)
       const result = await createCardRegistration(formData)
 
       if (result.success) {

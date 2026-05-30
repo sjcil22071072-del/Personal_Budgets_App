@@ -32,167 +32,172 @@ export async function getParticipantsWithFundingSources(): Promise<ParticipantWi
 }
 
 export async function createTransaction(formData: FormData) {
-  const supabase = await createClient()
-  const adminClient = createAdminClient()
+  try {
+    const supabase = await createClient()
+    const adminClient = createAdminClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
 
-  const { data: profile } = await adminClient
-    .from('profiles')
-    .select('id')
-    .eq('id', user.id)
-    .maybeSingle()
-  const creator_id = profile ? user.id : null
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle()
+    const creator_id = profile ? user.id : null
 
-  const participant_id = formData.get('participant_id') as string
-  let funding_source_id = (formData.get('funding_source_id') as string | null) || null
-  const rawAmount = Number(formData.get('amount'))
-  const date = (formData.get('date') as string) || new Date().toISOString().split('T')[0]
-  const description = formData.get('description') as string
-  const category = (formData.get('category') as string) || '기타'
-  const memo = formData.get('memo') as string
-  const status = (formData.get('status') as 'pending' | 'confirmed') || 'pending'
-  const is_expense = formData.get('is_expense') !== 'false'
-  const rawPaymentMethod = formData.get('payment_method') as string | null
-  const payment_method = rawPaymentMethod === '계좌이체' ? '계좌이체' : '카드'
-  const place_name = (formData.get('place_name') as string) || null
-  const place_lat = formData.get('place_lat') ? Number(formData.get('place_lat')) : null
-  const place_lng = formData.get('place_lng') ? Number(formData.get('place_lng')) : null
+    const participant_id = formData.get('participant_id') as string
+    let funding_source_id = (formData.get('funding_source_id') as string | null) || null
+    const rawAmount = Number(formData.get('amount'))
+    const date = (formData.get('date') as string) || new Date().toISOString().split('T')[0]
+    const description = formData.get('description') as string
+    const category = (formData.get('category') as string) || '기타'
+    const memo = formData.get('memo') as string
+    const status = (formData.get('status') as 'pending' | 'confirmed') || 'pending'
+    const is_expense = formData.get('is_expense') !== 'false'
+    const rawPaymentMethod = formData.get('payment_method') as string | null
+    const payment_method = rawPaymentMethod === '계좌이체' ? '계좌이체' : '카드'
+    const place_name = (formData.get('place_name') as string) || null
+    const place_lat = formData.get('place_lat') ? Number(formData.get('place_lat')) : null
+    const place_lng = formData.get('place_lng') ? Number(formData.get('place_lng')) : null
 
-  // 영수증 사진 목록 (최대 20장)
-  const receiptFiles: File[] = []
-  for (let i = 0; i < 20; i++) {
-    const f = formData.get(`receipt_${i}`) as File | null
-    if (f && f.size > 0) receiptFiles.push(f)
-  }
-
-  // 활동 사진 목록 (최대 5장)
-  const activityFiles: File[] = []
-  for (let i = 0; i < 5; i++) {
-    const f = formData.get(`activity_${i}`) as File | null
-    if (f && f.size > 0) activityFiles.push(f)
-  }
-
-  // 증빙서류 파일 목록 (최대 5장)
-  const evidenceFiles: File[] = []
-  for (let i = 0; i < 5; i++) {
-    const f = formData.get(`evidence_${i}`) as File | null
-    if (f && f.size > 0) evidenceFiles.push(f)
-  }
-
-  const amount = is_expense ? rawAmount : -Math.abs(rawAmount)
-
-  if (!funding_source_id) {
-    const transactionMonth = new Date(date)
-    const transactionMonthStart = Number.isNaN(transactionMonth.getTime())
-      ? null
-      : new Date(transactionMonth.getFullYear(), transactionMonth.getMonth(), 1)
-    const { data: defaultFundingSources } = await adminClient
-      .from('funding_sources')
-      .select('id, start_date, end_date')
-      .eq('participant_id', participant_id)
-    const activeFundingSource = (defaultFundingSources || []).find((fs: any) => {
-      if (!transactionMonthStart) return true
-      if (fs.start_date) {
-        const start = new Date(fs.start_date)
-        const startMonth = new Date(start.getFullYear(), start.getMonth(), 1)
-        if (startMonth > transactionMonthStart) return false
-      }
-      if (fs.end_date) {
-        const end = new Date(fs.end_date)
-        const endMonth = new Date(end.getFullYear(), end.getMonth(), 1)
-        if (endMonth < transactionMonthStart) return false
-      }
-      return true
-    })
-    funding_source_id = activeFundingSource?.id ?? defaultFundingSources?.[0]?.id ?? null
-  }
-
-  const receipt_image_urls: string[] = []
-  const activity_image_urls: string[] = []
-  const evidence_image_urls: string[] = []
-
-  // 영수증 업로드 (최대 5장)
-  for (const [idx, file] of receiptFiles.entries()) {
-    const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const fileName = `${user.id}-${Date.now()}-receipt-${idx}.${fileExt}`
-    const { error: uploadError } = await adminClient.storage
-      .from('receipts')
-      .upload(fileName, file)
-    if (!uploadError) {
-      const { data: { publicUrl } } = adminClient.storage.from('receipts').getPublicUrl(fileName)
-      receipt_image_urls.push(publicUrl)
-    } else {
-      console.error('Receipt upload error:', uploadError)
+    // 영수증 사진 목록 (최대 20장)
+    const receiptFiles: File[] = []
+    for (let i = 0; i < 20; i++) {
+      const f = formData.get(`receipt_${i}`) as File | null
+      if (f && f.size > 0) receiptFiles.push(f)
     }
-  }
 
-  // 활동사진 업로드 (최대 5장)
-  for (const [idx, file] of activityFiles.entries()) {
-    const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const fileName = `${participant_id}/${Date.now()}-activity-${idx}.${fileExt}`
-    const { error: uploadError } = await adminClient.storage
-      .from('activity-photos')
-      .upload(fileName, file)
-    if (!uploadError) {
-      const { data: { publicUrl } } = adminClient.storage.from('activity-photos').getPublicUrl(fileName)
-      activity_image_urls.push(publicUrl)
-    } else {
-      console.error('Activity photo upload error:', uploadError)
+    // 활동 사진 목록 (최대 5장)
+    const activityFiles: File[] = []
+    for (let i = 0; i < 5; i++) {
+      const f = formData.get(`activity_${i}`) as File | null
+      if (f && f.size > 0) activityFiles.push(f)
     }
-  }
 
-  // 증빙서류 업로드 (최대 5장)
-  for (const [idx, file] of evidenceFiles.entries()) {
-    const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const fileName = `${participant_id}/${Date.now()}-evidence-${idx}.${fileExt}`
-    const { error: uploadError } = await adminClient.storage
-      .from('evidence-documents')
-      .upload(fileName, file)
-    if (!uploadError) {
-      const { data: { publicUrl } } = adminClient.storage
+    // 증빙서류 파일 목록 (최대 5장)
+    const evidenceFiles: File[] = []
+    for (let i = 0; i < 5; i++) {
+      const f = formData.get(`evidence_${i}`) as File | null
+      if (f && f.size > 0) evidenceFiles.push(f)
+    }
+
+    const amount = is_expense ? rawAmount : -Math.abs(rawAmount)
+
+    if (!funding_source_id) {
+      const transactionMonth = new Date(date)
+      const transactionMonthStart = Number.isNaN(transactionMonth.getTime())
+        ? null
+        : new Date(transactionMonth.getFullYear(), transactionMonth.getMonth(), 1)
+      const { data: defaultFundingSources } = await adminClient
+        .from('funding_sources')
+        .select('id, start_date, end_date')
+        .eq('participant_id', participant_id)
+      const activeFundingSource = (defaultFundingSources || []).find((fs: any) => {
+        if (!transactionMonthStart) return true
+        if (fs.start_date) {
+          const start = new Date(fs.start_date)
+          const startMonth = new Date(start.getFullYear(), start.getMonth(), 1)
+          if (startMonth > transactionMonthStart) return false
+        }
+        if (fs.end_date) {
+          const end = new Date(fs.end_date)
+          const endMonth = new Date(end.getFullYear(), end.getMonth(), 1)
+          if (endMonth < transactionMonthStart) return false
+        }
+        return true
+      })
+      funding_source_id = activeFundingSource?.id ?? defaultFundingSources?.[0]?.id ?? null
+    }
+
+    const receipt_image_urls: string[] = []
+    const activity_image_urls: string[] = []
+    const evidence_image_urls: string[] = []
+
+    // 영수증 업로드 (최대 5장)
+    for (const [idx, file] of receiptFiles.entries()) {
+      const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const fileName = `${user.id}-${Date.now()}-receipt-${idx}.${fileExt}`
+      const { error: uploadError } = await adminClient.storage
+        .from('receipts')
+        .upload(fileName, file)
+      if (!uploadError) {
+        const { data: { publicUrl } } = adminClient.storage.from('receipts').getPublicUrl(fileName)
+        receipt_image_urls.push(publicUrl)
+      } else {
+        console.error('Receipt upload error:', uploadError)
+      }
+    }
+
+    // 활동사진 업로드 (최대 5장)
+    for (const [idx, file] of activityFiles.entries()) {
+      const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const fileName = `${participant_id}/${Date.now()}-activity-${idx}.${fileExt}`
+      const { error: uploadError } = await adminClient.storage
+        .from('activity-photos')
+        .upload(fileName, file)
+      if (!uploadError) {
+        const { data: { publicUrl } } = adminClient.storage.from('activity-photos').getPublicUrl(fileName)
+        activity_image_urls.push(publicUrl)
+      } else {
+        console.error('Activity photo upload error:', uploadError)
+      }
+    }
+
+    // 증빙서류 업로드 (최대 5장)
+    for (const [idx, file] of evidenceFiles.entries()) {
+      const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const fileName = `${participant_id}/${Date.now()}-evidence-${idx}.${fileExt}`
+      const { error: uploadError } = await adminClient.storage
         .from('evidence-documents')
-        .getPublicUrl(fileName)
-      evidence_image_urls.push(publicUrl)
-    } else {
-      console.error('Evidence upload error:', uploadError)
+        .upload(fileName, file)
+      if (!uploadError) {
+        const { data: { publicUrl } } = adminClient.storage
+          .from('evidence-documents')
+          .getPublicUrl(fileName)
+        evidence_image_urls.push(publicUrl)
+      } else {
+        console.error('Evidence upload error:', uploadError)
+      }
     }
+
+    const { error } = await adminClient.from('transactions').insert({
+      participant_id,
+      creator_id,
+      funding_source_id,
+      amount,
+      date,
+      activity_name: description,
+      category,
+      memo: memo || null,
+      status,
+      receipt_image_urls,
+      activity_image_urls,
+      evidence_image_urls,
+      payment_method,
+      place_name,
+      place_lat,
+      place_lng,
+    })
+
+    if (error) {
+      console.error('Insert Error:', error)
+      throw new Error('Failed to create transaction')
+    }
+
+    await ensureMonthlyBudgetRollover(participant_id, true)
+
+    revalidatePath('/')
+    revalidatePath('/calendar')
+    revalidatePath('/receipt')
+    revalidatePath(`/supporter/${participant_id}/transactions`)
+    revalidatePath('/supporter/transactions')
+    revalidatePath(`/admin/participants/${participant_id}`)
+    return { success: true }
+  } catch (e: any) {
+    console.error('createTransaction error:', e)
+    return { success: false, error: e.message || '저장 중 오류가 발생했습니다.' }
   }
-
-  const { error } = await adminClient.from('transactions').insert({
-    participant_id,
-    creator_id,
-    funding_source_id,
-    amount,
-    date,
-    activity_name: description,
-    category,
-    memo: memo || null,
-    status,
-    receipt_image_urls,
-    activity_image_urls,
-    evidence_image_urls,
-    payment_method,
-    place_name,
-    place_lat,
-    place_lng,
-  })
-
-  if (error) {
-    console.error('Insert Error:', error)
-    throw new Error('Failed to create transaction')
-  }
-
-  await ensureMonthlyBudgetRollover(participant_id, true)
-
-  revalidatePath('/')
-  revalidatePath('/calendar')
-  revalidatePath('/receipt')
-  revalidatePath(`/supporter/${participant_id}/transactions`)
-  revalidatePath('/supporter/transactions')
-  revalidatePath(`/admin/participants/${participant_id}`)
-  return { success: true }
 }
 
 export async function updateTransactionStatus(transactionId: string, newStatus: 'pending' | 'confirmed' | 'rejected') {

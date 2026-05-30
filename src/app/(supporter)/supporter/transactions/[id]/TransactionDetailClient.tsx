@@ -5,6 +5,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { compressImage } from '@/utils/image-compression'
 import { formatCurrency } from '@/utils/budget-visuals'
 import ActivityCategoryPicker from '@/components/transactions/ActivityCategoryPicker'
 import {
@@ -118,7 +119,9 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     setUploadError('')
     try {
       const nextUrls = [...receiptUrls]
-      for (const file of fileList) {
+      // Compress files asynchronously
+      const compressedFiles = await Promise.all(fileList.map(f => compressImage(f)))
+      for (const file of compressedFiles) {
         const result = await addReceiptImage(tx.id, file)
         if (result.error) {
           setUploadError(result.error)
@@ -164,7 +167,8 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     setUploadingActivity(true)
     setUploadError('')
     try {
-      const result = await addActivityImage(tx.id, tx.participant_id ?? '', file)
+      const compressed = await compressImage(file)
+      const result = await addActivityImage(tx.id, tx.participant_id ?? '', compressed)
       if (result.error) {
         setUploadError(result.error)
       } else if (result.url) {
@@ -207,7 +211,8 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
     setUploadingEvidence(true)
     setUploadError('')
     try {
-      const result = await addEvidenceImage(tx.id, tx.participant_id ?? '', file)
+      const compressed = await compressImage(file)
+      const result = await addEvidenceImage(tx.id, tx.participant_id ?? '', compressed)
       if (result.error) {
         setUploadError(result.error)
       } else if (result.url) {
