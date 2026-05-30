@@ -80,10 +80,30 @@ export default async function ReceiptPage() {
           </p>
         </div>
 
-        <ReceiptUploadForm
-          participantId={participant.id}
-          fundingSources={participant.funding_sources || []}
-        />
+        {(() => {
+          const now = new Date();
+          const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const activeFundingSources = (participant.funding_sources || []).filter((fs: any) => {
+            if (fs.start_date) {
+              const start = new Date(fs.start_date);
+              const startMonthStart = new Date(start.getFullYear(), start.getMonth(), 1);
+              if (startMonthStart > currentMonthStart) return false;
+            }
+            if (fs.end_date) {
+              const end = new Date(fs.end_date);
+              const endMonthStart = new Date(end.getFullYear(), end.getMonth(), 1);
+              if (endMonthStart < currentMonthStart) return false;
+            }
+            return true;
+          });
+
+          return (
+            <ReceiptUploadForm
+              participantId={participant.id}
+              fundingSources={activeFundingSources}
+            />
+          );
+        })()}
       </main>
     </div>
   );

@@ -42,7 +42,7 @@ export async function createTransaction(formData: FormData) {
     .from('profiles')
     .select('id')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
   const creator_id = profile ? user.id : null
 
   const participant_id = formData.get('participant_id') as string
