@@ -41,6 +41,7 @@ interface Tx {
   place_lat?: number | null
   place_lng?: number | null
   receipt_reviewed?: boolean | null
+  show_memo_to_participant?: boolean | null
 }
 
 export default function TransactionDetailClient({ tx }: { tx: Tx }) {
@@ -87,6 +88,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   )
   const [status, setStatus] = useState<'pending' | 'confirmed' | 'rejected'>(tx.status)
   const [receiptReviewed, setReceiptReviewed] = useState(tx.receipt_reviewed ?? false)
+  const [showMemoToParticipant, setShowMemoToParticipant] = useState(tx.show_memo_to_participant ?? false)
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
 
   // 이미지 상태 (최대 5장씩)
@@ -285,6 +287,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
           payment_method: paymentMethod,
           status,
           receipt_reviewed: status === 'pending' ? receiptReviewed : false,
+          show_memo_to_participant: showMemoToParticipant,
         }
       )
       router.push('/supporter/review')
@@ -614,6 +617,15 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                 <label className="text-xs font-black text-zinc-500">메모</label>
                 <textarea value={memo} onChange={e => setMemo(e.target.value)} rows={2}
                   className="w-full min-w-0 p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none resize-none" />
+                <label className="flex items-center gap-2 mt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showMemoToParticipant}
+                    onChange={e => setShowMemoToParticipant(e.target.checked)}
+                    className="w-4 h-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-900"
+                  />
+                  <span className="text-xs font-bold text-zinc-600">당사자에게 메모 보이게 하기</span>
+                </label>
               </fieldset>
 
               <div className="h-px bg-zinc-200 my-2" />

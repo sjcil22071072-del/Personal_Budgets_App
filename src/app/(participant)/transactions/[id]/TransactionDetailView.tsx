@@ -23,6 +23,7 @@ interface Tx {
   activity_image_urls?: string[] | null
   evidence_image_urls?: string[] | null
   place_name?: string | null
+  show_memo_to_participant?: boolean | null
 }
 
 export default function TransactionDetailView({ tx }: { tx: Tx }) {
@@ -153,22 +154,35 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
 
       <main className="flex-1 w-full max-w-lg mx-auto px-4 py-6 flex flex-col gap-5">
 
-        {/* 거절 배너 (강조) */}
-        {tx.status === 'rejected' && (
-          <div className="p-5 rounded-2xl bg-red-50 border border-red-200 flex flex-col gap-2 shadow-sm animate-fade-in-up">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">❌</span>
-              <div>
-                <p className="font-black text-red-800 text-sm">승인이 거절되었습니다</p>
-                <p className="text-xs text-red-500 font-bold mt-0.5">담당자가 거절 사유를 남겼어요</p>
+        {/* 메모 배너 (거절 사유 또는 안내 사항) */}
+        {(tx.status === 'rejected' || tx.show_memo_to_participant) && tx.memo && (
+          tx.status === 'rejected' ? ( 
+            <div className="p-5 rounded-2xl bg-red-50 border border-red-200 flex flex-col gap-2 shadow-sm animate-fade-in-up">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">❌</span>
+                <div>
+                  <p className="font-black text-red-800 text-sm">승인이 거절되었습니다</p>
+                  <p className="text-xs text-red-500 font-bold mt-0.5">담당자가 거절 사유를 남겼어요</p>
+                </div>
               </div>
-            </div>
-            {tx.memo && (
               <div className="bg-red-100/60 rounded-xl p-3 ml-8">
                 <p className="text-sm text-red-800 font-bold leading-relaxed">{tx.memo}</p>
               </div>
-            )}
-          </div>
+            </div>
+          ) : ( 
+            <div className="p-5 rounded-2xl bg-sky-50 border border-sky-100 flex flex-col gap-2 shadow-sm animate-fade-in-up">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">ℹ️</span>
+                <div>
+                  <p className="font-black text-sky-900 text-sm">담당 선생님의 안내 사항</p>
+                  <p className="text-xs text-sky-500 font-bold mt-0.5">메모가 작성되어 안내해 드려요</p>
+                </div>
+              </div>
+              <div className="bg-sky-100/40 rounded-xl p-3 ml-8">
+                <p className="text-sm text-sky-850 font-bold leading-relaxed">{tx.memo}</p>
+              </div>
+            </div>
+          )
         )}
 
         {/* 상태 뱃지 */}

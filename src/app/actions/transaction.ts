@@ -351,6 +351,7 @@ export async function updateTransactionDetail(
     place_lat?: number | null
     place_lng?: number | null
     receipt_reviewed?: boolean | null
+    show_memo_to_participant?: boolean | null
   }
 ) {
   const supabase = await createClient()

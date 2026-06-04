@@ -192,6 +192,7 @@ export interface Database {
           place_lat: number | null
           place_lng: number | null
           receipt_reviewed: boolean
+          show_memo_to_participant: boolean
         }
         Insert: {
           id?: string
@@ -216,6 +217,7 @@ export interface Database {
           place_lat?: number | null
           place_lng?: number | null
           receipt_reviewed?: boolean
+          show_memo_to_participant?: boolean
         }
         Update: {
           id?: string
@@ -240,6 +242,7 @@ export interface Database {
           place_lat?: number | null
           place_lng?: number | null
           receipt_reviewed?: boolean
+          show_memo_to_participant?: boolean
         }
       }
       file_links: {
