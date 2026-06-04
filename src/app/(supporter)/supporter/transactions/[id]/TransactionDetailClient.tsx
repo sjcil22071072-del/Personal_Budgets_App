@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { compressImage } from '@/utils/image-compression'
@@ -72,6 +72,14 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   }
 
   const [category, setCategory] = useState(getInitialCategory)
+
+  // 분류(category)가 변경되면 활동내용(activityName)도 동일하게 자동 설정
+  useEffect(() => {
+    if (category) {
+      setActivityName(category)
+    }
+  }, [category])
+
   const [memo, setMemo] = useState(tx.memo || '')
   const [date, setDate] = useState(tx.date)
   const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>(
@@ -580,9 +588,9 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
               </div>
 
               <fieldset className="min-w-0 flex flex-col gap-2">
-                <label className="text-xs font-black text-zinc-500">활동 내용</label>
-                <input type="text" value={activityName} onChange={e => setActivityName(e.target.value)}
-                  className="w-full min-w-0 p-3 rounded-lg bg-zinc-50 ring-1 ring-zinc-200 text-zinc-900 font-medium focus:ring-zinc-400 focus:outline-none" required />
+                <label className="text-xs font-black text-zinc-500">활동 내용 (분류 선택 시 자동 입력)</label>
+                <input type="text" value={activityName} readOnly disabled
+                  className="w-full min-w-0 p-3 rounded-lg bg-zinc-100 ring-1 ring-zinc-200 text-zinc-400 font-medium cursor-not-allowed focus:outline-none" required />
               </fieldset>
 
               <fieldset className="flex flex-col gap-2">

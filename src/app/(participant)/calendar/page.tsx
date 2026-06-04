@@ -30,7 +30,7 @@ export default async function CalendarPage() {
     participantData = await adminClient
       .from('participants')
       .select('id')
-      .eq('email', userEmail)
+      .ilike('email', userEmail)
       .maybeSingle()
   }
 

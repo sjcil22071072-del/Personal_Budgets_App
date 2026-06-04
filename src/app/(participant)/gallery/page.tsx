@@ -42,7 +42,7 @@ export default async function GalleryPage({
     participantData = await adminClient
       .from('participants')
       .select('id')
-      .eq('email', userEmail)
+      .ilike('email', userEmail)
       .maybeSingle()
   }
 

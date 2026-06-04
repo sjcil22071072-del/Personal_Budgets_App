@@ -26,7 +26,7 @@ export default async function MorePage() {
     participantData = await adminClient
       .from('participants')
       .select('*')
-      .eq('email', userEmail)
+      .ilike('email', userEmail)
       .maybeSingle()
   }
 

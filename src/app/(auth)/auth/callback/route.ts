@@ -77,7 +77,7 @@ export async function GET(request: Request) {
   const { data: adminRegistration } = await adminClient
     .from('user_invitations')
     .select('id, role, used_at')
-    .eq('email', email)
+    .ilike('email', email)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -85,7 +85,7 @@ export async function GET(request: Request) {
   const { data: participantRegistration } = await adminClient
     .from('participants')
     .select('id, name')
-    .eq('email', email)
+    .ilike('email', email)
     .maybeSingle()
 
   const typedExistingProfile = existingProfile as ExistingProfile | null

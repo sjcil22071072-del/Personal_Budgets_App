@@ -46,7 +46,7 @@ export default async function ParticipantTransactionDetailPage({ params }: PageP
     participantData = await adminClient
       .from('participants')
       .select('id')
-      .eq('email', profileEmail)
+      .ilike('email', profileEmail)
       .maybeSingle()
   }
 

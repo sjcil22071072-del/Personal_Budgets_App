@@ -165,12 +165,13 @@ export async function createParticipant(formData: {
       fundingSourceCount: formData.fundingSources?.length ?? 0,
     })
     const { supabase } = await verifyAdmin()
+    const normalizedEmail = formData.email.trim().toLowerCase()
 
     // 이메일 중복 검사
     const { data: existing } = await supabase
       .from('participants')
       .select('id')
-      .eq('email', formData.email)
+      .ilike('email', normalizedEmail)
       .maybeSingle()
 
     if (existing) {
@@ -182,7 +183,7 @@ export async function createParticipant(formData: {
       .from('participants')
       .insert({
         name: formData.name,
-        email: formData.email,
+        email: normalizedEmail,
         monthly_budget_default: formData.monthlyBudget,
         yearly_budget_default: formData.yearlyBudget,
         budget_start_date: OPERATION_START_DATE,
@@ -211,14 +212,14 @@ export async function createParticipant(formData: {
     try {
       const { data: { users }, error: listError } = await supabase.auth.admin.listUsers()
       if (!listError && users) {
-        const matchedUser = users.find((u: any) => u.email?.toLowerCase() === formData.email.toLowerCase())
+        const matchedUser = users.find((u: any) => u.email?.toLowerCase() === normalizedEmail)
         if (matchedUser) {
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
               id: matchedUser.id,
               name: formData.name,
-              email: formData.email,
+              email: normalizedEmail,
               role: 'participant'
             }, { onConflict: 'id' })
           
@@ -300,18 +301,19 @@ export async function updateParticipant(participantId: string, formData: {
     const updateData: any = {}
     if (formData.name !== undefined) updateData.name = formData.name
     if (formData.email !== undefined) {
-      const { data: existing } = await supabase
-        .from('participants')
-        .select('id')
-        .eq('email', formData.email)
-        .neq('id', participantId)
-        .maybeSingle()
+       const normalizedEmail = formData.email.trim().toLowerCase()
+       const { data: existing } = await supabase
+         .from('participants')
+         .select('id')
+         .ilike('email', normalizedEmail)
+         .neq('id', participantId)
+         .maybeSingle()
 
-      if (existing) {
-        return { error: '이미 등록된 이메일(아이디)입니다.' }
-      }
-      updateData.email = formData.email
-    }
+       if (existing) {
+         return { error: '이미 등록된 이메일(아이디)입니다.' }
+       }
+       updateData.email = normalizedEmail
+     }
     if (formData.monthlyBudget !== undefined) updateData.monthly_budget_default = formData.monthlyBudget
     if (formData.yearlyBudget !== undefined) updateData.yearly_budget_default = formData.yearlyBudget
     updateData.budget_start_date = OPERATION_START_DATE
@@ -337,7 +339,9 @@ export async function updateParticipant(participantId: string, formData: {
           if (matchedUser) {
             const profileUpdate: any = {}
             if (formData.name !== undefined) profileUpdate.name = formData.name
-            if (formData.email !== undefined) profileUpdate.email = formData.email
+            if (formData.email !== undefined) {
+              profileUpdate.email = formData.email.trim().toLowerCase()
+            }
             
             if (Object.keys(profileUpdate).length > 0) {
               const { error: profileError } = await supabase
@@ -398,7 +402,7 @@ export async function deleteParticipant(participantId: string) {
         const { error: profileError } = await supabase
           .from('profiles')
           .delete()
-          .eq('email', email)
+          .ilike('email', email)
         
         if (profileError) {
           console.error('[admin.deleteParticipant] profile sync error:', profileError)
@@ -703,7 +707,7 @@ export async function deleteUsers(
 
         // 6. DB profiles 테이블에서 삭제 및 auth.users 삭제
         if (email) {
-          await supabase.from('profiles').delete().eq('email', email)
+          await supabase.from('profiles').delete().ilike('email', email)
           try {
             const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
             const matchedUser = authUsers?.find((user: any) => user.email?.toLowerCase() === email.toLowerCase())
@@ -737,7 +741,7 @@ export async function deleteUsers(
 
         // 3. 초대 정보 및 auth.users 계정 삭제
         if (email) {
-          await supabase.from('user_invitations').delete().eq('email', email)
+          await supabase.from('user_invitations').delete().ilike('email', email)
           try {
             await supabase.auth.admin.deleteUser(u.id)
           } catch (authErr) {
