@@ -27,6 +27,45 @@ export default function TransactionForm({
   const [activityFiles, setActivityFiles] = useState<File[]>([])
   const [activityPreviews, setActivityPreviews] = useState<string[]>([])
 
+  // 드래그 앤 드롭 상태
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
+  const [draggedType, setDraggedType] = useState<'receipt' | 'evidence' | 'activity' | null>(null)
+
+  const handleDragStart = (type: 'receipt' | 'evidence' | 'activity', idx: number) => {
+    setDraggedIdx(idx)
+    setDraggedType(type)
+  }
+
+  const handleDragOver = (e: React.DragEvent, type: 'receipt' | 'evidence' | 'activity') => {
+    if (draggedType === type) {
+      e.preventDefault()
+    }
+  }
+
+  const handleDrop = (
+    type: 'receipt' | 'evidence' | 'activity',
+    targetIdx: number,
+    files: File[],
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>,
+    previews: string[],
+    setPreviews: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (draggedIdx === null || draggedType !== type || draggedIdx === targetIdx) return
+
+    const nextFiles = [...files]
+    const [draggedFile] = nextFiles.splice(draggedIdx, 1)
+    nextFiles.splice(targetIdx, 0, draggedFile)
+    setFiles(nextFiles)
+
+    const nextPreviews = [...previews]
+    const [draggedPreview] = nextPreviews.splice(draggedIdx, 1)
+    nextPreviews.splice(targetIdx, 0, draggedPreview)
+    setPreviews(nextPreviews)
+
+    setDraggedIdx(null)
+    setDraggedType(null)
+  }
+
   const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || [])
     if (!newFiles.length) return
@@ -245,7 +284,14 @@ export default function TransactionForm({
           {receiptPreviews.length > 0 ? (
             <div className="grid grid-cols-4 gap-2">
               {receiptPreviews.map((src, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200">
+                <div 
+                  key={i} 
+                  draggable 
+                  onDragStart={() => handleDragStart('receipt', i)}
+                  onDragOver={(e) => handleDragOver(e, 'receipt')}
+                  onDrop={() => handleDrop('receipt', i, receiptFiles, setReceiptFiles, receiptPreviews, setReceiptPreviews)}
+                  className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200 cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 transition-all"
+                >
                   <img src={src} alt={`영수증 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                   <button
                     type="button"
@@ -285,7 +331,14 @@ export default function TransactionForm({
           {evidencePreviews.length > 0 ? (
             <div className="grid grid-cols-4 gap-2">
               {evidencePreviews.map((src, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200">
+                <div 
+                  key={i} 
+                  draggable 
+                  onDragStart={() => handleDragStart('evidence', i)}
+                  onDragOver={(e) => handleDragOver(e, 'evidence')}
+                  onDrop={() => handleDrop('evidence', i, evidenceFiles, setEvidenceFiles, evidencePreviews, setEvidencePreviews)}
+                  className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200 cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 transition-all"
+                >
                   <img src={src} alt={`증빙 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                   <button
                     type="button"
@@ -325,7 +378,14 @@ export default function TransactionForm({
           {activityPreviews.length > 0 ? (
             <div className="grid grid-cols-4 gap-2">
               {activityPreviews.map((src, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200">
+                <div 
+                  key={i} 
+                  draggable 
+                  onDragStart={() => handleDragStart('activity', i)}
+                  onDragOver={(e) => handleDragOver(e, 'activity')}
+                  onDrop={() => handleDrop('activity', i, activityFiles, setActivityFiles, activityPreviews, setActivityPreviews)}
+                  className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200 cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 transition-all"
+                >
                   <img src={src} alt={`활동 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                   <button
                     type="button"

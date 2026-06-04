@@ -42,6 +42,45 @@ export default function ReceiptUploadForm({
   const [activityFiles, setActivityFiles] = useState<File[]>([]);
   const [activityPreviews, setActivityPreviews] = useState<string[]>([]);
 
+  // 드래그 앤 드롭 상태
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [draggedType, setDraggedType] = useState<'receipt' | 'evidence' | 'activity' | null>(null);
+
+  const handleDragStart = (type: 'receipt' | 'evidence' | 'activity', idx: number) => {
+    setDraggedIdx(idx);
+    setDraggedType(type);
+  };
+
+  const handleDragOver = (e: React.DragEvent, type: 'receipt' | 'evidence' | 'activity') => {
+    if (draggedType === type) {
+      e.preventDefault();
+    }
+  };
+
+  const handleDrop = (
+    type: 'receipt' | 'evidence' | 'activity',
+    targetIdx: number,
+    files: File[],
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>,
+    previews: string[],
+    setPreviews: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (draggedIdx === null || draggedType !== type || draggedIdx === targetIdx) return;
+
+    const nextFiles = [...files];
+    const [draggedFile] = nextFiles.splice(draggedIdx, 1);
+    nextFiles.splice(targetIdx, 0, draggedFile);
+    setFiles(nextFiles);
+
+    const nextPreviews = [...previews];
+    const [draggedPreview] = nextPreviews.splice(draggedIdx, 1);
+    nextPreviews.splice(targetIdx, 0, draggedPreview);
+    setPreviews(nextPreviews);
+
+    setDraggedIdx(null);
+    setDraggedType(null);
+  };
+
   // 폼 필드 상태
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -186,7 +225,11 @@ export default function ReceiptUploadForm({
             {receiptPreviews.map((src, i) => (
               <div
                 key={i}
-                className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-100"
+                draggable
+                onDragStart={() => handleDragStart('receipt', i)}
+                onDragOver={(e) => handleDragOver(e, 'receipt')}
+                onDrop={() => handleDrop('receipt', i, receiptFiles, setReceiptFiles, receiptPreviews, setReceiptPreviews)}
+                className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-100 cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 transition-all"
               >
                 <img
                   src={src}
@@ -258,7 +301,11 @@ export default function ReceiptUploadForm({
             {evidencePreviews.map((src, i) => (
               <div
                 key={i}
-                className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-100"
+                draggable
+                onDragStart={() => handleDragStart('evidence', i)}
+                onDragOver={(e) => handleDragOver(e, 'evidence')}
+                onDrop={() => handleDrop('evidence', i, evidenceFiles, setEvidenceFiles, evidencePreviews, setEvidencePreviews)}
+                className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-100 cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 transition-all"
               >
                 <img
                   src={src}
@@ -330,7 +377,11 @@ export default function ReceiptUploadForm({
             {activityPreviews.map((src, i) => (
               <div
                 key={i}
-                className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-100"
+                draggable
+                onDragStart={() => handleDragStart('activity', i)}
+                onDragOver={(e) => handleDragOver(e, 'activity')}
+                onDrop={() => handleDrop('activity', i, activityFiles, setActivityFiles, activityPreviews, setActivityPreviews)}
+                className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-100 cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 transition-all"
               >
                 <img
                   src={src}

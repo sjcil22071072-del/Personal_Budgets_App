@@ -352,6 +352,9 @@ export async function updateTransactionDetail(
     place_lng?: number | null
     receipt_reviewed?: boolean | null
     show_memo_to_participant?: boolean | null
+    receipt_image_urls?: string[] | null
+    activity_image_urls?: string[] | null
+    evidence_image_urls?: string[] | null
   }
 ) {
   const supabase = await createClient()

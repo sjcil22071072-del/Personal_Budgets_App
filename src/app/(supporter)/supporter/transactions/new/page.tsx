@@ -47,6 +47,47 @@ function NewTransactionForm() {
   const [evidencePreviews, setEvidencePreviews] = useState<string[]>([])
   const [evidenceIdx, setEvidenceIdx] = useState(0)
 
+  // 드래그 앤 드롭 상태
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
+  const [draggedType, setDraggedType] = useState<'receipt' | 'evidence' | 'activity' | null>(null)
+
+  const handleDragStart = (type: 'receipt' | 'evidence' | 'activity', idx: number) => {
+    setDraggedIdx(idx)
+    setDraggedType(type)
+  }
+
+  const handleDragOver = (e: React.DragEvent, type: 'receipt' | 'evidence' | 'activity') => {
+    if (draggedType === type) {
+      e.preventDefault()
+    }
+  }
+
+  const handleDrop = (
+    type: 'receipt' | 'evidence' | 'activity',
+    targetIdx: number,
+    files: File[],
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>,
+    previews: string[],
+    setPreviews: React.Dispatch<React.SetStateAction<string[]>>,
+    setIdx: React.Dispatch<React.SetStateAction<number>>
+  ) => {
+    if (draggedIdx === null || draggedType !== type || draggedIdx === targetIdx) return
+
+    const nextFiles = [...files]
+    const [draggedFile] = nextFiles.splice(draggedIdx, 1)
+    nextFiles.splice(targetIdx, 0, draggedFile)
+    setFiles(nextFiles)
+
+    const nextPreviews = [...previews]
+    const [draggedPreview] = nextPreviews.splice(draggedIdx, 1)
+    nextPreviews.splice(targetIdx, 0, draggedPreview)
+    setPreviews(nextPreviews)
+
+    setIdx(targetIdx)
+    setDraggedIdx(null)
+    setDraggedType(null)
+  }
+
   const receiptInputRef = useRef<HTMLInputElement>(null)
   const activityInputRef = useRef<HTMLInputElement>(null)
   const evidenceInputRef = useRef<HTMLInputElement>(null)
@@ -327,9 +368,13 @@ function NewTransactionForm() {
                         <button
                           key={url}
                           type="button"
+                          draggable
+                          onDragStart={() => handleDragStart('receipt', i)}
+                          onDragOver={(e) => handleDragOver(e, 'receipt')}
+                          onDrop={() => handleDrop('receipt', i, receiptFiles, setReceiptFiles, receiptPreviews, setReceiptPreviews, setReceiptIdx)}
                           onClick={() => setReceiptIdx(i)}
-                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all ${
-                            i === receiptIdx ? 'ring-blue-500' : 'ring-zinc-200 hover:ring-zinc-400'
+                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
+                            i === receiptIdx ? 'ring-blue-500' : 'ring-zinc-200'
                           }`}
                         >
                           <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
@@ -373,9 +418,13 @@ function NewTransactionForm() {
                         <button
                           key={url}
                           type="button"
+                          draggable
+                          onDragStart={() => handleDragStart('activity', i)}
+                          onDragOver={(e) => handleDragOver(e, 'activity')}
+                          onDrop={() => handleDrop('activity', i, activityFiles, setActivityFiles, activityPreviews, setActivityPreviews, setActivityIdx)}
                           onClick={() => setActivityIdx(i)}
-                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all ${
-                            i === activityIdx ? 'ring-blue-500' : 'ring-zinc-200 hover:ring-zinc-400'
+                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
+                            i === activityIdx ? 'ring-blue-500' : 'ring-zinc-200'
                           }`}
                         >
                           <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
@@ -420,9 +469,13 @@ function NewTransactionForm() {
                         <button
                           key={url}
                           type="button"
+                          draggable
+                          onDragStart={() => handleDragStart('evidence', i)}
+                          onDragOver={(e) => handleDragOver(e, 'evidence')}
+                          onDrop={() => handleDrop('evidence', i, evidenceFiles, setEvidenceFiles, evidencePreviews, setEvidencePreviews, setEvidenceIdx)}
                           onClick={() => setEvidenceIdx(i)}
-                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all ${
-                            i === evidenceIdx ? 'ring-blue-500' : 'ring-zinc-200 hover:ring-zinc-400'
+                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
+                            i === evidenceIdx ? 'ring-blue-500' : 'ring-zinc-200'
                           }`}
                         >
                           <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
