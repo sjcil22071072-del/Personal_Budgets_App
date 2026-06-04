@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteCardRegistration, createCardRegistration } from '@/app/actions/cardRegistration'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 import { deleteFamilyRegistration, saveFamilyRegistration } from '@/app/actions/familyRegistration'
 import { compressImage } from '@/utils/image-compression'
 
@@ -471,24 +472,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
 
       {/* 라이트박스 이미지 확대 모달 */}
       {activeImage && (
-        <div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out transition-opacity duration-300"
-          onClick={() => setActiveImage(null)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center">
-            <img
-              src={activeImage}
-              alt="제출 문서 원본 확대"
-              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl ring-1 ring-white/10"
-            />
-            <button
-              onClick={() => setActiveImage(null)}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-lg font-bold border border-white/10 transition-colors"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
+        <ImageLightbox src={activeImage} onClose={() => setActiveImage(null)} />
       )}
     </div>
   )

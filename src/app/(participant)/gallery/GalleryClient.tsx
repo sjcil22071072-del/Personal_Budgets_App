@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 import { formatCurrency } from '@/utils/budget-visuals'
 
 interface GalleryItem {
@@ -118,23 +119,7 @@ export default function GalleryClient({ items, currentMonth, months }: Props) {
 
       {/* 라이트박스 */}
       {lightbox && (
-        <div
-          className="fixed inset-0 z-[9000] bg-black/90 flex flex-col items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <img
-            src={lightbox.src}
-            alt={lightbox.label}
-            className="max-w-full max-h-[80dvh] object-contain rounded-2xl shadow-2xl"
-          />
-          <p className="text-white text-sm font-bold mt-4 text-center">{lightbox.label}</p>
-          <button
-            onClick={() => setLightbox(null)}
-            className="mt-4 px-6 py-3 rounded-2xl bg-white/10 text-white font-bold text-sm"
-          >
-            닫기
-          </button>
-        </div>
+        <ImageLightbox src={lightbox.src} alt={lightbox.label} onClose={() => setLightbox(null)} />
       )}
     </>
   )

@@ -4,6 +4,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useRef, Suspense } from 'react'
 import Link from 'next/link'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 import { createTransaction, getParticipantsWithFundingSources } from '@/app/actions/transaction'
 import type { ParticipantWithFundingSources } from '@/app/actions/transaction'
 import ActivityCategoryPicker from '@/components/transactions/ActivityCategoryPicker'
@@ -618,26 +619,7 @@ function NewTransactionForm() {
 
       {/* 이미지 확대 모달 */}
       {zoomImageUrl && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 cursor-zoom-out animate-in fade-in duration-200"
-          onClick={() => setZoomImageUrl(null)}
-        >
-          <div className="relative max-w-5xl max-h-[90vh] flex items-center justify-center">
-            <img
-              src={zoomImageUrl}
-              alt="확대된 이미지"
-              className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl cursor-default animate-in zoom-in-95 duration-200"
-              onClick={e => e.stopPropagation()}
-            />
-            <button
-              onClick={() => setZoomImageUrl(null)}
-              className="absolute -top-12 right-0 p-2 text-white hover:text-zinc-300 text-3xl font-light transition-colors"
-              title="닫기"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
+        <ImageLightbox src={zoomImageUrl} onClose={() => setZoomImageUrl(null)} />
       )}
     </div>
   )
