@@ -371,12 +371,20 @@ export async function updateTransactionDetail(
     .single()
   const participant_id = tx?.participant_id
 
+  // undefined 필드를 제거하여 PostgREST 쿼리 오류 방지
+  const cleanUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([_, v]) => v !== undefined)
+  )
+
   // Balance is updated automatically by the database trigger calculate_funding_source_balance
   const { error } = await adminClient
     .from('transactions')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update({ ...cleanUpdates, updated_at: new Date().toISOString() })
     .eq('id', transactionId)
-  if (error) throw new Error('Failed to update transaction')
+  if (error) {
+    console.error('Failed to update transaction in DB:', error)
+    throw new Error(`Failed to update transaction: ${error.message} (${error.details || ''})`)
+  }
 
   if (participant_id) {
     await ensureMonthlyBudgetRollover(participant_id, true)
@@ -446,14 +454,19 @@ export async function updateTransaction(
     .single()
   const participant_id = tx?.participant_id
 
+  // undefined 필드를 제거하여 PostgREST 쿼리 오류 방지
+  const cleanUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([_, v]) => v !== undefined)
+  )
+
   const { error } = await adminClient
     .from('transactions')
-    .update(updates)
+    .update(cleanUpdates)
     .eq('id', transactionId)
 
   if (error) {
     console.error('Update Error:', error)
-    throw new Error('Failed to update transaction')
+    throw new Error(`Failed to update transaction: ${error.message} (${error.details || ''})`)
   }
 
   if (participant_id) {
