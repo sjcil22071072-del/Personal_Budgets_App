@@ -77,7 +77,7 @@ export default function FamilyRegistrationForm({
             />
             <div className="aspect-[4/3] overflow-hidden rounded-3xl border-2 border-dashed border-zinc-200 bg-zinc-50 flex items-center justify-center">
               {preview ? (
-                <img src={preview} alt="증명서 미리보기" className="h-full w-full object-cover" />
+                <img src={preview} alt="증명서 미리보기" className="h-full w-full object-contain bg-zinc-50" />
               ) : (
                 <div className="flex flex-col items-center justify-center gap-2 text-zinc-400">
                   <span className="text-4xl">📄</span>
@@ -159,7 +159,7 @@ export default function FamilyRegistrationForm({
                 <img
                   src={initialRegistration.image_url}
                   alt="가족관계증명서"
-                  className="h-full w-full object-cover group-hover:opacity-90 transition-opacity"
+                  className="h-full w-full object-contain bg-zinc-50 group-hover:opacity-90 transition-opacity"
                 />
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-sm font-bold gap-1">
                   🔍 크게 보기

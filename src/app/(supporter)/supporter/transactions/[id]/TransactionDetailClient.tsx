@@ -439,7 +439,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                             i === receiptIdx ? 'ring-blue-500' : 'ring-zinc-200 hover:ring-zinc-400'
                           }`}
                         >
-                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                         </button>
                       ))}
                     </div>
@@ -486,7 +486,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                             i === activityIdx ? 'ring-blue-500' : 'ring-zinc-200 hover:ring-zinc-400'
                           }`}
                         >
-                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                         </button>
                       ))}
                     </div>
@@ -534,7 +534,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                             i === evidenceIdx ? 'ring-blue-500' : 'ring-zinc-200 hover:ring-zinc-400'
                           }`}
                         >
-                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                         </button>
                       ))}
                     </div>

@@ -191,7 +191,7 @@ export default function ReceiptUploadForm({
                 <img
                   src={src}
                   alt={`영수증 ${i + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-zinc-50"
                 />
                 <button
                   type="button"
@@ -263,7 +263,7 @@ export default function ReceiptUploadForm({
                 <img
                   src={src}
                   alt={`증빙 ${i + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-zinc-50"
                 />
                 <button
                   type="button"
@@ -335,7 +335,7 @@ export default function ReceiptUploadForm({
                 <img
                   src={src}
                   alt={`활동 ${i + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-zinc-50"
                 />
                 <button
                   type="button"

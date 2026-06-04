@@ -333,7 +333,7 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
                           }`}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                         </button>
                       ))}
                     </div>

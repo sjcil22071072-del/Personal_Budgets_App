@@ -285,7 +285,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                           <img
                             src={p.familyRelation.imageUrl!}
                             alt={`${p.name} 가족관계증명서`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-black gap-1">
                             <span>🔍</span> 크게 보기
@@ -353,7 +353,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                                   <img
                                     src={url}
                                     alt={`${p.name} 카드 #${cardIdx + 1} ${imgIdx === 0 ? '앞면' : '뒷면'}`}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
                                   />
                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-black gap-0.5">
                                     <span>🔍</span> {imgIdx === 0 ? '앞면' : '뒷면'}
@@ -390,7 +390,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                               <img
                                 src={selectedCardFiles[p.id].frontPreview!}
                                 alt="앞면 미리보기"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain bg-zinc-50"
                               />
                             ) : (
                               <>
@@ -415,7 +415,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                               <img
                                 src={selectedCardFiles[p.id].backPreview!}
                                 alt="뒷면 미리보기"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain bg-zinc-50"
                               />
                             ) : (
                               <>

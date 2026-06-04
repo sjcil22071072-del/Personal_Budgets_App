@@ -246,7 +246,7 @@ export default function TransactionForm({
             <div className="grid grid-cols-4 gap-2">
               {receiptPreviews.map((src, i) => (
                 <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200">
-                  <img src={src} alt={`영수증 ${i + 1}`} className="w-full h-full object-cover" />
+                  <img src={src} alt={`영수증 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                   <button
                     type="button"
                     onClick={() => handleRemoveReceipt(i)}
@@ -286,7 +286,7 @@ export default function TransactionForm({
             <div className="grid grid-cols-4 gap-2">
               {evidencePreviews.map((src, i) => (
                 <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200">
-                  <img src={src} alt={`증빙 ${i + 1}`} className="w-full h-full object-cover" />
+                  <img src={src} alt={`증빙 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                   <button
                     type="button"
                     onClick={() => handleRemoveEvidence(i)}
@@ -326,7 +326,7 @@ export default function TransactionForm({
             <div className="grid grid-cols-4 gap-2">
               {activityPreviews.map((src, i) => (
                 <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 ring-1 ring-zinc-200">
-                  <img src={src} alt={`활동 ${i + 1}`} className="w-full h-full object-cover" />
+                  <img src={src} alt={`활동 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
                   <button
                     type="button"
                     onClick={() => handleRemoveActivity(i)}

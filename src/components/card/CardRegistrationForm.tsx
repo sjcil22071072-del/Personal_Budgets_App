@@ -145,7 +145,7 @@ export default function CardRegistrationForm({
                       <img
                         src={url}
                         alt={`등록한 카드 ${index === 0 ? '앞면' : index === 1 ? '뒷면' : `${index + 1}번째 사진`}`}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain bg-zinc-50"
                       />
                     </a>
                   ))}
@@ -178,7 +178,7 @@ function CardImagePicker({
       />
       <div className="aspect-[4/3] overflow-hidden rounded-3xl border-2 border-dashed border-zinc-200 bg-zinc-50">
         {preview ? (
-          <img src={preview} alt={`${label} 미리보기`} className="h-full w-full object-cover" />
+          <img src={preview} alt={`${label} 미리보기`} className="h-full w-full object-contain bg-zinc-50" />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-zinc-400">
             <span className="text-4xl">💳</span>
