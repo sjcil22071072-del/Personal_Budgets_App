@@ -59,7 +59,7 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       }
     }
 
-    const startDate = participant.budget_start_date || new Date().toISOString().split('T')[0]
+    const startDate = participant.budget_start_date || '2026-05-01'
     const startMonth = new Date(startDate)
     const resolvedStartMonth = Number.isNaN(startMonth.getTime()) ? currentMonth : new Date(startMonth.getFullYear(), startMonth.getMonth(), 1)
 
@@ -89,21 +89,6 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
     for (const fundingSource of sortedFundingSources) {
       const effectiveStartDate = fundingSource.start_date || startDate
 
-      // 해당 재원에 매칭되는 거래 내역 필터링 (날짜 범위 및 fallback 고려)
-      const fsTransactions = (spentData || []).filter((tx) => {
-        if (tx.date < effectiveStartDate) return false
-        if (fundingSource.end_date && tx.date > fundingSource.end_date) return false
-
-        const txFundingSourceId = tx.funding_source_id || null
-        if (txFundingSourceId === fundingSource.id) return true
-        if (!txFundingSourceId || !fundingSourceIds.has(txFundingSourceId)) {
-          return getFallbackFundingSourceIdForDate(tx.date, sortedFundingSources) === fundingSource.id
-        }
-        return false
-      })
-
-      const totalSpent = fsTransactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
-
       // 활성 월 계산 및 한계 월 도출
       const fsStart = fundingSource.start_date ? new Date(fundingSource.start_date) : null
       const fsResolvedStartMonth = fsStart && !Number.isNaN(fsStart.getTime()) 
@@ -115,6 +100,25 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
         ? new Date(fsEnd.getFullYear(), fsEnd.getMonth(), 1)
         : null
       const limitMonth = fsResolvedEndMonth && fsResolvedEndMonth < currentMonth ? fsResolvedEndMonth : currentMonth
+
+      const nextMonthOfLimit = new Date(limitMonth.getFullYear(), limitMonth.getMonth() + 1, 1)
+      const limitMonthEndStr = nextMonthOfLimit.toISOString().split('T')[0]
+
+      // 해당 재원에 매칭되는 거래 내역 필터링 (날짜 범위 및 fallback 고려)
+      const fsTransactions = (spentData || []).filter((tx) => {
+        if (tx.date < effectiveStartDate) return false
+        if (fundingSource.end_date && tx.date > fundingSource.end_date) return false
+        if (tx.date >= limitMonthEndStr) return false
+
+        const txFundingSourceId = tx.funding_source_id || null
+        if (txFundingSourceId === fundingSource.id) return true
+        if (!txFundingSourceId || !fundingSourceIds.has(txFundingSourceId)) {
+          return getFallbackFundingSourceIdForDate(tx.date, sortedFundingSources) === fundingSource.id
+        }
+        return false
+      })
+
+      const totalSpent = fsTransactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
 
       // 이번 달 기준 종료 여부 판단
       const isEnded = fsResolvedEndMonth && fsResolvedEndMonth < currentMonth

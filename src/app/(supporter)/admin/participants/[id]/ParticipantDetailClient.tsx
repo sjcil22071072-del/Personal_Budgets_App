@@ -328,7 +328,7 @@ export default function ParticipantDetailClient({
           </div>
 
           {fundingSources.map((fs: any) => {
-            const fsPercentage = Number(fs.monthly_budget) > 0 ? Math.round((Number(fs.current_month_balance) / Number(fs.monthly_budget)) * 100) : 0
+            const fsPercentage = Number(fs.monthly_budget) > 0 ? Math.max(0, Math.round((Number(fs.current_month_balance) / Number(fs.monthly_budget)) * 100)) : 0
             const isEditingThis = editingFsId === fs.id
 
             // 날짜 기반 상태 확인
