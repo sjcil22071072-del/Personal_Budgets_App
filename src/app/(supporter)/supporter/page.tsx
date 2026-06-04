@@ -89,7 +89,7 @@ export default async function SupporterPage() {
               )
               const totalBalance = fsList.reduce((acc: number, fs: any) => acc + Number(fs.current_month_balance), 0)
               const totalBudget = fsList.reduce((acc: number, fs: any) => acc + Number(fs.monthly_budget), 0)
-              const percentage = totalBudget > 0 ? Math.round((totalBalance / totalBudget) * 100) : 0
+              const percentage = totalBudget > 0 ? Math.max(0, Math.round((totalBalance / totalBudget) * 100)) : 0
 
               return (
                 <Link

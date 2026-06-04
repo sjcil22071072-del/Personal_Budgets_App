@@ -50,7 +50,7 @@ export default async function AdminParticipantBoard() {
     const balance =
       activeFs.reduce((a: number, fs: any) => a + Number(fs.current_month_balance || 0), 0) || budget
     const spent = Math.max(0, budget - balance)
-    const pct = budget > 0 ? Math.round((balance / budget) * 100) : 100
+    const pct = budget > 0 ? Math.max(0, Math.round((balance / budget) * 100)) : 100
 
     const ptxs = (transactions || []).filter((t: any) => t.participant_id === p.id)
     const pendingCount = ptxs.filter((t: any) => t.status === 'pending').length

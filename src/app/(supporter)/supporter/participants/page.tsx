@@ -75,7 +75,7 @@ export default async function ParticipantsOverviewPage() {
               const spent = totalBudget - totalBalance;
               const pct =
                 totalBudget > 0
-                  ? Math.min(100, Math.round((spent / totalBudget) * 100))
+                  ? Math.max(0, Math.min(100, Math.round((spent / totalBudget) * 100)))
                   : 0;
 
               return (
