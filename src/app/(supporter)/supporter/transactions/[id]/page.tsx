@@ -2,9 +2,11 @@ import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import TransactionDetailClient from "./TransactionDetailClient";
-import { getSignedImageUrl } from "@/app/actions/storage";
+import { extractStoragePath } from "@/utils/supabase/storage";
 import { isStaffRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
+
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -37,20 +39,39 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     .eq("id", id)
     .single();
 
+  const getSignedUrlLocal = async (url: string | null, bucket: string) => {
+    if (!url) return null;
+    const path = extractStoragePath(url, bucket);
+    if (!path) return null;
+    const isPdf = path.toLowerCase().endsWith('.pdf');
+    const options = isPdf 
+      ? undefined 
+      : {
+          transform: {
+            width: 1000,
+            quality: 80,
+          }
+        };
+    const { data } = await adminClient.storage
+      .from(bucket)
+      .createSignedUrl(path, 3600, options);
+    return data?.signedUrl ?? null;
+  };
+
   const [signedReceiptUrls, signedActivityUrls, signedEvidenceUrls] = await Promise.all([
     Promise.all(
       (tx?.receipt_image_urls || []).map((url: string) =>
-        getSignedImageUrl(url, "receipts")
+        getSignedUrlLocal(url, "receipts")
       )
     ),
     Promise.all(
       (tx?.activity_image_urls || []).map((url: string) =>
-        getSignedImageUrl(url, "activity-photos")
+        getSignedUrlLocal(url, "activity-photos")
       )
     ),
     Promise.all(
       (tx?.evidence_image_urls || []).map((url: string) =>
-        getSignedImageUrl(url, "evidence-documents")
+        getSignedUrlLocal(url, "evidence-documents")
       )
     ),
   ]);
