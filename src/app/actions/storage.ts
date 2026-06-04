@@ -38,12 +38,17 @@ export async function getSignedImageUrls(
     }
   }
 
-  // receipts 버킷 signed URLs 일괄 생성
+  // receipts 버킷 signed URLs 일괄 생성 (썸네일용 최적화)
   if (receiptPaths.length > 0) {
     const uniqueReceiptPaths = Array.from(new Set(receiptPaths.map(p => p.path)))
     const { data, error } = await admin.storage
       .from('receipts')
-      .createSignedUrls(uniqueReceiptPaths, SIGNED_URL_EXPIRES)
+      .createSignedUrls(uniqueReceiptPaths, SIGNED_URL_EXPIRES, {
+        transform: {
+          width: 300,
+          quality: 70,
+        }
+      })
     if (error) {
       console.error('Failed to create signed URLs for receipts:', error)
     }
@@ -59,12 +64,17 @@ export async function getSignedImageUrls(
     }
   }
 
-  // activity-photos 버킷 signed URLs 일괄 생성
+  // activity-photos 버킷 signed URLs 일괄 생성 (썸네일용 최적화)
   if (activityPaths.length > 0) {
     const uniqueActivityPaths = Array.from(new Set(activityPaths.map(p => p.path)))
     const { data, error } = await admin.storage
       .from('activity-photos')
-      .createSignedUrls(uniqueActivityPaths, SIGNED_URL_EXPIRES)
+      .createSignedUrls(uniqueActivityPaths, SIGNED_URL_EXPIRES, {
+        transform: {
+          width: 300,
+          quality: 70,
+        }
+      })
     if (error) {
       console.error('Failed to create signed URLs for activity-photos:', error)
     }
@@ -103,9 +113,19 @@ export async function getSignedImageUrl(
   if (!path) return null
 
   const admin = createAdminClient()
+  const isPdf = path.toLowerCase().endsWith('.pdf')
+  const options = isPdf 
+    ? undefined 
+    : {
+        transform: {
+          width: 1000,
+          quality: 80,
+        }
+      }
+
   const { data, error } = await admin.storage  // error 추가
     .from(bucket)
-    .createSignedUrl(path, SIGNED_URL_EXPIRES)
+    .createSignedUrl(path, SIGNED_URL_EXPIRES, options)
 
   console.log('signedUrl:', data?.signedUrl, 'error:', error) // 추가
   return data?.signedUrl ?? null
