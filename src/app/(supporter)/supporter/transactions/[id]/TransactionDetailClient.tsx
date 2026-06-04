@@ -287,7 +287,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
           receipt_reviewed: status === 'pending' ? receiptReviewed : false,
         }
       )
-      router.push('/supporter/transactions')
+      router.push('/supporter/review')
       router.refresh()
     } catch (e: any) {
       setError(e.message || '저장에 실패했습니다.')
