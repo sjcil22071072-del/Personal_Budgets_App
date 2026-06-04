@@ -41,53 +41,59 @@ export async function getSignedImageUrls(
   // receipts 버킷 signed URLs 일괄 생성 (썸네일용 최적화)
   if (receiptPaths.length > 0) {
     const uniqueReceiptPaths = Array.from(new Set(receiptPaths.map(p => p.path)))
-    const { data, error } = await admin.storage
-      .from('receipts')
-      .createSignedUrls(uniqueReceiptPaths, SIGNED_URL_EXPIRES, {
-        transform: {
-          width: 300,
-          quality: 70,
-        }
-      })
-    if (error) {
-      console.error('Failed to create signed URLs for receipts:', error)
-    }
-    if (data) {
-      data.forEach(item => {
-        if (item.signedUrl && item.path) {
-          const matched = receiptPaths.filter(p => p.path === item.path)
-          matched.forEach(p => {
-            result[p.id] = { ...result[p.id], receipt: item.signedUrl as string }
+    const signedUrls = await Promise.all(
+      uniqueReceiptPaths.map(async path => {
+        const { data, error } = await admin.storage
+          .from('receipts')
+          .createSignedUrl(path, SIGNED_URL_EXPIRES, {
+            transform: {
+              width: 300,
+              quality: 70,
+            }
           })
+        if (error) {
+          console.error(`Failed to create signed URL for receipt path ${path}:`, error)
         }
+        return { path, signedUrl: data?.signedUrl || null }
       })
-    }
+    )
+    signedUrls.forEach(item => {
+      if (item.signedUrl) {
+        const matched = receiptPaths.filter(p => p.path === item.path)
+        matched.forEach(p => {
+          result[p.id] = { ...result[p.id], receipt: item.signedUrl as string }
+        })
+      }
+    })
   }
 
   // activity-photos 버킷 signed URLs 일괄 생성 (썸네일용 최적화)
   if (activityPaths.length > 0) {
     const uniqueActivityPaths = Array.from(new Set(activityPaths.map(p => p.path)))
-    const { data, error } = await admin.storage
-      .from('activity-photos')
-      .createSignedUrls(uniqueActivityPaths, SIGNED_URL_EXPIRES, {
-        transform: {
-          width: 300,
-          quality: 70,
-        }
-      })
-    if (error) {
-      console.error('Failed to create signed URLs for activity-photos:', error)
-    }
-    if (data) {
-      data.forEach(item => {
-        if (item.signedUrl && item.path) {
-          const matched = activityPaths.filter(p => p.path === item.path)
-          matched.forEach(p => {
-            result[p.id] = { ...result[p.id], activity: item.signedUrl as string }
+    const signedUrls = await Promise.all(
+      uniqueActivityPaths.map(async path => {
+        const { data, error } = await admin.storage
+          .from('activity-photos')
+          .createSignedUrl(path, SIGNED_URL_EXPIRES, {
+            transform: {
+              width: 300,
+              quality: 70,
+            }
           })
+        if (error) {
+          console.error(`Failed to create signed URL for activity photo path ${path}:`, error)
         }
+        return { path, signedUrl: data?.signedUrl || null }
       })
-    }
+    )
+    signedUrls.forEach(item => {
+      if (item.signedUrl) {
+        const matched = activityPaths.filter(p => p.path === item.path)
+        matched.forEach(p => {
+          result[p.id] = { ...result[p.id], activity: item.signedUrl as string }
+        })
+      }
+    })
   }
 
   return result
