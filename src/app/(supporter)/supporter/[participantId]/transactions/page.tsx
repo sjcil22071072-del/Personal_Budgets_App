@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { Database } from '@/types/database'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import TransactionActions from '@/components/transactions/TransactionActions'
 import TransactionFilters from '@/components/transactions/TransactionFilters'
 
@@ -104,7 +105,9 @@ export default async function TransactionsPage({
         </Link>
       </div>
 
-      <TransactionFilters fundingSources={fundingSources || []} />
+      <Suspense fallback={<div className="h-20 bg-white rounded-lg animate-pulse mb-6 border border-gray-100" />}>
+        <TransactionFilters fundingSources={fundingSources || []} />
+      </Suspense>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">

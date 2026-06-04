@@ -10,7 +10,7 @@ import { useState, useEffect, Suspense } from "react";
 
 function GoogleLoginContent() {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const error = searchParams?.get("error");
   const [loading, setLoading] = useState(false);
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
 

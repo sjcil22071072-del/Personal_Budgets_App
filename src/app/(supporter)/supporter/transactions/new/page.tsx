@@ -79,7 +79,7 @@ function NewTransactionForm() {
     try {
       const data = await getParticipantsWithFundingSources()
       setParticipants(data)
-      const queryId = searchParams.get('participantId') || searchParams.get('participant') || ''
+      const queryId = (searchParams?.get('participantId') || searchParams?.get('participant') || '')
       if (queryId && data.some(p => p.id === queryId)) {
         setSelectedParticipant(queryId)
       } else if (data.length === 1) {

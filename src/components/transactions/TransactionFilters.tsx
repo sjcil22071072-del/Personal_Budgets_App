@@ -12,13 +12,13 @@ export default function TransactionFilters({
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const currentMonth = searchParams.get('month') || new Date().toISOString().slice(0, 7)
-  const currentSource = searchParams.get('sourceId') || 'all'
-  const currentMajor = searchParams.get('categoryMajor') || 'all'
-  const currentMinor = searchParams.get('categoryMinor') || 'all'
+  const currentMonth = searchParams?.get('month') || new Date().toISOString().slice(0, 7)
+  const currentSource = searchParams?.get('sourceId') || 'all'
+  const currentMajor = searchParams?.get('categoryMajor') || 'all'
+  const currentMinor = searchParams?.get('categoryMinor') || 'all'
 
   const updateFilters = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams?.toString() || '')
     if (value && value !== 'all') {
       params.set(key, value)
     } else {
@@ -28,7 +28,7 @@ export default function TransactionFilters({
   }
 
   const handleMajorChange = (majorValue: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams?.toString() || '')
     if (majorValue && majorValue !== 'all') {
       params.set('categoryMajor', majorValue)
     } else {
@@ -39,7 +39,7 @@ export default function TransactionFilters({
   }
 
   const handleMinorChange = (minorValue: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams?.toString() || '')
     if (minorValue && minorValue !== 'all') {
       params.set('categoryMinor', minorValue)
     } else {
@@ -53,10 +53,10 @@ export default function TransactionFilters({
   const minorOptions = selectedGroup ? selectedGroup.items : []
 
   const hasAnyFilter = 
-    searchParams.has('month') || 
-    searchParams.has('sourceId') || 
-    searchParams.has('categoryMajor') || 
-    searchParams.has('categoryMinor')
+    !!(searchParams?.has('month') || 
+    searchParams?.has('sourceId') || 
+    searchParams?.has('categoryMajor') || 
+    searchParams?.has('categoryMinor'))
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-4 items-center">
