@@ -9,6 +9,8 @@ import ActivityCategoryPicker, {
   getActivityMajor,
 } from "@/components/transactions/ActivityCategoryPicker"
 import { updateTransaction, deleteTransaction } from '@/app/actions/transaction'
+import { extractStoragePath } from '@/utils/supabase/storage'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 
 interface Tx {
   id: string
@@ -24,6 +26,7 @@ interface Tx {
   evidence_image_urls?: string[] | null
   place_name?: string | null
   show_memo_to_participant?: boolean | null
+  image_rotations?: any | null
 }
 
 export default function TransactionDetailView({ tx }: { tx: Tx }) {
@@ -103,6 +106,7 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
 
   const [viewTab, setViewTab] = useState<'receipt' | 'activity' | 'evidence'>(initialTab)
   const [imgIdx, setImgIdx] = useState(0)
+  const [zoomTargetUrl, setZoomTargetUrl] = useState<string | null>(null)
 
   const currentUrls =
     viewTab === 'receipt'
@@ -314,30 +318,53 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
             <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-4 flex flex-col items-center gap-3">
               {currentUrls.length > 0 ? (
                 <>
-                  <div className="relative w-full rounded-xl overflow-hidden bg-zinc-100" style={{ minHeight: 240 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={currentUrls[imgIdx]}
-                      alt={`사진 ${imgIdx + 1}`}
-                      className="w-full max-h-[400px] object-contain mx-auto block"
-                    />
-                  </div>
-                  {currentUrls.length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto pb-1 w-full justify-center">
-                      {currentUrls.map((url, i) => (
-                        <button
-                          key={`${url}-${i}`}
-                          onClick={() => setImgIdx(i)}
-                          className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden ring-2 transition-all ${
-                            i === imgIdx ? 'ring-blue-500 scale-105' : 'ring-zinc-200 hover:ring-zinc-400'
-                          }`}
+                  {(() => {
+                    const bucket = viewTab === 'receipt' ? 'receipts' : viewTab === 'activity' ? 'activity-photos' : 'evidence-documents'
+                    const mainPath = extractStoragePath(currentUrls[imgIdx], bucket) || currentUrls[imgIdx]
+                    const mainRotation = (tx.image_rotations as any)?.[mainPath] ?? 0
+                    return (
+                      <>
+                        <div
+                          className="relative w-full rounded-xl overflow-hidden bg-zinc-100 cursor-zoom-in"
+                          style={{ minHeight: 240 }}
+                          onClick={() => setZoomTargetUrl(currentUrls[imgIdx])}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                          <img
+                            src={currentUrls[imgIdx]}
+                            alt={`사진 ${imgIdx + 1}`}
+                            style={{ transform: `rotate(${mainRotation}deg)` }}
+                            className="w-full max-h-[400px] object-contain mx-auto block transition-transform duration-300"
+                          />
+                        </div>
+                        {currentUrls.length > 1 && (
+                          <div className="flex gap-2 overflow-x-auto pb-1 w-full justify-center">
+                            {currentUrls.map((url, i) => {
+                              const path = extractStoragePath(url, bucket) || url
+                              const rotation = (tx.image_rotations as any)?.[path] ?? 0
+                              return (
+                                <button
+                                  key={`${url}-${i}`}
+                                  onClick={() => setImgIdx(i)}
+                                  className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden ring-2 transition-all ${
+                                    i === imgIdx ? 'ring-blue-500 scale-105' : 'ring-zinc-200 hover:ring-zinc-400'
+                                  }`}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={url}
+                                    alt={`썸네일 ${i + 1}`}
+                                    style={{ transform: `rotate(${rotation}deg)` }}
+                                    className="w-full h-full object-contain bg-zinc-50"
+                                  />
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()}
                   <p className="text-xs text-zinc-400 font-bold">{imgIdx + 1} / {currentUrls.length}장</p>
                 </>
               ) : (
@@ -414,6 +441,19 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
 
 
       </main>
+
+      {zoomTargetUrl && (
+        <ImageLightbox
+          src={zoomTargetUrl}
+          initialRotation={(() => {
+            const bucket = viewTab === 'receipt' ? 'receipts' : viewTab === 'activity' ? 'activity-photos' : 'evidence-documents'
+            const path = extractStoragePath(zoomTargetUrl, bucket) || zoomTargetUrl
+            return (tx.image_rotations as any)?.[path] ?? 0
+          })()}
+          showRotate={false}
+          onClose={() => setZoomTargetUrl(null)}
+        />
+      )}
     </div>
   )
 }

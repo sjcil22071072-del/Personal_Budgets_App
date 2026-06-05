@@ -28,12 +28,12 @@ export default async function SubmittedDocumentsPage() {
     { data: cardRegs },
   ] = await Promise.all([
     adminClient.from('participants').select('id, name').order('name', { ascending: true }),
-    adminClient.from('family_registrations').select('participant_id, image_url, created_at'),
-    adminClient.from('card_registrations').select('id, participant_id, image_urls, created_at').order('created_at', { ascending: false }),
+    adminClient.from('family_registrations').select('participant_id, image_url, image_rotation, created_at'),
+    adminClient.from('card_registrations').select('id, participant_id, image_urls, image_rotations, created_at').order('created_at', { ascending: false }),
   ])
 
   // 가족관계증명서 이미지 signed URL 생성
-  const familyMap = new Map<string, { imageUrl: string | null; createdAt: string | null }>()
+  const familyMap = new Map<string, { imageUrl: string | null; imageRotation: number; createdAt: string | null }>()
   for (const fr of familyRegs ?? []) {
     const pid = (fr as any).participant_id
     let signedUrl: string | null = null
@@ -48,11 +48,11 @@ export default async function SubmittedDocumentsPage() {
       }
       if (!signedUrl) signedUrl = rawUrl
     }
-    familyMap.set(pid, { imageUrl: signedUrl, createdAt: (fr as any).created_at })
+    familyMap.set(pid, { imageUrl: signedUrl, imageRotation: (fr as any).image_rotation ?? 0, createdAt: (fr as any).created_at })
   }
 
   // 카드 등록 이미지 signed URL 생성 (당사자당 복수 건 지원)
-  const cardMap = new Map<string, { id: string; imageUrls: string[]; createdAt: string | null }[]>()
+  const cardMap = new Map<string, { id: string; imageUrls: string[]; imageRotations: Record<string, number>; createdAt: string | null }[]>()
   for (const cr of cardRegs ?? []) {
     const pid = (cr as any).participant_id
     const rawUrls: string[] = (cr as any).image_urls ?? []
@@ -69,7 +69,7 @@ export default async function SubmittedDocumentsPage() {
       }
     }
     const list = cardMap.get(pid) ?? []
-    list.push({ id: (cr as any).id, imageUrls: signedUrls, createdAt: (cr as any).created_at })
+    list.push({ id: (cr as any).id, imageUrls: signedUrls, imageRotations: (cr as any).image_rotations ?? {}, createdAt: (cr as any).created_at })
     cardMap.set(pid, list)
   }
 
@@ -83,11 +83,13 @@ export default async function SubmittedDocumentsPage() {
       familyRelation: {
         registered: !!family,
         imageUrl: family?.imageUrl ?? null,
+        imageRotation: family?.imageRotation ?? 0,
         createdAt: family?.createdAt ?? null,
       },
       cardRegistrations: cards.map(c => ({
         id: c.id,
         imageUrls: c.imageUrls,
+        imageRotations: c.imageRotations,
         createdAt: c.createdAt,
       })),
     }

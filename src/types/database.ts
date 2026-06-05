@@ -89,18 +89,21 @@ export interface Database {
           id: string
           participant_id: string
           image_urls: string[]
+          image_rotations: Json
           created_at: string
         }
         Insert: {
           id?: string
           participant_id: string
           image_urls: string[]
+          image_rotations?: Json
           created_at?: string
         }
         Update: {
           id?: string
           participant_id?: string
           image_urls?: string[]
+          image_rotations?: Json
           created_at?: string
         }
       }
@@ -109,6 +112,7 @@ export interface Database {
           id: string
           participant_id: string
           image_url: string
+          image_rotation: number
           created_at: string
           updated_at: string
         }
@@ -116,6 +120,7 @@ export interface Database {
           id?: string
           participant_id: string
           image_url: string
+          image_rotation?: number
           created_at?: string
           updated_at?: string
         }
@@ -123,6 +128,7 @@ export interface Database {
           id?: string
           participant_id?: string
           image_url?: string
+          image_rotation?: number
           created_at?: string
           updated_at?: string
         }
@@ -193,6 +199,7 @@ export interface Database {
           place_lng: number | null
           receipt_reviewed: boolean
           show_memo_to_participant: boolean
+          image_rotations: Json
         }
         Insert: {
           id?: string
@@ -218,6 +225,7 @@ export interface Database {
           place_lng?: number | null
           receipt_reviewed?: boolean
           show_memo_to_participant?: boolean
+          image_rotations?: Json
         }
         Update: {
           id?: string
@@ -243,6 +251,7 @@ export interface Database {
           place_lng?: number | null
           receipt_reviewed?: boolean
           show_memo_to_participant?: boolean
+          image_rotations?: Json
         }
       }
       file_links: {

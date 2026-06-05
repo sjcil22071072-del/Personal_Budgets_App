@@ -181,3 +181,31 @@ export async function deleteCardRegistration(id: string) {
     return { success: false, error: e?.message || '카드 삭제 중 오류가 발생했습니다.' }
   }
 }
+
+export async function updateCardRotation(cardId: string, imageRotations: Record<string, number>) {
+  try {
+    const supabase = await createClient()
+    const admin = createAdminClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: '인증되지 않은 사용자입니다.' }
+
+    const { error } = await admin
+      .from('card_registrations')
+      .update({ image_rotations: imageRotations })
+      .eq('id', cardId)
+
+    if (error) {
+      console.error('Failed to update card rotation:', error)
+      return { success: false, error: '회전 정보 저장에 실패했습니다.' }
+    }
+
+    revalidatePath('/')
+    revalidatePath('/card-registration')
+    revalidatePath('/admin/submitted-documents')
+
+    return { success: true }
+  } catch (e: any) {
+    console.error('updateCardRotation exception:', e)
+    return { success: false, error: e?.message || '회전 저장 중 오류가 발생했습니다.' }
+  }
+}

@@ -8,12 +8,14 @@ interface Props {
   alt?: string
   onClose: () => void
   showRotate?: boolean
+  initialRotation?: number
+  onRotateChange?: (rotation: number) => void
 }
 
-export default function ImageLightbox({ src, alt, onClose, showRotate = true }: Props) {
+export default function ImageLightbox({ src, alt, onClose, showRotate = true, initialRotation = 0, onRotateChange }: Props) {
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
-  const [rotation, setRotation] = useState(0)
+  const [rotation, setRotation] = useState(initialRotation)
   const [isDragging, setIsDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0 })
 
@@ -67,6 +69,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true }: 
     setZoom(1)
     setPan({ x: 0, y: 0 })
     setRotation(0)
+    if (onRotateChange) onRotateChange(0)
   }
 
   const handleZoomIn = () => {
@@ -82,7 +85,11 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true }: 
   }
 
   const handleRotate = () => {
-    setRotation(prev => (prev + 90) % 360)
+    setRotation(prev => {
+      const next = (prev + 90) % 360
+      if (onRotateChange) onRotateChange(next)
+      return next
+    })
   }
 
   useEffect(() => {

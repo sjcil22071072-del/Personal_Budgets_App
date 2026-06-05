@@ -19,6 +19,7 @@ import {
   addEvidenceImage,
   removeEvidenceImage,
 } from '@/app/actions/transaction'
+import { extractStoragePath } from '@/utils/supabase/storage'
 
 const PAYMENT_METHODS = ['카드', '계좌이체'] as const
 
@@ -43,6 +44,7 @@ interface Tx {
   place_lng?: number | null
   receipt_reviewed?: boolean | null
   show_memo_to_participant?: boolean | null
+  image_rotations?: Record<string, number> | null
 }
 
 export default function TransactionDetailClient({ tx }: { tx: Tx }) {
@@ -96,6 +98,28 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const [receiptUrls, setReceiptUrls] = useState<string[]>(tx.receipt_image_urls || [])
   const [activityUrls, setActivityUrls] = useState<string[]>(tx.activity_image_urls || [])
   const [evidenceUrls, setEvidenceUrls] = useState<string[]>(tx.evidence_image_urls || [])
+  const [imageRotations, setImageRotations] = useState<Record<string, number>>(
+    (tx.image_rotations as Record<string, number>) || {}
+  )
+
+  const getCurrentImagePath = () => {
+    if (!zoomImageUrl) return null
+    let bucket = 'receipts'
+    if (viewTab === 'activity') bucket = 'activity-photos'
+    else if (viewTab === 'evidence') bucket = 'evidence-documents'
+    return extractStoragePath(zoomImageUrl, bucket) || zoomImageUrl
+  }
+
+  const currentImagePath = getCurrentImagePath()
+  const currentRotation = currentImagePath ? (imageRotations[currentImagePath] ?? 0) : 0
+
+  const handleZoomRotateChange = (rotation: number) => {
+    if (!currentImagePath) return
+    setImageRotations(prev => ({
+      ...prev,
+      [currentImagePath]: rotation
+    }))
+  }
 
   // 드래그 앤 드롭 상태
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
@@ -326,6 +350,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
           receipt_image_urls: receiptUrls,
           activity_image_urls: activityUrls,
           evidence_image_urls: evidenceUrls,
+          image_rotations: imageRotations,
         }
       )
       router.push('/supporter/review')
@@ -454,6 +479,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     <img
                       src={receiptUrls[receiptIdx]}
                       alt={`영수증 ${receiptIdx + 1}`}
+                      style={{ transform: `rotate(${imageRotations[extractStoragePath(receiptUrls[receiptIdx], 'receipts') || receiptUrls[receiptIdx]] ?? 0}deg)` }}
                       className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => setZoomImageUrl(receiptUrls[receiptIdx])}
                     />
@@ -468,22 +494,26 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                   </div>
                   {receiptUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
-                      {receiptUrls.map((url, i) => (
-                        <button
-                          key={url}
-                          type="button"
-                          draggable
-                          onDragStart={() => handleDragStart('receipt', i)}
-                          onDragOver={(e) => handleDragOver(e, 'receipt')}
-                          onDrop={() => handleDrop('receipt', i, receiptUrls, setReceiptUrls, setReceiptIdx)}
-                          onClick={() => setReceiptIdx(i)}
-                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
-                            i === receiptIdx ? 'ring-blue-500' : 'ring-zinc-200'
-                          }`}
-                        >
-                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
-                        </button>
-                      ))}
+                      {receiptUrls.map((url, i) => {
+                        const path = extractStoragePath(url, 'receipts') || url
+                        const rotation = imageRotations[path] ?? 0
+                        return (
+                          <button
+                            key={url}
+                            type="button"
+                            draggable
+                            onDragStart={() => handleDragStart('receipt', i)}
+                            onDragOver={(e) => handleDragOver(e, 'receipt')}
+                            onDrop={() => handleDrop('receipt', i, receiptUrls, setReceiptUrls, setReceiptIdx)}
+                            onClick={() => setReceiptIdx(i)}
+                            className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
+                              i === receiptIdx ? 'ring-blue-500' : 'ring-zinc-200'
+                            }`}
+                          >
+                            <img src={url} alt={`썸네일 ${i + 1}`} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                   <p className="text-center text-xs text-zinc-400">{receiptIdx + 1} / {receiptUrls.length}장</p>
@@ -505,6 +535,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     <img
                       src={activityUrls[activityIdx]}
                       alt={`활동사진 ${activityIdx + 1}`}
+                      style={{ transform: `rotate(${imageRotations[extractStoragePath(activityUrls[activityIdx], 'activity-photos') || activityUrls[activityIdx]] ?? 0}deg)` }}
                       className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => setZoomImageUrl(activityUrls[activityIdx])}
                     />
@@ -519,22 +550,26 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                   </div>
                   {activityUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
-                      {activityUrls.map((url, i) => (
-                        <button
-                          key={url}
-                          type="button"
-                          draggable
-                          onDragStart={() => handleDragStart('activity', i)}
-                          onDragOver={(e) => handleDragOver(e, 'activity')}
-                          onDrop={() => handleDrop('activity', i, activityUrls, setActivityUrls, setActivityIdx)}
-                          onClick={() => setActivityIdx(i)}
-                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
-                            i === activityIdx ? 'ring-blue-500' : 'ring-zinc-200'
-                          }`}
-                        >
-                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
-                        </button>
-                      ))}
+                      {activityUrls.map((url, i) => {
+                        const path = extractStoragePath(url, 'activity-photos') || url
+                        const rotation = imageRotations[path] ?? 0
+                        return (
+                          <button
+                            key={url}
+                            type="button"
+                            draggable
+                            onDragStart={() => handleDragStart('activity', i)}
+                            onDragOver={(e) => handleDragOver(e, 'activity')}
+                            onDrop={() => handleDrop('activity', i, activityUrls, setActivityUrls, setActivityIdx)}
+                            onClick={() => setActivityIdx(i)}
+                            className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
+                              i === activityIdx ? 'ring-blue-500' : 'ring-zinc-200'
+                            }`}
+                          >
+                            <img src={url} alt={`썸네일 ${i + 1}`} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                   <p className="text-center text-xs text-zinc-400">{activityIdx + 1} / {activityUrls.length}장</p>
@@ -557,6 +592,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     <img
                       src={evidenceUrls[evidenceIdx]}
                       alt={`증빙서류 ${evidenceIdx + 1}`}
+                      style={{ transform: `rotate(${imageRotations[extractStoragePath(evidenceUrls[evidenceIdx], 'evidence-documents') || evidenceUrls[evidenceIdx]] ?? 0}deg)` }}
                       className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => setZoomImageUrl(evidenceUrls[evidenceIdx])}
                     />
@@ -571,22 +607,26 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                   </div>
                   {evidenceUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
-                      {evidenceUrls.map((url, i) => (
-                        <button
-                          key={url}
-                          type="button"
-                          draggable
-                          onDragStart={() => handleDragStart('evidence', i)}
-                          onDragOver={(e) => handleDragOver(e, 'evidence')}
-                          onDrop={() => handleDrop('evidence', i, evidenceUrls, setEvidenceUrls, setEvidenceIdx)}
-                          onClick={() => setEvidenceIdx(i)}
-                          className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
-                            i === evidenceIdx ? 'ring-blue-500' : 'ring-zinc-200'
-                          }`}
-                        >
-                          <img src={url} alt={`썸네일 ${i + 1}`} className="w-full h-full object-contain bg-zinc-50" />
-                        </button>
-                      ))}
+                      {evidenceUrls.map((url, i) => {
+                        const path = extractStoragePath(url, 'evidence-documents') || url
+                        const rotation = imageRotations[path] ?? 0
+                        return (
+                          <button
+                            key={url}
+                            type="button"
+                            draggable
+                            onDragStart={() => handleDragStart('evidence', i)}
+                            onDragOver={(e) => handleDragOver(e, 'evidence')}
+                            onDrop={() => handleDrop('evidence', i, evidenceUrls, setEvidenceUrls, setEvidenceIdx)}
+                            onClick={() => setEvidenceIdx(i)}
+                            className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all cursor-move hover:ring-2 hover:ring-zinc-400 active:opacity-50 ${
+                              i === evidenceIdx ? 'ring-blue-500' : 'ring-zinc-200'
+                            }`}
+                          >
+                            <img src={url} alt={`썸네일 ${i + 1}`} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                   <p className="text-center text-xs text-zinc-400">{evidenceIdx + 1} / {evidenceUrls.length}장</p>
@@ -762,7 +802,12 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
       )}
 
       {zoomImageUrl && (
-        <ImageLightbox src={zoomImageUrl} onClose={() => setZoomImageUrl(null)} />
+        <ImageLightbox
+          src={zoomImageUrl}
+          initialRotation={currentRotation}
+          onRotateChange={handleZoomRotateChange}
+          onClose={() => setZoomImageUrl(null)}
+        />
       )}
     </div>
   )

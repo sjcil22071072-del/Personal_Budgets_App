@@ -2,14 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteCardRegistration, createCardRegistration } from '@/app/actions/cardRegistration'
+import { deleteCardRegistration, createCardRegistration, updateCardRotation } from '@/app/actions/cardRegistration'
 import ImageLightbox from '@/components/ui/ImageLightbox'
-import { deleteFamilyRegistration, saveFamilyRegistration } from '@/app/actions/familyRegistration'
+import { deleteFamilyRegistration, saveFamilyRegistration, updateFamilyRotation } from '@/app/actions/familyRegistration'
 import { compressImage } from '@/utils/image-compression'
+import { extractStoragePath } from '@/utils/supabase/storage'
 
 interface CardRegistration {
   id: string
   imageUrls: string[]
+  imageRotations?: Record<string, number> | null
   createdAt: string | null
 }
 
@@ -19,6 +21,7 @@ interface ParticipantDoc {
   familyRelation: {
     registered: boolean
     imageUrl: string | null
+    imageRotation?: number
     createdAt: string | null
   }
   cardRegistrations: CardRegistration[]
@@ -31,7 +34,13 @@ interface SubmittedDocumentsClientProps {
 export default function SubmittedDocumentsClient({ initialData }: SubmittedDocumentsClientProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [activeImage, setActiveImage] = useState<string | null>(null)
+  const [zoomTarget, setZoomTarget] = useState<{
+    type: 'family' | 'card'
+    id: string
+    url: string
+    initialRotation: number
+    rotations?: Record<string, number>
+  } | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [uploadingId, setUploadingId] = useState<string | null>(null)
@@ -43,6 +52,22 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
       backPreview: string | null;
     }
   }>({})
+
+  const handleRotateChange = async (rotation: number) => {
+    if (!zoomTarget) return
+    try {
+      if (zoomTarget.type === 'family') {
+        await updateFamilyRotation(zoomTarget.id, rotation)
+      } else if (zoomTarget.type === 'card') {
+        const nextRotations = { ...(zoomTarget.rotations || {}), [zoomTarget.url]: rotation }
+        await updateCardRotation(zoomTarget.id, nextRotations)
+        setZoomTarget(prev => prev ? { ...prev, rotations: nextRotations } : null)
+      }
+      router.refresh()
+    } catch (err) {
+      console.error('Failed to save rotation to server:', err)
+    }
+  }
 
   const handleCardFileChange = (participantId: string, side: 'front' | 'back', file: File | null) => {
     if (!file) return
@@ -281,11 +306,17 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                       <div className="space-y-3">
                         <div
                           className="group relative w-full max-w-xs h-40 rounded-2xl overflow-hidden border border-zinc-200/80 bg-white cursor-zoom-in shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
-                          onClick={() => setActiveImage(p.familyRelation.imageUrl)}
+                          onClick={() => setZoomTarget({
+                            type: 'family',
+                            id: p.id,
+                            url: p.familyRelation.imageUrl!,
+                            initialRotation: p.familyRelation.imageRotation ?? 0
+                          })}
                         >
                           <img
                             src={p.familyRelation.imageUrl!}
                             alt={`${p.name} 가족관계증명서`}
+                            style={{ transform: `rotate(${p.familyRelation.imageRotation ?? 0}deg)` }}
                             className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-black gap-1">
@@ -345,22 +376,33 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2.5 max-w-sm">
-                              {card.imageUrls.map((url, imgIdx) => (
-                                <div
-                                  key={imgIdx}
-                                  className="group relative h-32 rounded-2xl overflow-hidden border border-zinc-200/80 bg-white cursor-zoom-in shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
-                                  onClick={() => setActiveImage(url)}
-                                >
-                                  <img
-                                    src={url}
-                                    alt={`${p.name} 카드 #${cardIdx + 1} ${imgIdx === 0 ? '앞면' : '뒷면'}`}
-                                    className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-black gap-0.5">
-                                    <span>🔍</span> {imgIdx === 0 ? '앞면' : '뒷면'}
+                              {card.imageUrls.map((url, imgIdx) => {
+                                const storagePath = extractStoragePath(url, 'card-photos') || url
+                                const rotation = (card.imageRotations as any)?.[storagePath] ?? 0
+                                return (
+                                  <div
+                                    key={imgIdx}
+                                    className="group relative h-32 rounded-2xl overflow-hidden border border-zinc-200/80 bg-white cursor-zoom-in shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
+                                    onClick={() => setZoomTarget({
+                                      type: 'card',
+                                      id: card.id,
+                                      url: url,
+                                      initialRotation: rotation,
+                                      rotations: (card.imageRotations as any) ?? {}
+                                    })}
+                                  >
+                                    <img
+                                      src={url}
+                                      alt={`${p.name} 카드 #${cardIdx + 1} ${imgIdx === 0 ? '앞면' : '뒷면'}`}
+                                      style={{ transform: `rotate(${rotation}deg)` }}
+                                      className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-black gap-0.5">
+                                      <span>🔍</span> {imgIdx === 0 ? '앞면' : '뒷면'}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                             {cardIdx < totalCards - 1 && <div className="border-b border-zinc-200/60 mt-3" />}
                           </div>
@@ -471,8 +513,13 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
       </div>
 
       {/* 라이트박스 이미지 확대 모달 */}
-      {activeImage && (
-        <ImageLightbox src={activeImage} onClose={() => setActiveImage(null)} />
+      {zoomTarget && (
+        <ImageLightbox
+          src={zoomTarget.url}
+          initialRotation={zoomTarget.initialRotation}
+          onRotateChange={handleRotateChange}
+          onClose={() => setZoomTarget(null)}
+        />
       )}
     </div>
   )

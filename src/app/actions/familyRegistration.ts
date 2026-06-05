@@ -212,3 +212,31 @@ export async function deleteFamilyRegistration(participantId: string) {
     return { success: false, error: e?.message || '증명서 삭제 중 오류가 발생했습니다.' }
   }
 }
+
+export async function updateFamilyRotation(participantId: string, rotation: number) {
+  try {
+    const supabase = await createClient()
+    const admin = createAdminClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: '인증되지 않은 사용자입니다.' }
+
+    const { error } = await admin
+      .from('family_registrations')
+      .update({ image_rotation: rotation, updated_at: new Date().toISOString() })
+      .eq('participant_id', participantId)
+
+    if (error) {
+      console.error('Failed to update family rotation:', error)
+      return { success: false, error: '회전 정보 저장에 실패했습니다.' }
+    }
+
+    revalidatePath('/')
+    revalidatePath('/family-registration')
+    revalidatePath('/admin/submitted-documents')
+
+    return { success: true }
+  } catch (e: any) {
+    console.error('updateFamilyRotation exception:', e)
+    return { success: false, error: e?.message || '회전 저장 중 오류가 발생했습니다.' }
+  }
+}
