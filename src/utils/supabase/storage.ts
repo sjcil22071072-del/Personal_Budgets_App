@@ -25,6 +25,13 @@ export function extractStoragePath(publicUrl: string, bucket: string): string | 
     const authIdx = publicUrl.indexOf(authMarker)
     if (authIdx !== -1) {
       path = publicUrl.slice(authIdx + authMarker.length)
+    } else {
+      // sign URL 형식 (createSignedUrl 발급)
+      const signMarker = `/object/sign/${bucket}/`
+      const signIdx = publicUrl.indexOf(signMarker)
+      if (signIdx !== -1) {
+        path = publicUrl.slice(signIdx + signMarker.length)
+      }
     }
   }
 
