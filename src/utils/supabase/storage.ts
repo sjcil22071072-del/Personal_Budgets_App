@@ -13,8 +13,9 @@ export function extractStoragePath(publicUrl: string, bucket: string): string | 
   if (!publicUrl) return null
   
   // Supabase storage URL 구조에서 버킷명 뒤의 파일 상대 경로를 추출하는 정규식
-  // /storage/v1/object/(public|authenticated|sign|auth)/bucket_name/ 파일경로
-  const regex = new RegExp(`\\/storage\\/v1\\/object\\/(?:public|authenticated|sign|auth)\\/${bucket}\\/([^?#]+)`, 'i')
+  // 일반 Object API 포맷 및 Image Transformation (render/image) API 포맷 모두 매칭
+  // /storage/v1/(object|render/image)/(public|authenticated|sign|auth)/bucket_name/ 파일경로
+  const regex = new RegExp(`\\/storage\\/v1\\/(?:object|render\\/image)\\/(?:public|authenticated|sign|auth)\\/${bucket}\\/([^?#]+)`, 'i')
   const match = publicUrl.match(regex)
   
   if (match && match[1]) {
