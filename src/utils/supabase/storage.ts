@@ -12,36 +12,21 @@
 export function extractStoragePath(publicUrl: string, bucket: string): string | null {
   if (!publicUrl) return null
   
-  let path: string | null = null
-
-  // public 버킷 URL 형식
-  const publicMarker = `/object/public/${bucket}/`
-  const publicIdx = publicUrl.indexOf(publicMarker)
-  if (publicIdx !== -1) {
-    path = publicUrl.slice(publicIdx + publicMarker.length)
-  } else {
-    // authenticated 버킷 URL 형식 (이미 signed URL인 경우 등)
-    const authMarker = `/object/authenticated/${bucket}/`
-    const authIdx = publicUrl.indexOf(authMarker)
-    if (authIdx !== -1) {
-      path = publicUrl.slice(authIdx + authMarker.length)
-    } else {
-      // sign URL 형식 (createSignedUrl 발급)
-      const signMarker = `/object/sign/${bucket}/`
-      const signIdx = publicUrl.indexOf(signMarker)
-      if (signIdx !== -1) {
-        path = publicUrl.slice(signIdx + signMarker.length)
-      }
-    }
+  // Supabase storage URL 구조에서 버킷명 뒤의 파일 상대 경로를 추출하는 정규식
+  // /storage/v1/object/(public|authenticated|sign|auth)/bucket_name/ 파일경로
+  const regex = new RegExp(`\\/storage\\/v1\\/object\\/(?:public|authenticated|sign|auth)\\/${bucket}\\/([^?#]+)`, 'i')
+  const match = publicUrl.match(regex)
+  
+  if (match && match[1]) {
+    // URL 인코딩 문자(%2F 등)를 디코딩하여 순수한 파일 상대 경로 획득
+    return decodeURIComponent(match[1])
   }
 
-  if (path) {
-    // 쿼리 스트링(?token=...)이 존재하면 제거하여 순수 파일 경로만 반환
-    const qIdx = path.indexOf('?')
-    if (qIdx !== -1) {
-      path = path.slice(0, qIdx)
-    }
-    return path
+  // http 주소가 아니며 쿼리가 없는 상대경로인 경우 fallback 처리
+  if (!publicUrl.startsWith('http://') && !publicUrl.startsWith('https://')) {
+    const qIdx = publicUrl.indexOf('?')
+    const cleanPath = qIdx !== -1 ? publicUrl.slice(0, qIdx) : publicUrl
+    return decodeURIComponent(cleanPath)
   }
 
   return null
