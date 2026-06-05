@@ -19,15 +19,24 @@ export function extractStoragePath(publicUrl: string, bucket: string): string | 
   const match = publicUrl.match(regex)
   
   if (match && match[1]) {
-    // URL 인코딩 문자(%2F 등)를 디코딩하여 순수한 파일 상대 경로 획득
-    return decodeURIComponent(match[1])
+    try {
+      // URL 인코딩 문자(%2F, %20 등)를 디코딩하여 순수한 파일 상대 경로 획득
+      // Supabase JS Client는 내부적으로 createSignedUrl 등 호출 시 인코딩을 수행하므로 디코딩된 평문 경로를 넘겨야 함
+      return decodeURIComponent(match[1])
+    } catch {
+      return match[1]
+    }
   }
 
   // http 주소가 아니며 쿼리가 없는 상대경로인 경우 fallback 처리
   if (!publicUrl.startsWith('http://') && !publicUrl.startsWith('https://')) {
     const qIdx = publicUrl.indexOf('?')
     const cleanPath = qIdx !== -1 ? publicUrl.slice(0, qIdx) : publicUrl
-    return decodeURIComponent(cleanPath)
+    try {
+      return decodeURIComponent(cleanPath)
+    } catch {
+      return cleanPath
+    }
   }
 
   return null
