@@ -11,15 +11,31 @@
  */
 export function extractStoragePath(publicUrl: string, bucket: string): string | null {
   if (!publicUrl) return null
+  
+  let path: string | null = null
+
   // public 버킷 URL 형식
   const publicMarker = `/object/public/${bucket}/`
   const publicIdx = publicUrl.indexOf(publicMarker)
-  if (publicIdx !== -1) return publicUrl.slice(publicIdx + publicMarker.length)
+  if (publicIdx !== -1) {
+    path = publicUrl.slice(publicIdx + publicMarker.length)
+  } else {
+    // authenticated 버킷 URL 형식 (이미 signed URL인 경우 등)
+    const authMarker = `/object/authenticated/${bucket}/`
+    const authIdx = publicUrl.indexOf(authMarker)
+    if (authIdx !== -1) {
+      path = publicUrl.slice(authIdx + authMarker.length)
+    }
+  }
 
-  // authenticated 버킷 URL 형식 (이미 signed URL인 경우 등)
-  const authMarker = `/object/authenticated/${bucket}/`
-  const authIdx = publicUrl.indexOf(authMarker)
-  if (authIdx !== -1) return publicUrl.slice(authIdx + authMarker.length)
+  if (path) {
+    // 쿼리 스트링(?token=...)이 존재하면 제거하여 순수 파일 경로만 반환
+    const qIdx = path.indexOf('?')
+    if (qIdx !== -1) {
+      path = path.slice(0, qIdx)
+    }
+    return path
+  }
 
   return null
 }
