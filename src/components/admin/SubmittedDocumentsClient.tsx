@@ -364,7 +364,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                           <img
                             src={p.familyRelation.imageUrl!}
                             alt={`${p.name} 가족관계증명서`}
-                            style={{ transform: `rotate(${familyRotationsMap[p.id] ?? 0}deg)` }}
+                            style={{ transform: `rotate(${familyRotationsMap[p.id] ?? 0}deg) scale(${(familyRotationsMap[p.id] === 90 || familyRotationsMap[p.id] === 270) ? 0.5 : 1})` }}
                             className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-black gap-1">
@@ -442,7 +442,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                                     <img
                                       src={url}
                                       alt={`${p.name} 카드 #${cardIdx + 1} ${imgIdx === 0 ? '앞면' : '뒷면'}`}
-                                      style={{ transform: `rotate(${rotation}deg)` }}
+                                      style={{ transform: `rotate(${rotation}deg) scale(${rotation === 90 || rotation === 270 ? 0.75 : 1})` }}
                                       className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
                                     />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-black gap-0.5">

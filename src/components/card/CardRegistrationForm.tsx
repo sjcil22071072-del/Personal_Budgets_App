@@ -195,7 +195,7 @@ export default function CardRegistrationForm({
                         <img
                           src={url}
                           alt={`등록한 카드 ${index === 0 ? '앞면' : index === 1 ? '뒷면' : `${index + 1}번째 사진`}`}
-                          style={{ transform: `rotate(${rotation}deg)` }}
+                          style={{ transform: `rotate(${rotation}deg) scale(${rotation === 90 || rotation === 270 ? 0.75 : 1})` }}
                           className="h-full w-full object-contain bg-zinc-50"
                         />
                       </button>
