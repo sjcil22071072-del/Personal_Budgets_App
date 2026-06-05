@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCardRegistration } from '@/app/actions/cardRegistration'
 import { compressImage } from '@/utils/image-compression'
+import ImageLightbox from '@/components/ui/ImageLightbox'
+import { extractStoragePath } from '@/utils/supabase/storage'
 
 type CardSide = 'front' | 'back'
 
@@ -11,6 +13,7 @@ interface CardRegistrationItem {
   id: string
   created_at: string
   image_urls: string[]
+  image_rotations?: any
 }
 
 export default function CardRegistrationForm({
@@ -25,6 +28,8 @@ export default function CardRegistrationForm({
   const [backPreview, setBackPreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
+  const [zoomInitialRotation, setZoomInitialRotation] = useState<number>(0)
 
   function setImage(side: CardSide, file: File | null) {
     if (!file) return
@@ -134,27 +139,43 @@ export default function CardRegistrationForm({
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {item.image_urls.map((url, index) => (
-                    <a
-                      key={`${item.id}-${index}`}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200"
-                    >
-                      <img
-                        src={url}
-                        alt={`등록한 카드 ${index === 0 ? '앞면' : index === 1 ? '뒷면' : `${index + 1}번째 사진`}`}
-                        className="h-full w-full object-contain bg-zinc-50"
-                      />
-                    </a>
-                  ))}
+                  {item.image_urls.map((url, index) => {
+                    const path = extractStoragePath(url, 'card-photos') || ''
+                    const rotation = (item.image_rotations as Record<string, number>)?.[path] ?? 0
+                    return (
+                      <button
+                        key={`${item.id}-${index}`}
+                        type="button"
+                        onClick={() => {
+                          setZoomImageUrl(url)
+                          setZoomInitialRotation(rotation)
+                        }}
+                        className="block aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200 text-left transition-transform active:scale-[0.98]"
+                      >
+                        <img
+                          src={url}
+                          alt={`등록한 카드 ${index === 0 ? '앞면' : index === 1 ? '뒷면' : `${index + 1}번째 사진`}`}
+                          style={{ transform: `rotate(${rotation}deg)` }}
+                          className="h-full w-full object-contain bg-zinc-50"
+                        />
+                      </button>
+                    )
+                  })}
                 </div>
               </article>
             ))}
           </div>
         )}
       </section>
+
+      {zoomImageUrl && (
+        <ImageLightbox
+          src={zoomImageUrl}
+          initialRotation={zoomInitialRotation}
+          showRotate={false}
+          onClose={() => setZoomImageUrl(null)}
+        />
+      )}
     </div>
   )
 }

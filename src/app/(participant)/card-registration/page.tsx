@@ -42,7 +42,7 @@ export default async function CardRegistrationPage() {
 
   const { data: cardData } = await adminClient
     .from('card_registrations')
-    .select('id, participant_id, image_urls, created_at')
+    .select('id, participant_id, image_urls, image_rotations, created_at')
     .eq('participant_id', participant.id)
     .order('created_at', { ascending: false })
 
@@ -61,6 +61,7 @@ export default async function CardRegistrationPage() {
       id: item.id,
       created_at: item.created_at,
       image_urls: signedUrls.filter((url): url is string => Boolean(url)),
+      image_rotations: item.image_rotations,
     }
   }))
 
