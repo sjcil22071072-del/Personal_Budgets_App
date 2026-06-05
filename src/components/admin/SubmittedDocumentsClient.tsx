@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteCardRegistration, createCardRegistration, updateCardRotation } from '@/app/actions/cardRegistration'
 import ImageLightbox from '@/components/ui/ImageLightbox'
@@ -53,22 +53,62 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
     }
   }>({})
 
+  const [cardRotationsMap, setCardRotationsMap] = useState<Record<string, Record<string, number>>>(() => {
+    const map: Record<string, Record<string, number>> = {}
+    initialData.forEach(p => {
+      p.cardRegistrations.forEach(c => {
+        map[c.id] = (c.imageRotations as any) ?? {}
+      })
+    })
+    return map
+  })
+
+  const [familyRotationsMap, setFamilyRotationsMap] = useState<Record<string, number>>(() => {
+    const map: Record<string, number> = {}
+    initialData.forEach(p => {
+      map[p.id] = p.familyRelation.imageRotation ?? 0
+    })
+    return map
+  })
+
+  useEffect(() => {
+    const cMap: Record<string, Record<string, number>> = {}
+    const fMap: Record<string, number> = {}
+    initialData.forEach(p => {
+      fMap[p.id] = p.familyRelation.imageRotation ?? 0
+      p.cardRegistrations.forEach(c => {
+        cMap[c.id] = (c.imageRotations as any) ?? {}
+      })
+    })
+    setCardRotationsMap(cMap)
+    setFamilyRotationsMap(fMap)
+  }, [initialData])
+
   const handleRotateChange = async (rotation: number) => {
     if (!zoomTarget) return
     try {
       if (zoomTarget.type === 'family') {
+        // 로컬 상태 즉시 갱신해 즉각 피드백 제공
+        setFamilyRotationsMap(prev => ({ ...prev, [zoomTarget.id]: rotation }))
+        setZoomTarget(prev => prev ? { ...prev, initialRotation: rotation } : null)
+
         const res = await updateFamilyRotation(zoomTarget.id, rotation)
         if (!res.success) {
           throw new Error(res.error || '가족관계증명서 회전 저장 실패')
         }
       } else if (zoomTarget.type === 'card') {
         const path = extractStoragePath(zoomTarget.url, 'card-photos') || zoomTarget.url
-        const nextRotations = { ...(zoomTarget.rotations || {}), [path]: rotation }
+        const currentRotations = cardRotationsMap[zoomTarget.id] || {}
+        const nextRotations = { ...currentRotations, [path]: rotation }
+
+        // 로컬 상태 즉시 갱신해 즉각 피드백 제공
+        setCardRotationsMap(prev => ({ ...prev, [zoomTarget.id]: nextRotations }))
+        setZoomTarget(prev => prev ? { ...prev, rotations: nextRotations, initialRotation: rotation } : null)
+
         const res = await updateCardRotation(zoomTarget.id, nextRotations)
         if (!res.success) {
           throw new Error(res.error || '카드 회전 저장 실패')
         }
-        setZoomTarget(prev => prev ? { ...prev, rotations: nextRotations, initialRotation: rotation } : null)
       }
       router.refresh()
     } catch (err: any) {
@@ -318,13 +358,13 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                             type: 'family',
                             id: p.id,
                             url: p.familyRelation.imageUrl!,
-                            initialRotation: p.familyRelation.imageRotation ?? 0
+                            initialRotation: familyRotationsMap[p.id] ?? 0
                           })}
                         >
                           <img
                             src={p.familyRelation.imageUrl!}
                             alt={`${p.name} 가족관계증명서`}
-                            style={{ transform: `rotate(${p.familyRelation.imageRotation ?? 0}deg)` }}
+                            style={{ transform: `rotate(${familyRotationsMap[p.id] ?? 0}deg)` }}
                             className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-black gap-1">
@@ -386,7 +426,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                             <div className="grid grid-cols-2 gap-2.5 max-w-sm">
                               {card.imageUrls.map((url, imgIdx) => {
                                 const storagePath = extractStoragePath(url, 'card-photos') || url
-                                const rotation = (card.imageRotations as any)?.[storagePath] ?? 0
+                                const rotation = cardRotationsMap[card.id]?.[storagePath] ?? 0
                                 return (
                                   <div
                                     key={imgIdx}
@@ -396,7 +436,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                                       id: card.id,
                                       url: url,
                                       initialRotation: rotation,
-                                      rotations: (card.imageRotations as any) ?? {}
+                                      rotations: cardRotationsMap[card.id] ?? {}
                                     })}
                                   >
                                     <img

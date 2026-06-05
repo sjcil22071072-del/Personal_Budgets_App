@@ -3,6 +3,8 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isAdminRole } from '@/utils/user-role'
+
+export const dynamic = 'force-dynamic'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 import { extractStoragePath } from '@/utils/supabase/storage'
 import SubmittedDocumentsClient from '@/components/admin/SubmittedDocumentsClient'

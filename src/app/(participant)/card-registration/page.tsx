@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminClient, createClient } from '@/utils/supabase/server'
+
+export const dynamic = 'force-dynamic'
 import NavDropdown from '@/components/layout/NavDropdown'
 import CardRegistrationForm from '@/components/card/CardRegistrationForm'
 import { extractStoragePath } from '@/utils/supabase/storage'

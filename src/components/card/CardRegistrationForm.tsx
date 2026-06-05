@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCardRegistration, updateCardRotation } from '@/app/actions/cardRegistration'
 import { compressImage } from '@/utils/image-compression'
@@ -31,19 +31,38 @@ export default function CardRegistrationForm({
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
   const [zoomInitialRotation, setZoomInitialRotation] = useState<number>(0)
   const [zoomCardId, setZoomCardId] = useState<string | null>(null)
-  const [zoomRotations, setZoomRotations] = useState<Record<string, number>>({})
+
+  const [cardRotationsMap, setCardRotationsMap] = useState<Record<string, Record<string, number>>>(() => {
+    const map: Record<string, Record<string, number>> = {}
+    registrations.forEach(r => {
+      map[r.id] = (r.image_rotations as any) ?? {}
+    })
+    return map
+  })
+
+  useEffect(() => {
+    const map: Record<string, Record<string, number>> = {}
+    registrations.forEach(r => {
+      map[r.id] = (r.image_rotations as any) ?? {}
+    })
+    setCardRotationsMap(map)
+  }, [registrations])
 
   const handleRotateChange = async (rotation: number) => {
     if (!zoomImageUrl || !zoomCardId) return
     try {
       const path = extractStoragePath(zoomImageUrl, 'card-photos') || zoomImageUrl
-      const nextRotations = { ...zoomRotations, [path]: rotation }
+      const currentRotations = cardRotationsMap[zoomCardId] || {}
+      const nextRotations = { ...currentRotations, [path]: rotation }
+
+      // 로컬 상태 즉시 갱신해 즉각 피드백 제공
+      setCardRotationsMap(prev => ({ ...prev, [zoomCardId]: nextRotations }))
+      setZoomInitialRotation(rotation)
+
       const res = await updateCardRotation(zoomCardId, nextRotations)
       if (!res.success) {
         throw new Error(res.error || '카드 회전 저장 실패')
       }
-      setZoomRotations(nextRotations)
-      setZoomInitialRotation(rotation)
       router.refresh()
     } catch (err: any) {
       console.error('Failed to save card rotation:', err)
@@ -161,7 +180,7 @@ export default function CardRegistrationForm({
                 <div className="grid grid-cols-2 gap-3">
                   {item.image_urls.map((url, index) => {
                     const path = extractStoragePath(url, 'card-photos') || ''
-                    const rotation = (item.image_rotations as Record<string, number>)?.[path] ?? 0
+                    const rotation = cardRotationsMap[item.id]?.[path] ?? 0
                     return (
                       <button
                         key={`${item.id}-${index}`}
@@ -170,7 +189,6 @@ export default function CardRegistrationForm({
                           setZoomImageUrl(url)
                           setZoomInitialRotation(rotation)
                           setZoomCardId(item.id)
-                          setZoomRotations((item.image_rotations as any) ?? {})
                         }}
                         className="block aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200 text-left transition-transform active:scale-[0.98]"
                       >
@@ -199,7 +217,6 @@ export default function CardRegistrationForm({
           onClose={() => {
             setZoomImageUrl(null)
             setZoomCardId(null)
-            setZoomRotations({})
           }}
         />
       )}
