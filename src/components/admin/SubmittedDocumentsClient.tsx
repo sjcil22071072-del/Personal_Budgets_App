@@ -59,9 +59,10 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
       if (zoomTarget.type === 'family') {
         await updateFamilyRotation(zoomTarget.id, rotation)
       } else if (zoomTarget.type === 'card') {
-        const nextRotations = { ...(zoomTarget.rotations || {}), [zoomTarget.url]: rotation }
+        const path = extractStoragePath(zoomTarget.url, 'card-photos') || zoomTarget.url
+        const nextRotations = { ...(zoomTarget.rotations || {}), [path]: rotation }
         await updateCardRotation(zoomTarget.id, nextRotations)
-        setZoomTarget(prev => prev ? { ...prev, rotations: nextRotations } : null)
+        setZoomTarget(prev => prev ? { ...prev, rotations: nextRotations, initialRotation: rotation } : null)
       }
       router.refresh()
     } catch (err) {
