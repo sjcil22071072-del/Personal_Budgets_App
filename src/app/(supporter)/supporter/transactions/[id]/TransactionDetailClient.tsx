@@ -98,6 +98,9 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const [receiptUrls, setReceiptUrls] = useState<string[]>(tx.receipt_image_urls || [])
   const [activityUrls, setActivityUrls] = useState<string[]>(tx.activity_image_urls || [])
   const [evidenceUrls, setEvidenceUrls] = useState<string[]>(tx.evidence_image_urls || [])
+  const [viewTab, setViewTab] = useState<'receipt' | 'activity' | 'evidence'>(() =>
+    receiptUrls.length === 0 && activityUrls.length > 0 ? 'activity' : 'receipt'
+  )
   const [imageRotations, setImageRotations] = useState<Record<string, number>>(
     (tx.image_rotations as Record<string, number>) || {}
   )
@@ -171,10 +174,6 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const receiptInputRef = useRef<HTMLInputElement>(null)
   const activityInputRef = useRef<HTMLInputElement>(null)
   const evidenceInputRef = useRef<HTMLInputElement>(null)
-
-  const [viewTab, setViewTab] = useState<'receipt' | 'activity' | 'evidence'>(() =>
-    receiptUrls.length === 0 && activityUrls.length > 0 ? 'activity' : 'receipt'
-  )
 
   async function handleReceiptUpload(files: FileList) {
     const fileList = Array.from(files)
