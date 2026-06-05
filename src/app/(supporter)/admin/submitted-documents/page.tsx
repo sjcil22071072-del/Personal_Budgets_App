@@ -34,12 +34,12 @@ export default async function SubmittedDocumentsPage() {
     adminClient.from('card_registrations').select('id, participant_id, image_urls, image_rotations, created_at').order('created_at', { ascending: false }),
   ])
 
-  // 가족관계증명서 이미지 signed URL 생성
-  const familyMap = new Map<string, { imageUrl: string | null; imageRotation: number; createdAt: string | null }>()
-  for (const fr of familyRegs ?? []) {
+  // 가족관계증명서 이미지 signed URL 생성 (병렬 처리)
+  const familyWithSignedUrls = await Promise.all((familyRegs ?? []).map(async (fr) => {
     const pid = (fr as any).participant_id
-    let signedUrl: string | null = null
     const rawUrl = (fr as any).image_url
+    let signedUrl: string | null = null
+
     if (rawUrl) {
       const path = extractStoragePath(rawUrl, 'family-relation-photos')
       if (path) {
@@ -50,30 +50,51 @@ export default async function SubmittedDocumentsPage() {
       }
       if (!signedUrl) signedUrl = rawUrl
     }
-    familyMap.set(pid, { imageUrl: signedUrl, imageRotation: (fr as any).image_rotation ?? 0, createdAt: (fr as any).created_at })
-  }
+    
+    return {
+      pid,
+      imageUrl: signedUrl,
+      imageRotation: (fr as any).image_rotation ?? 0,
+      createdAt: (fr as any).created_at
+    }
+  }))
 
-  // 카드 등록 이미지 signed URL 생성 (당사자당 복수 건 지원)
-  const cardMap = new Map<string, { id: string; imageUrls: string[]; imageRotations: Record<string, number>; createdAt: string | null }[]>()
-  for (const cr of cardRegs ?? []) {
+  const familyMap = new Map<string, { imageUrl: string | null; imageRotation: number; createdAt: string | null }>()
+  familyWithSignedUrls.forEach(item => {
+    familyMap.set(item.pid, { imageUrl: item.imageUrl, imageRotation: item.imageRotation, createdAt: item.createdAt })
+  })
+
+  // 카드 등록 이미지 signed URL 생성 (병렬 처리)
+  const cardsWithSignedUrls = await Promise.all((cardRegs ?? []).map(async (cr) => {
     const pid = (cr as any).participant_id
     const rawUrls: string[] = (cr as any).image_urls ?? []
-    const signedUrls: string[] = []
-    for (const rawUrl of rawUrls) {
+    
+    const signedUrls = await Promise.all(rawUrls.map(async (rawUrl) => {
       const path = extractStoragePath(rawUrl, 'card-photos')
       if (path) {
         const { data } = await adminClient.storage
           .from('card-photos')
           .createSignedUrl(path, SIGNED_URL_EXPIRES)
-        signedUrls.push(data?.signedUrl ?? rawUrl)
-      } else {
-        signedUrls.push(rawUrl)
+        return data?.signedUrl ?? rawUrl
       }
+      return rawUrl
+    }))
+
+    return {
+      pid,
+      id: (cr as any).id,
+      imageUrls: signedUrls,
+      imageRotations: (cr as any).image_rotations ?? {},
+      createdAt: (cr as any).created_at
     }
-    const list = cardMap.get(pid) ?? []
-    list.push({ id: (cr as any).id, imageUrls: signedUrls, imageRotations: (cr as any).image_rotations ?? {}, createdAt: (cr as any).created_at })
-    cardMap.set(pid, list)
-  }
+  }))
+
+  const cardMap = new Map<string, { id: string; imageUrls: string[]; imageRotations: Record<string, number>; createdAt: string | null }[]>()
+  cardsWithSignedUrls.forEach(item => {
+    const list = cardMap.get(item.pid) ?? []
+    list.push({ id: item.id, imageUrls: item.imageUrls, imageRotations: item.imageRotations, createdAt: item.createdAt })
+    cardMap.set(item.pid, list)
+  })
 
   // 클라이언트에 전달할 데이터 조합
   const initialData = (participants ?? []).map((p: any) => {
