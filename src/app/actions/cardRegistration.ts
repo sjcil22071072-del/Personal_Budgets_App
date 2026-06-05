@@ -196,7 +196,7 @@ export async function updateCardRotation(cardId: string, imageRotations: Record<
 
     if (error) {
       console.error('Failed to update card rotation:', error)
-      return { success: false, error: '회전 정보 저장에 실패했습니다.' }
+      return { success: false, error: `회전 정보 저장에 실패했습니다: ${error.message} (${error.details || 'no details'})` }
     }
 
     revalidatePath('/')
@@ -206,6 +206,6 @@ export async function updateCardRotation(cardId: string, imageRotations: Record<
     return { success: true }
   } catch (e: any) {
     console.error('updateCardRotation exception:', e)
-    return { success: false, error: e?.message || '회전 저장 중 오류가 발생했습니다.' }
+    return { success: false, error: `회전 저장 중 오류가 발생했습니다: ${e?.message || '알 수 없는 오류'}` }
   }
 }

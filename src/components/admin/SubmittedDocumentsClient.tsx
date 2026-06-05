@@ -57,16 +57,23 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
     if (!zoomTarget) return
     try {
       if (zoomTarget.type === 'family') {
-        await updateFamilyRotation(zoomTarget.id, rotation)
+        const res = await updateFamilyRotation(zoomTarget.id, rotation)
+        if (!res.success) {
+          throw new Error(res.error || '가족관계증명서 회전 저장 실패')
+        }
       } else if (zoomTarget.type === 'card') {
         const path = extractStoragePath(zoomTarget.url, 'card-photos') || zoomTarget.url
         const nextRotations = { ...(zoomTarget.rotations || {}), [path]: rotation }
-        await updateCardRotation(zoomTarget.id, nextRotations)
+        const res = await updateCardRotation(zoomTarget.id, nextRotations)
+        if (!res.success) {
+          throw new Error(res.error || '카드 회전 저장 실패')
+        }
         setZoomTarget(prev => prev ? { ...prev, rotations: nextRotations, initialRotation: rotation } : null)
       }
       router.refresh()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save rotation to server:', err)
+      alert(err.message || '회전 각도 저장에 실패했습니다.')
     }
   }
 

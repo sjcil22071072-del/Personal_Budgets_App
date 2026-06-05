@@ -21,7 +21,7 @@ export default async function SupporterPage() {
   await ensureMonthlyBudgetRollover()
 
   // 담당 당사자 조회 (관리자는 전체)
-  let query = supabase
+  const query = supabase
     .from('participants')
     .select(`
       *,

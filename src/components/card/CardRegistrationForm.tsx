@@ -38,12 +38,16 @@ export default function CardRegistrationForm({
     try {
       const path = extractStoragePath(zoomImageUrl, 'card-photos') || zoomImageUrl
       const nextRotations = { ...zoomRotations, [path]: rotation }
-      await updateCardRotation(zoomCardId, nextRotations)
+      const res = await updateCardRotation(zoomCardId, nextRotations)
+      if (!res.success) {
+        throw new Error(res.error || '카드 회전 저장 실패')
+      }
       setZoomRotations(nextRotations)
       setZoomInitialRotation(rotation)
       router.refresh()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save card rotation:', err)
+      alert(err.message || '회전 각도 저장에 실패했습니다.')
     }
   }
 
