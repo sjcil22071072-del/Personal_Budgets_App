@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createCardRegistration } from '@/app/actions/cardRegistration'
+import { createCardRegistration, updateCardRotation } from '@/app/actions/cardRegistration'
 import { compressImage } from '@/utils/image-compression'
 import ImageLightbox from '@/components/ui/ImageLightbox'
 import { extractStoragePath } from '@/utils/supabase/storage'
@@ -30,6 +30,22 @@ export default function CardRegistrationForm({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
   const [zoomInitialRotation, setZoomInitialRotation] = useState<number>(0)
+  const [zoomCardId, setZoomCardId] = useState<string | null>(null)
+  const [zoomRotations, setZoomRotations] = useState<Record<string, number>>({})
+
+  const handleRotateChange = async (rotation: number) => {
+    if (!zoomImageUrl || !zoomCardId) return
+    try {
+      const path = extractStoragePath(zoomImageUrl, 'card-photos') || zoomImageUrl
+      const nextRotations = { ...zoomRotations, [path]: rotation }
+      await updateCardRotation(zoomCardId, nextRotations)
+      setZoomRotations(nextRotations)
+      setZoomInitialRotation(rotation)
+      router.refresh()
+    } catch (err) {
+      console.error('Failed to save card rotation:', err)
+    }
+  }
 
   function setImage(side: CardSide, file: File | null) {
     if (!file) return
@@ -149,6 +165,8 @@ export default function CardRegistrationForm({
                         onClick={() => {
                           setZoomImageUrl(url)
                           setZoomInitialRotation(rotation)
+                          setZoomCardId(item.id)
+                          setZoomRotations((item.image_rotations as any) ?? {})
                         }}
                         className="block aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200 text-left transition-transform active:scale-[0.98]"
                       >
@@ -172,8 +190,13 @@ export default function CardRegistrationForm({
         <ImageLightbox
           src={zoomImageUrl}
           initialRotation={zoomInitialRotation}
-          showRotate={false}
-          onClose={() => setZoomImageUrl(null)}
+          showRotate={true}
+          onRotateChange={handleRotateChange}
+          onClose={() => {
+            setZoomImageUrl(null)
+            setZoomCardId(null)
+            setZoomRotations({})
+          }}
         />
       )}
     </div>
