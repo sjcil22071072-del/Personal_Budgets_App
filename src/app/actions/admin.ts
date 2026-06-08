@@ -302,6 +302,19 @@ export async function updateParticipant(participantId: string, formData: {
     if (formData.name !== undefined) updateData.name = formData.name
     if (formData.email !== undefined) {
        const normalizedEmail = formData.email.trim().toLowerCase()
+       
+       if (oldEmail && oldEmail.toLowerCase() !== normalizedEmail) {
+         // 이미 거래 내역이 등록된 계정인지 검사하여 변경 제한 (보안 가드)
+         const { count, error: txError } = await supabase
+           .from('transactions')
+           .select('id', { count: 'exact', head: true })
+           .eq('participant_id', participantId)
+
+         if (!txError && count && count > 0) {
+           return { error: '이미 지출 내역이나 영수증이 등록되어 사용 중인 계정은 보안상 이메일(아이디)을 변경할 수 없습니다. 기존 아이디를 사용해 주세요.' }
+         }
+       }
+
        const { data: existing } = await supabase
          .from('participants')
          .select('id')

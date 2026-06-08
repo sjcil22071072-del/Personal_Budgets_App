@@ -68,75 +68,7 @@ export async function GET(request: Request) {
   const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL ?? '').trim().toLowerCase()
   const isSuperAdmin = !!superAdminEmail && email === superAdminEmail
 
-  // 당사자(Participant) 이메일 변경으로 인한 Auth UUID 불일치 복구 로직 (데이터 이전 방식)
-  if (email && !isSuperAdmin) {
-    const { data: participantReg } = await adminClient
-      .from('participants')
-      .select('*')
-      .ilike('email', email)
-      .maybeSingle()
 
-    if (participantReg && participantReg.id !== user.id) {
-      console.log(`[AuthCallback] Email mismatch. Migrating data from ${participantReg.id} to ${user.id}`)
-      try {
-        const oldId = participantReg.id
-        const newId = user.id
-
-        // 1. 새 ID(newId)를 가진 participants 레코드 복사 생성
-        const { error: insertErr } = await adminClient
-          .from('participants')
-          .insert({
-            id: newId,
-            name: participantReg.name,
-            email: participantReg.email,
-            monthly_budget_default: participantReg.monthly_budget_default,
-            yearly_budget_default: participantReg.yearly_budget_default,
-            budget_start_date: participantReg.budget_start_date,
-            budget_end_date: participantReg.budget_end_date,
-            funding_source_count: participantReg.funding_source_count,
-            alert_threshold: participantReg.alert_threshold,
-            assigned_supporter_id: participantReg.assigned_supporter_id,
-            ui_preferences: participantReg.ui_preferences,
-            created_at: participantReg.created_at
-          })
-
-        if (insertErr) {
-          throw new Error(`Failed to insert new participant record: ${insertErr.message}`)
-        }
-
-        // 2. 자식 테이블들의 participant_id를 newId로 마이그레이션
-        // a. funding_sources
-        await adminClient.from('funding_sources').update({ participant_id: newId }).eq('participant_id', oldId)
-        // b. transactions
-        await adminClient.from('transactions').update({ participant_id: newId }).eq('participant_id', oldId)
-        // c. card_registrations
-        await adminClient.from('card_registrations').update({ participant_id: newId }).eq('participant_id', oldId)
-        // d. family_registrations
-        await adminClient.from('family_registrations').update({ participant_id: newId }).eq('participant_id', oldId)
-        // e. file_links
-        await adminClient.from('file_links').update({ participant_id: newId }).eq('participant_id', oldId)
-
-        // 3. 기존 profiles의 oldId 레코드 삭제
-        await adminClient.from('profiles').delete().eq('id', oldId)
-
-        // 4. 기존 participants의 oldId 레코드 삭제 (자식 데이터는 이미 다 이전되었으므로 cascade 삭제가 발생해도 무방)
-        await adminClient.from('participants').delete().eq('id', oldId)
-
-        // 5. Supabase Auth의 이전 계정(oldId) 삭제
-        try {
-          await adminClient.auth.admin.deleteUser(oldId)
-          console.log(`[AuthCallback] Deleted old auth user: ${oldId}`)
-        } catch (authDelErr) {
-          console.warn('[AuthCallback] Failed to delete old auth user:', authDelErr)
-        }
-
-        console.log(`[AuthCallback] Successfully migrated all data to new user ID: ${newId}`)
-      } catch (migrationErr: any) {
-        console.error('[AuthCallback] Critical: Data migration failed:', migrationErr)
-        return NextResponse.redirect(`${baseUrl}/login?error=MigrationFailed`)
-      }
-    }
-  }
 
   const { data: existingProfile } = await adminClient
     .from('profiles')
