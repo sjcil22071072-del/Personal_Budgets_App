@@ -145,16 +145,18 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   if (isRotated && naturalSize.width > 0 && naturalSize.height > 0 && viewportSize.width > 0 && viewportSize.height > 0) {
     const maxW = viewportSize.width * 0.9
     const maxH = viewportSize.height * 0.8
-    const R_rotated = naturalSize.height / naturalSize.width
-    let W_visual = maxW
-    let H_visual = maxW * R_rotated
-    if (H_visual > maxH) {
-      H_visual = maxH
-      W_visual = maxH / R_rotated
-    }
-    
-    imgStyle.width = `${H_visual}px`
-    imgStyle.height = `${W_visual}px`
+
+    // Calculate unrotated layout box size
+    const scale_normal = Math.min(maxW / naturalSize.width, maxH / naturalSize.height, 1)
+    const W_layout = naturalSize.width * scale_normal
+    const H_layout = naturalSize.height * scale_normal
+
+    // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (maxW x maxH)
+    const scaleX = maxW / H_layout
+    const scaleY = maxH / W_layout
+    const scale = Math.min(scaleX, scaleY, 1)
+
+    imgStyle.transform = `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom * scale})`
   }
 
   return createPortal(

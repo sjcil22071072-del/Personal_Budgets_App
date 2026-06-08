@@ -109,20 +109,19 @@ function RotatableImage({ src, alt, rotation, onClick, onDelete, deleting }: Rot
 
   if (isRotated && naturalSize.width > 0 && naturalSize.height > 0 && containerWidth > 0) {
     const parentWidth = containerWidth
-    const R_rotated = naturalSize.height / naturalSize.width
-    let W_visual = parentWidth
-    let H_visual = parentWidth * R_rotated
-    if (H_visual > 500) {
-      H_visual = 500
-      W_visual = 500 / R_rotated
-    }
     
-    // Set layout dimensions of img element (swapped)
-    imgStyle.width = `${H_visual}px`
-    imgStyle.height = `${W_visual}px`
-    
-    // Container height matches the visual height of rotated image
-    containerStyle.height = `${H_visual}px`
+    // Calculate unrotated layout box size (constrained by maxWidth/maxHeight)
+    const scale_normal = Math.min(parentWidth / naturalSize.width, 500 / naturalSize.height, 1)
+    const W_layout = naturalSize.width * scale_normal
+    const H_layout = naturalSize.height * scale_normal
+
+    // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x 500)
+    const scaleX = parentWidth / H_layout
+    const scaleY = 500 / W_layout
+    const scale = Math.min(scaleX, scaleY, 1)
+
+    imgStyle.transform = `rotate(${rotation}deg) scale(${scale})`
+    containerStyle.height = `${W_layout * scale}px`
   }
 
   return (
