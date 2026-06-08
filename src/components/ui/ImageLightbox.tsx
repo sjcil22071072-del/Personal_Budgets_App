@@ -23,7 +23,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
 
   const handleImageLoad = () => {
-    if (imgRef.current) {
+    if (imgRef.current && imgRef.current.naturalWidth > 0) {
       setNaturalSize({
         width: imgRef.current.naturalWidth,
         height: imgRef.current.naturalHeight
@@ -32,8 +32,24 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   }
 
   useEffect(() => {
-    if (imgRef.current?.complete) {
-      handleImageLoad()
+    let checkTimeout: any
+    
+    const checkSize = () => {
+      if (imgRef.current && imgRef.current.complete) {
+        if (imgRef.current.naturalWidth > 0) {
+          setNaturalSize({
+            width: imgRef.current.naturalWidth,
+            height: imgRef.current.naturalHeight
+          })
+        } else {
+          checkTimeout = setTimeout(checkSize, 50)
+        }
+      }
+    }
+
+    checkSize()
+    return () => {
+      if (checkTimeout) clearTimeout(checkTimeout)
     }
   }, [src])
 
