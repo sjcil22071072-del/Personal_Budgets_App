@@ -119,15 +119,7 @@ export async function getSignedImageUrl(
   if (!path) return null
 
   const admin = createAdminClient()
-  const isPdf = path.toLowerCase().endsWith('.pdf')
-  const options = isPdf 
-    ? undefined 
-    : {
-        transform: {
-          width: 1000,
-          quality: 80,
-        }
-      }
+  const options = undefined
 
   const { data, error } = await admin.storage  // error 추가
     .from(bucket)
