@@ -99,15 +99,10 @@ function RotatableImage({ src, alt, rotation, onClick, onDelete, deleting }: Rot
 
   const isRotated = rotation === 90 || rotation === 270
 
-  let imgStyle: React.CSSProperties = {
-    transform: `rotate(${rotation}deg)`,
-    transition: 'transform 0.2s ease-in-out',
-    maxWidth: '100%',
-    maxHeight: '500px'
-  }
+  let imgStyle: React.CSSProperties = {}
   let containerStyle: React.CSSProperties = {}
 
-  if (isRotated && naturalSize.width > 0 && naturalSize.height > 0 && containerWidth > 0) {
+  if (naturalSize.width > 0 && naturalSize.height > 0 && containerWidth > 0) {
     const parentWidth = containerWidth
     
     // Calculate unrotated layout box size (constrained by maxWidth/maxHeight)
@@ -115,13 +110,49 @@ function RotatableImage({ src, alt, rotation, onClick, onDelete, deleting }: Rot
     const W_layout = naturalSize.width * scale_normal
     const H_layout = naturalSize.height * scale_normal
 
-    // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x 500)
-    const scaleX = parentWidth / H_layout
-    const scaleY = 500 / W_layout
-    const scale = Math.min(scaleX, scaleY, 1)
+    if (isRotated) {
+      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x 500)
+      const scaleX = parentWidth / H_layout
+      const scaleY = 500 / W_layout
+      const scale = Math.min(scaleX, scaleY, 1)
 
-    imgStyle.transform = `rotate(${rotation}deg) scale(${scale})`
-    containerStyle.height = `${W_layout * scale}px`
+      imgStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: `${W_layout}px`,
+        height: `${H_layout}px`,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
+        transition: 'transform 0.2s ease-in-out',
+        objectFit: 'contain',
+        maxWidth: '100%',
+        maxHeight: '100%'
+      }
+      containerStyle.height = `${W_layout * scale}px`
+    } else {
+      imgStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: `${W_layout}px`,
+        height: `${H_layout}px`,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        transition: 'transform 0.2s ease-in-out',
+        objectFit: 'contain',
+        maxWidth: '100%',
+        maxHeight: '100%'
+      }
+      containerStyle.height = `${H_layout}px`
+    }
+  } else {
+    // Before image loaded
+    imgStyle = {
+      maxWidth: '100%',
+      maxHeight: '500px',
+      opacity: 0,
+      objectFit: 'contain'
+    }
+    containerStyle.height = '400px'
   }
 
   return (
@@ -136,7 +167,7 @@ function RotatableImage({ src, alt, rotation, onClick, onDelete, deleting }: Rot
         alt={alt}
         onLoad={handleLoad}
         style={imgStyle}
-        className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
+        className="rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
         onClick={onClick}
       />
       {onDelete && (

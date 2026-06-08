@@ -135,14 +135,9 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
 
   const isRotated = rotation === 90 || rotation === 270
   
-  let imgStyle: React.CSSProperties = {
-    transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
-    transition: isDragging ? 'none' : 'transform 0.15s ease-out',
-    maxWidth: '90vw',
-    maxHeight: '80vh'
-  }
+  let imgStyle: React.CSSProperties = {}
 
-  if (isRotated && naturalSize.width > 0 && naturalSize.height > 0 && viewportSize.width > 0 && viewportSize.height > 0) {
+  if (naturalSize.width > 0 && naturalSize.height > 0 && viewportSize.width > 0 && viewportSize.height > 0) {
     const maxW = viewportSize.width * 0.9
     const maxH = viewportSize.height * 0.8
 
@@ -151,12 +146,46 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
     const W_layout = naturalSize.width * scale_normal
     const H_layout = naturalSize.height * scale_normal
 
-    // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (maxW x maxH)
-    const scaleX = maxW / H_layout
-    const scaleY = maxH / W_layout
-    const scale = Math.min(scaleX, scaleY, 1)
+    if (isRotated) {
+      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (maxW x maxH)
+      const scaleX = maxW / H_layout
+      const scaleY = maxH / W_layout
+      const scale = Math.min(scaleX, scaleY, 1)
 
-    imgStyle.transform = `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom * scale})`
+      imgStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: `${W_layout}px`,
+        height: `${H_layout}px`,
+        transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom * scale})`,
+        transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+        objectFit: 'contain',
+        maxWidth: 'none',
+        maxHeight: 'none'
+      }
+    } else {
+      imgStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: `${W_layout}px`,
+        height: `${H_layout}px`,
+        transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
+        transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+        objectFit: 'contain',
+        maxWidth: 'none',
+        maxHeight: 'none'
+      }
+    }
+  } else {
+    // Before image loaded
+    imgStyle = {
+      maxWidth: '90vw',
+      maxHeight: '80vh',
+      opacity: 0,
+      objectFit: 'contain'
+    }
   }
 
   return createPortal(
@@ -182,7 +211,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
           alt={alt ?? '사진'}
           style={imgStyle}
           onLoad={handleImageLoad}
-          className={`max-w-[90vw] max-h-[80dvh] object-contain rounded-xl shadow-2xl pointer-events-auto transition-transform ${
+          className={`rounded-xl shadow-2xl pointer-events-auto transition-transform ${
             zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
           }`}
           onMouseDown={handleMouseDown}
