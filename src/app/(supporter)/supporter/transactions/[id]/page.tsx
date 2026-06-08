@@ -43,15 +43,7 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     if (!url) return null;
     const path = extractStoragePath(url, bucket);
     if (!path) return null;
-    const isPdf = path.toLowerCase().endsWith('.pdf');
-    const options = isPdf 
-      ? undefined 
-      : {
-          transform: {
-            width: 1000,
-            quality: 80,
-          }
-        };
+    const options = undefined;
     const { data } = await adminClient.storage
       .from(bucket)
       .createSignedUrl(path, 3600, options);
