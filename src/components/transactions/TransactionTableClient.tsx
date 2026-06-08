@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { updateTransactionStatus, deleteTransaction } from '@/app/actions/transaction'
 import { ACTIVITY_CATEGORY_GROUPS } from '@/components/transactions/ActivityCategoryPicker'
 import * as XLSX from 'xlsx'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 
 interface Transaction {
   id: string
@@ -84,6 +85,7 @@ export default function TransactionTableClient({
   })
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [lightbox, setLightbox] = useState<{ src: string; label: string } | null>(null)
 
   const currentSort = parseSortParam(filters.sort)
   const selectedCategoryGroup = ACTIVITY_CATEGORY_GROUPS.find(group => group.major === filters.categoryMajor)
@@ -502,15 +504,17 @@ export default function TransactionTableClient({
                                   alt="첨부 사진"
                                   className="object-cover w-full h-full"
                                 />
-                                <a
-                                  href={tx.receipt_original_url || tx.activity_original_url || tx.receipt_image_url || tx.activity_image_url || '#'}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-white text-[10px] font-bold transition-all"
-                                  title="새 창에서 원본 보기"
+                                <button
+                                  type="button"
+                                  onClick={() => setLightbox({
+                                    src: tx.receipt_original_url || tx.activity_original_url || tx.receipt_image_url || tx.activity_image_url || '',
+                                    label: `${tx.activity_name} — 첨부 사진`
+                                  })}
+                                  className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-white text-[10px] font-bold transition-all cursor-pointer"
+                                  title="크게 보기"
                                 >
                                   🔍
-                                </a>
+                                </button>
                               </div>
                             ) : (
                               <span className="text-zinc-300 font-bold">-</span>
@@ -560,6 +564,13 @@ export default function TransactionTableClient({
             </div>
           </div>
         </>
+      {lightbox && (
+        <ImageLightbox
+          src={lightbox.src}
+          alt={lightbox.label}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </>
   )
 }
