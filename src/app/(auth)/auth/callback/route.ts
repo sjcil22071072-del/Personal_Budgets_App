@@ -68,7 +68,46 @@ export async function GET(request: Request) {
   const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL ?? '').trim().toLowerCase()
   const isSuperAdmin = !!superAdminEmail && email === superAdminEmail
 
+  // 당사자(Participant) 이메일 변경으로 인한 Auth UUID 불일치 복구 로직
+  if (email && !isSuperAdmin) {
+    const { data: participantReg } = await adminClient
+      .from('participants')
+      .select('id, name')
+      .ilike('email', email)
+      .maybeSingle()
 
+    if (participantReg && participantReg.id !== user.id) {
+      console.log(`[AuthCallback] Email mismatch detected for ${email}. Participant ID: ${participantReg.id}, Auth ID: ${user.id}`)
+      try {
+        // 0. profiles 테이블에서 깡통 계정 프로필 먼저 삭제 (외래키 제약조건 우회)
+        await adminClient.from('profiles').delete().eq('id', user.id)
+
+        // 1. 현재 로그인 시도한 깡통 Auth 계정(uuid-user2) 삭제
+        const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id)
+        if (deleteError) {
+          console.error('[AuthCallback] Failed to delete temporary duplicate user:', deleteError)
+        }
+
+        // 2. 기존 당사자 Auth 계정(uuid-user1)의 이메일을 새 이메일로 갱신
+        const { error: updateAuthError } = await adminClient.auth.admin.updateUserById(
+          participantReg.id,
+          { email: email, email_confirm: true }
+        )
+
+        if (updateAuthError) {
+          console.error('[AuthCallback] Failed to update original user email:', updateAuthError)
+        } else {
+          console.log(`[AuthCallback] Successfully updated original user email to ${email} for user ID: ${participantReg.id}`)
+        }
+
+        // 3. 로그아웃 세션 해제 및 로그인 화면으로 리다이렉트 (재시도 유도)
+        await supabase.auth.signOut()
+        return NextResponse.redirect(`${baseUrl}/login?error=EmailUpdatedRetry`)
+      } catch (recoveryErr) {
+        console.error('[AuthCallback] Recovery process exception:', recoveryErr)
+      }
+    }
+  }
 
   const { data: existingProfile } = await adminClient
     .from('profiles')
