@@ -79,6 +79,9 @@ export async function GET(request: Request) {
     if (participantReg && participantReg.id !== user.id) {
       console.log(`[AuthCallback] Email mismatch detected for ${email}. Participant ID: ${participantReg.id}, Auth ID: ${user.id}`)
       try {
+        // 0. profiles 테이블에서 깡통 계정 프로필 먼저 삭제 (외래키 제약조건 우회)
+        await adminClient.from('profiles').delete().eq('id', user.id)
+
         // 1. 현재 로그인 시도한 깡통 Auth 계정(uuid-user2) 삭제
         const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id)
         if (deleteError) {

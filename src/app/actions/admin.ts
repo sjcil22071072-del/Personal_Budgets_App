@@ -361,6 +361,9 @@ export async function updateParticipant(participantId: string, formData: {
                   // 중복되는 새 이메일의 auth.users 계정이 있는지 확인하고, 있다면 삭제 (접속 불가 계정으로 남아있는 경우 정리)
                   const duplicateUser = users.find((u: any) => u.email?.toLowerCase() === newEmail)
                   if (duplicateUser && duplicateUser.id !== matchedUser.id) {
+                    // profiles 테이블에서 중복 계정 프로필 먼저 삭제 (외래키 제약조건 우회)
+                    await supabase.from('profiles').delete().eq('id', duplicateUser.id)
+
                     const { error: deleteError } = await supabase.auth.admin.deleteUser(duplicateUser.id)
                     if (deleteError) {
                       console.warn('[admin.updateParticipant] failed to delete duplicate auth user:', deleteError)
