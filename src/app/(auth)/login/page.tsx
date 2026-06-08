@@ -209,11 +209,26 @@ function GoogleLoginContent() {
 
           {/* 오류 메시지 */}
           {error && (
-            <div className="rounded-2xl bg-red-50/60 border border-red-100 p-4 text-xs text-red-800 leading-relaxed shadow-sm">
-              <p className="font-bold mb-1">
-                이 앱에 들어올 수 없는 이메일이에요.
-              </p>
-              <p>담당 선생님께 문의해주세요.</p>
+            <div className={`rounded-2xl p-4 text-xs leading-relaxed shadow-sm border ${
+              error === "EmailUpdatedRetry"
+                ? "bg-emerald-50/70 border-emerald-100 text-emerald-850"
+                : "bg-red-50/60 border-red-100 text-red-800"
+            }`}>
+              {error === "EmailUpdatedRetry" ? (
+                <>
+                  <p className="font-bold mb-1 text-emerald-900">
+                    이메일 정보가 성공적으로 동기화되었습니다.
+                  </p>
+                  <p className="text-zinc-650">안전한 서비스 이용을 위해 <strong>[구글로 로그인하기]</strong>를 한 번 더 눌러주세요.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-bold mb-1">
+                    이 앱에 들어올 수 없는 이메일이에요.
+                  </p>
+                  <p>담당 선생님께 문의해주세요.</p>
+                </>
+              )}
             </div>
           )}
 
