@@ -14,7 +14,8 @@ const EASY_READ_IMAGE_MAX_BYTES = 2 * 1024 * 1024 // 2MB
  * @returns id → { receipt?, activity? } 매핑
  */
 export async function getSignedImageUrls(
-  items: { id: string; receiptUrl: string | null; activityUrl: string | null }[]
+  items: { id: string; receiptUrl: string | null; activityUrl: string | null }[],
+  optimize = true
 ): Promise<Record<string, { receipt?: string; activity?: string }>> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -38,19 +39,18 @@ export async function getSignedImageUrls(
     }
   }
 
-  // receipts 버킷 signed URLs 일괄 생성 (썸네일용 최적화)
+  // receipts 버킷 signed URLs 일괄 생성
   if (receiptPaths.length > 0) {
     const uniqueReceiptPaths = Array.from(new Set(receiptPaths.map(p => p.path)))
     const signedUrls = await Promise.all(
       uniqueReceiptPaths.map(async path => {
         const { data, error } = await admin.storage
           .from('receipts')
-          .createSignedUrl(path, SIGNED_URL_EXPIRES, {
-            transform: {
-              width: 300,
-              quality: 70,
-            }
-          })
+          .createSignedUrl(
+            path,
+            SIGNED_URL_EXPIRES,
+            optimize ? { transform: { width: 300, quality: 70 } } : undefined
+          )
         if (error) {
           console.error(`Failed to create signed URL for receipt path ${path}:`, error)
         }
@@ -67,19 +67,18 @@ export async function getSignedImageUrls(
     })
   }
 
-  // activity-photos 버킷 signed URLs 일괄 생성 (썸네일용 최적화)
+  // activity-photos 버킷 signed URLs 일괄 생성
   if (activityPaths.length > 0) {
     const uniqueActivityPaths = Array.from(new Set(activityPaths.map(p => p.path)))
     const signedUrls = await Promise.all(
       uniqueActivityPaths.map(async path => {
         const { data, error } = await admin.storage
           .from('activity-photos')
-          .createSignedUrl(path, SIGNED_URL_EXPIRES, {
-            transform: {
-              width: 300,
-              quality: 70,
-            }
-          })
+          .createSignedUrl(
+            path,
+            SIGNED_URL_EXPIRES,
+            optimize ? { transform: { width: 300, quality: 70 } } : undefined
+          )
         if (error) {
           console.error(`Failed to create signed URL for activity photo path ${path}:`, error)
         }

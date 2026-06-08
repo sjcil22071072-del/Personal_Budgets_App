@@ -5,6 +5,9 @@ import { EasyTerm } from '@/components/ui/EasyTerm'
 import GalleryClient from './GalleryClient'
 import { getSignedImageUrls } from '@/app/actions/storage'
 import NavDropdown from '@/components/layout/NavDropdown'
+import { unstable_noStore as noStore } from 'next/cache'
+
+export const dynamic = 'force-dynamic'
 
 // 2026년 5월~10월 고정, 현재 달 기준으로 기본값 설정
 function getFixedMonths() {
@@ -22,6 +25,7 @@ export default async function GalleryPage({
 }: {
   searchParams: Promise<{ month?: string }>
 }) {
+  noStore()
   const params = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -78,17 +82,21 @@ export default async function GalleryPage({
       (t.receipt_image_urls && t.receipt_image_urls.length > 0) ||
       (t.activity_image_urls && t.activity_image_urls.length > 0)
   )
-  const signedUrls = await getSignedImageUrls(
-    rawItems.map((t: any) => {
-      const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
-        ? t.receipt_image_urls[0]
-        : (t.receipt_image_url ?? null);
-      const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
-        ? t.activity_image_urls[0]
-        : (t.activity_image_url ?? null);
-      return { id: t.id, receiptUrl, activityUrl };
-    })
-  )
+  const payload = rawItems.map((t: any) => {
+    const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+      ? t.receipt_image_urls[0]
+      : (t.receipt_image_url ?? null);
+    const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
+      ? t.activity_image_urls[0]
+      : (t.activity_image_url ?? null);
+    return { id: t.id, receiptUrl, activityUrl };
+  })
+
+  const [signedUrls, originalUrls] = await Promise.all([
+    getSignedImageUrls(payload, true),
+    getSignedImageUrls(payload, false)
+  ])
+
   const items = rawItems.map((t: any) => {
     const receipt = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
       ? t.receipt_image_urls[0]
@@ -102,7 +110,9 @@ export default async function GalleryPage({
       date: t.date,
       amount: t.amount,
       receipt_image_url: signedUrls[t.id]?.receipt ?? receipt,
+      receipt_original_url: originalUrls[t.id]?.receipt ?? receipt,
       activity_image_url: signedUrls[t.id]?.activity ?? activity,
+      activity_original_url: originalUrls[t.id]?.activity ?? activity,
       category: t.category,
       status: t.status,
     };

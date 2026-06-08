@@ -12,7 +12,9 @@ interface GalleryItem {
   date: string
   amount: number
   receipt_image_url: string | null
+  receipt_original_url?: string | null
   activity_image_url: string | null
+  activity_original_url?: string | null
   category: string | null
   status?: string | null
 }
@@ -83,7 +85,7 @@ export default function GalleryClient({ items, currentMonth, months }: Props) {
                     cards.push(
                       <button
                         key={`${item.id}-receipt`}
-                        onClick={() => setLightbox({ src: item.receipt_image_url!, label: `${displayCategory} — 영수증` })}
+                        onClick={() => setLightbox({ src: item.receipt_original_url ?? item.receipt_image_url!, label: `${displayCategory} — 영수증` })}
                         className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-100 active:scale-[0.97] transition-transform group"
                       >
                         <Image src={item.receipt_image_url} alt={displayCategory} fill sizes="(max-width:600px) 33vw, 200px" className="object-cover" />
@@ -98,7 +100,7 @@ export default function GalleryClient({ items, currentMonth, months }: Props) {
                     cards.push(
                       <button
                         key={`${item.id}-activity`}
-                        onClick={() => setLightbox({ src: item.activity_image_url!, label: `${displayCategory} — 활동 사진` })}
+                        onClick={() => setLightbox({ src: item.activity_original_url ?? item.activity_image_url!, label: `${displayCategory} — 활동 사진` })}
                         className="relative aspect-video rounded-2xl overflow-hidden bg-zinc-100 active:scale-[0.97] transition-transform group col-span-2"
                       >
                         <Image src={item.activity_image_url} alt={displayCategory} fill sizes="(max-width:600px) 66vw, 400px" className="object-cover" />
