@@ -330,11 +330,10 @@ export async function updateParticipant(participantId: string, formData: {
       return { error: `업데이트 실패: ${error.message}` }
     }
 
-    // profiles 및 auth.users 정보도 동기화
+    // profiles 정보 동기화
     try {
       const { data: { users }, error: listError } = await supabase.auth.admin.listUsers()
       if (!listError && users) {
-        // 이메일이 아닌 UUID(participantId)를 기준으로 Supabase Auth 사용자를 찾습니다. (이메일이 이미 바뀌어 있어도 안전하게 매칭됨)
         const matchedUser = users.find((u: any) => u.id === participantId)
         if (matchedUser) {
           const profileUpdate: any = {}
@@ -344,7 +343,6 @@ export async function updateParticipant(participantId: string, formData: {
           }
           
           if (Object.keys(profileUpdate).length > 0) {
-            // 1. profiles 테이블 업데이트
             const { error: profileError } = await supabase
               .from('profiles')
               .update(profileUpdate)
@@ -352,39 +350,6 @@ export async function updateParticipant(participantId: string, formData: {
             
             if (profileError) {
               console.error('[admin.updateParticipant] profile sync error:', profileError)
-            }
-
-            // 2. 이메일이 실질적으로 변경되는 경우, Supabase Auth 계정 정보도 동기화
-            if (formData.email !== undefined) {
-              const newEmail = formData.email.trim().toLowerCase()
-              const currentAuthEmail = matchedUser.email?.toLowerCase()
-
-              if (currentAuthEmail && currentAuthEmail !== newEmail) {
-                // 중복되는 새 이메일의 auth.users 계정이 있는지 확인하고, 있다면 삭제 (접속 불가 계정으로 남아있는 경우 정리)
-                const duplicateUser = users.find((u: any) => u.email?.toLowerCase() === newEmail)
-                if (duplicateUser && duplicateUser.id !== matchedUser.id) {
-                  // profiles 테이블에서 중복 계정 프로필 먼저 삭제 (외래키 제약조건 우회)
-                  await supabase.from('profiles').delete().eq('id', duplicateUser.id)
-
-                  const { error: deleteError } = await supabase.auth.admin.deleteUser(duplicateUser.id)
-                  if (deleteError) {
-                    console.warn('[admin.updateParticipant] failed to delete duplicate auth user:', deleteError)
-                  } else {
-                    console.log('[admin.updateParticipant] deleted duplicate auth user:', duplicateUser.id)
-                  }
-                }
-
-                // 기존 auth.users 계정의 이메일 업데이트
-                const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
-                  matchedUser.id,
-                  { email: newEmail, email_confirm: true }
-                )
-                if (authUpdateError) {
-                  console.error('[admin.updateParticipant] auth email update error:', authUpdateError)
-                } else {
-                  console.log('[admin.updateParticipant] auth email updated successfully for user:', matchedUser.id)
-                }
-              }
             }
           }
         }
