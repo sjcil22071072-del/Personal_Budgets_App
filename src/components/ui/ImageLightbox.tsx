@@ -19,26 +19,38 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   const [isDragging, setIsDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0 })
   const imgRef = useRef<HTMLImageElement>(null)
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
 
-  const updateDimensions = () => {
+  const handleImageLoad = () => {
     if (imgRef.current) {
-      setDimensions({
-        width: imgRef.current.offsetWidth,
-        height: imgRef.current.offsetHeight
+      setNaturalSize({
+        width: imgRef.current.naturalWidth,
+        height: imgRef.current.naturalHeight
       })
     }
   }
 
-  const handleImageLoad = () => {
-    updateDimensions()
-  }
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      handleImageLoad()
+    }
+  }, [src])
 
   useEffect(() => {
-    updateDimensions()
-    window.addEventListener('resize', updateDimensions)
-    return () => window.removeEventListener('resize', updateDimensions)
-  }, [src])
+    setViewportSize({
+      width: window.innerWidth,
+      height: window.innerHeight
+    })
+    const handleResize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      })
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const handleWheel = (e: React.WheelEvent) => {
     const zoomFactor = 0.1
@@ -121,20 +133,28 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
 
-  let rotateScale = 1
-  if ((rotation === 90 || rotation === 270) && dimensions.width > 0 && dimensions.height > 0) {
-    if (typeof window !== 'undefined') {
-      const maxW = window.innerWidth * 0.9 // max-w-[90vw]
-      const maxH = window.innerHeight * 0.8 // max-h-[80dvh]
-      const scaleX = maxW / dimensions.height
-      const scaleY = maxH / dimensions.width
-      rotateScale = Math.min(scaleX, scaleY, 1)
-    }
+  const isRotated = rotation === 90 || rotation === 270
+  
+  let imgStyle: React.CSSProperties = {
+    transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
+    transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+    maxWidth: '90vw',
+    maxHeight: '80vh'
   }
 
-  const transformStyle = {
-    transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom * rotateScale})`,
-    transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+  if (isRotated && naturalSize.width > 0 && naturalSize.height > 0 && viewportSize.width > 0 && viewportSize.height > 0) {
+    const maxW = viewportSize.width * 0.9
+    const maxH = viewportSize.height * 0.8
+    const R_rotated = naturalSize.height / naturalSize.width
+    let W_visual = maxW
+    let H_visual = maxW * R_rotated
+    if (H_visual > maxH) {
+      H_visual = maxH
+      W_visual = maxH / R_rotated
+    }
+    
+    imgStyle.width = `${H_visual}px`
+    imgStyle.height = `${W_visual}px`
   }
 
   return createPortal(
@@ -158,7 +178,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
           ref={imgRef}
           src={src}
           alt={alt ?? '사진'}
-          style={transformStyle}
+          style={imgStyle}
           onLoad={handleImageLoad}
           className={`max-w-[90vw] max-h-[80dvh] object-contain rounded-xl shadow-2xl pointer-events-auto transition-transform ${
             zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'

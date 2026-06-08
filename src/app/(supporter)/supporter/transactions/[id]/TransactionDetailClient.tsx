@@ -47,6 +47,113 @@ interface Tx {
   image_rotations?: Record<string, number> | null
 }
 
+interface RotatableImageProps {
+  src: string
+  alt: string
+  rotation: number
+  onClick?: () => void
+  onDelete?: () => void
+  deleting?: boolean
+}
+
+function RotatableImage({ src, alt, rotation, onClick, onDelete, deleting }: RotatableImageProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  const handleLoad = () => {
+    if (imgRef.current) {
+      setNaturalSize({
+        width: imgRef.current.naturalWidth,
+        height: imgRef.current.naturalHeight
+      })
+    }
+  }
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const updateWidth = () => {
+      setContainerWidth(container.offsetWidth)
+    }
+
+    updateWidth()
+    const observer = new ResizeObserver(() => {
+      updateWidth()
+    })
+    observer.observe(container)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
+
+  // In case the image was already cached and onLoad doesn't fire
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      handleLoad()
+    }
+  }, [src])
+
+  const isRotated = rotation === 90 || rotation === 270
+
+  let imgStyle: React.CSSProperties = {
+    transform: `rotate(${rotation}deg)`,
+    transition: 'transform 0.2s ease-in-out',
+    maxWidth: '100%',
+    maxHeight: '500px'
+  }
+  let containerStyle: React.CSSProperties = {}
+
+  if (isRotated && naturalSize.width > 0 && naturalSize.height > 0 && containerWidth > 0) {
+    const parentWidth = containerWidth
+    const R_rotated = naturalSize.height / naturalSize.width
+    let W_visual = parentWidth
+    let H_visual = parentWidth * R_rotated
+    if (H_visual > 500) {
+      H_visual = 500
+      W_visual = 500 / R_rotated
+    }
+    
+    // Set layout dimensions of img element (swapped)
+    imgStyle.width = `${H_visual}px`
+    imgStyle.height = `${W_visual}px`
+    
+    // Container height matches the visual height of rotated image
+    containerStyle.height = `${H_visual}px`
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full flex items-center justify-center"
+      style={containerStyle}
+    >
+      <img
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        onLoad={handleLoad}
+        style={imgStyle}
+        className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
+        onClick={onClick}
+      />
+      {onDelete && (
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={onDelete}
+          className="absolute top-2 right-2 px-2 py-1 text-xs font-bold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 z-10"
+        >
+          {deleting ? '삭제 중...' : '🗑️ 삭제'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
@@ -474,23 +581,14 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
             {viewTab === 'receipt' ? (
               receiptUrls.length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
-                  <div className="relative">
-                    <img
-                      src={receiptUrls[receiptIdx]}
-                      alt={`영수증 ${receiptIdx + 1}`}
-                      style={{ transform: `rotate(${imageRotations[extractStoragePath(receiptUrls[receiptIdx], 'receipts') || receiptUrls[receiptIdx]] ?? 0}deg)` }}
-                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setZoomImageUrl(receiptUrls[receiptIdx])}
-                    />
-                    <button
-                      type="button"
-                      disabled={!!deletingReceiptUrl}
-                      onClick={() => handleReceiptDelete(receiptUrls[receiptIdx])}
-                      className="absolute top-2 right-2 px-2 py-1 text-xs font-bold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                    >
-                      {deletingReceiptUrl === receiptUrls[receiptIdx] ? '삭제 중...' : '🗑️ 삭제'}
-                    </button>
-                  </div>
+                  <RotatableImage
+                    src={receiptUrls[receiptIdx]}
+                    alt={`영수증 ${receiptIdx + 1}`}
+                    rotation={imageRotations[extractStoragePath(receiptUrls[receiptIdx], 'receipts') || receiptUrls[receiptIdx]] ?? 0}
+                    onClick={() => setZoomImageUrl(receiptUrls[receiptIdx])}
+                    onDelete={() => handleReceiptDelete(receiptUrls[receiptIdx])}
+                    deleting={deletingReceiptUrl === receiptUrls[receiptIdx]}
+                  />
                   {receiptUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {receiptUrls.map((url, i) => {
@@ -530,23 +628,14 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
             ) : viewTab === 'activity' ? (
               activityUrls.length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
-                  <div className="relative">
-                    <img
-                      src={activityUrls[activityIdx]}
-                      alt={`활동사진 ${activityIdx + 1}`}
-                      style={{ transform: `rotate(${imageRotations[extractStoragePath(activityUrls[activityIdx], 'activity-photos') || activityUrls[activityIdx]] ?? 0}deg)` }}
-                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setZoomImageUrl(activityUrls[activityIdx])}
-                    />
-                    <button
-                      type="button"
-                      disabled={!!deletingActivityUrl}
-                      onClick={() => handleActivityDelete(activityUrls[activityIdx])}
-                      className="absolute top-2 right-2 px-2 py-1 text-xs font-bold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                    >
-                      {deletingActivityUrl === activityUrls[activityIdx] ? '삭제 중...' : '🗑️ 삭제'}
-                    </button>
-                  </div>
+                  <RotatableImage
+                    src={activityUrls[activityIdx]}
+                    alt={`활동사진 ${activityIdx + 1}`}
+                    rotation={imageRotations[extractStoragePath(activityUrls[activityIdx], 'activity-photos') || activityUrls[activityIdx]] ?? 0}
+                    onClick={() => setZoomImageUrl(activityUrls[activityIdx])}
+                    onDelete={() => handleActivityDelete(activityUrls[activityIdx])}
+                    deleting={deletingActivityUrl === activityUrls[activityIdx]}
+                  />
                   {activityUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {activityUrls.map((url, i) => {
@@ -587,23 +676,14 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
               /* 증빙서류 탭 */
               evidenceUrls.length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
-                  <div className="relative">
-                    <img
-                      src={evidenceUrls[evidenceIdx]}
-                      alt={`증빙서류 ${evidenceIdx + 1}`}
-                      style={{ transform: `rotate(${imageRotations[extractStoragePath(evidenceUrls[evidenceIdx], 'evidence-documents') || evidenceUrls[evidenceIdx]] ?? 0}deg)` }}
-                      className="max-w-full max-h-[500px] object-contain rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setZoomImageUrl(evidenceUrls[evidenceIdx])}
-                    />
-                    <button
-                      type="button"
-                      disabled={!!deletingEvidenceUrl}
-                      onClick={() => handleEvidenceDelete(evidenceUrls[evidenceIdx])}
-                      className="absolute top-2 right-2 px-2 py-1 text-xs font-bold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                    >
-                      {deletingEvidenceUrl === evidenceUrls[evidenceIdx] ? '삭제 중...' : '🗑️ 삭제'}
-                    </button>
-                  </div>
+                  <RotatableImage
+                    src={evidenceUrls[evidenceIdx]}
+                    alt={`증빙서류 ${evidenceIdx + 1}`}
+                    rotation={imageRotations[extractStoragePath(evidenceUrls[evidenceIdx], 'evidence-documents') || evidenceUrls[evidenceIdx]] ?? 0}
+                    onClick={() => setZoomImageUrl(evidenceUrls[evidenceIdx])}
+                    onDelete={() => handleEvidenceDelete(evidenceUrls[evidenceIdx])}
+                    deleting={deletingEvidenceUrl === evidenceUrls[evidenceIdx]}
+                  />
                   {evidenceUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {evidenceUrls.map((url, i) => {
