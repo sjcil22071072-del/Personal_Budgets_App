@@ -1,6 +1,7 @@
 /**
  * Client-side image compression utility.
- * Compresses an image file by drawing it onto a canvas and exporting it as a JPEG with specified quality.
+ * Bypasses canvas compression to prevent EXIF orientation bugs that crop and stretch images.
+ * Returns the original file as-is.
  */
 export async function compressImage(
   file: File,
@@ -8,64 +9,5 @@ export async function compressImage(
   maxHeight = 1200,
   quality = 0.75
 ): Promise<File> {
-  // If the file is not an image, return it as-is
-  if (!file.type.startsWith('image/')) {
-    return file
-  }
-
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const img = new Image()
-      img.onload = () => {
-        let width = img.width
-        let height = img.height
-
-        // Calculate new dimensions while maintaining aspect ratio
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width)
-            width = maxWidth
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height)
-            height = maxHeight
-          }
-        }
-
-        const canvas = document.createElement('canvas')
-        canvas.width = width
-        canvas.height = height
-
-        const ctx = canvas.getContext('2d')
-        if (!ctx) {
-          resolve(file) // Fallback to original file
-          return
-        }
-
-        ctx.drawImage(img, 0, 0, width, height)
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              })
-              resolve(compressedFile)
-            } else {
-              resolve(file)
-            }
-          },
-          'image/jpeg',
-          quality
-        )
-      }
-      img.onerror = () => resolve(file)
-      img.src = e.target?.result as string
-    }
-    reader.onerror = () => resolve(file)
-    reader.readAsDataURL(file)
-  })
+  return file
 }
