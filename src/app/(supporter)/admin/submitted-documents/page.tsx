@@ -8,10 +8,12 @@ export const dynamic = 'force-dynamic'
 import { getAuthenticatedUserProfileRole } from '@/utils/supabase/profile-gate'
 import { extractStoragePath } from '@/utils/supabase/storage'
 import SubmittedDocumentsClient from '@/components/admin/SubmittedDocumentsClient'
+import { unstable_noStore as noStore } from 'next/cache'
 
 const SIGNED_URL_EXPIRES = 3600 // 1시간
 
 export default async function SubmittedDocumentsPage() {
+  noStore()
   const supabase = await createClient()
   const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()

@@ -134,105 +134,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   }, [onClose])
 
   const isRotated = rotation === 90 || rotation === 270
-
-  if (!isRotated) {
-    return createPortal(
-      <div
-        className="fixed inset-0 z-[9000] bg-black/90 flex flex-col items-center justify-center p-4 select-none touch-none overflow-hidden"
-        onClick={onClose}
-        onWheel={handleWheel}
-      >
-        {/* 닫기 버튼 */}
-        <button
-          onClick={onClose}
-          className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xl font-bold transition-colors z-[9010] shadow-lg border border-white/10"
-          aria-label="닫기"
-        >
-          ✕
-        </button>
-
-        {/* 이미지 컨테이너 */}
-        <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
-          <img
-            ref={imgRef}
-            src={src}
-            alt={alt ?? '사진'}
-            onLoad={handleImageLoad}
-            style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
-              transition: isDragging ? 'none' : 'transform 0.15s ease-out',
-              maxWidth: '90vw',
-              maxHeight: '80vh',
-              objectFit: 'contain',
-              width: 'auto',
-              height: 'auto',
-              display: 'block'
-            }}
-            className={`rounded-xl shadow-2xl pointer-events-auto transition-transform ${
-              zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
-            }`}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleMouseUp}
-            onClick={e => e.stopPropagation()}
-          />
-        </div>
-
-        {/* 하단 글래스모피즘 컨트롤러 */}
-        <div
-          className="absolute bottom-8 bg-black/70 backdrop-blur-lg text-white rounded-full px-6 py-3.5 flex items-center gap-5 border border-white/10 shadow-2xl z-[9010] animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto"
-          onClick={e => e.stopPropagation()}
-        >
-          <button
-            onClick={handleZoomOut}
-            disabled={zoom <= 1}
-            className="text-sm font-black text-zinc-300 hover:text-white disabled:text-zinc-650 transition-colors flex items-center gap-1"
-            title="축소"
-          >
-            ➖
-          </button>
-          <span className="text-xs font-bold text-zinc-400 min-w-[45px] text-center">
-            {Math.round(zoom * 100)}% (v2)
-          </span>
-          <button
-            onClick={handleZoomIn}
-            disabled={zoom >= 5}
-            className="text-sm font-black text-zinc-300 hover:text-white disabled:text-zinc-650 transition-colors flex items-center gap-1"
-            title="확대"
-          >
-            ➕
-          </button>
-          <div className="w-px h-4 bg-white/20" />
-          {showRotate && (
-            <>
-              <button
-                onClick={handleRotate}
-                className="text-sm font-black text-zinc-300 hover:text-white transition-colors flex items-center gap-1"
-                title="회전"
-              >
-                🔄 회전
-              </button>
-              <div className="w-px h-4 bg-white/20" />
-            </>
-          )}
-          <button
-            onClick={handleReset}
-            className="text-sm font-black text-zinc-300 hover:text-white transition-colors flex items-center gap-1"
-            title="초기화"
-          >
-            ♻️ 초기화
-          </button>
-        </div>
-      </div>,
-      document.body
-    )
-  }
   
-  // If rotated (90 or 270 deg)
   let imgStyle: React.CSSProperties = {}
 
   if (naturalSize.width > 0 && naturalSize.height > 0 && viewportSize.width > 0 && viewportSize.height > 0) {
@@ -244,22 +146,39 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
     const W_layout = naturalSize.width * scale_normal
     const H_layout = naturalSize.height * scale_normal
 
-    // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (maxW x maxH)
-    const scaleX = maxW / H_layout
-    const scaleY = maxH / W_layout
-    const scale = Math.min(scaleX, scaleY, 1)
+    if (isRotated) {
+      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (maxW x maxH)
+      const scaleX = maxW / H_layout
+      const scaleY = maxH / W_layout
+      const scale = Math.min(scaleX, scaleY, 1)
 
-    imgStyle = {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      width: `${W_layout}px`,
-      height: `${H_layout}px`,
-      transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom * scale})`,
-      transition: isDragging ? 'none' : 'transform 0.15s ease-out',
-      objectFit: 'contain',
-      maxWidth: 'none',
-      maxHeight: 'none'
+      imgStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: `${W_layout}px`,
+        height: `${H_layout}px`,
+        transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom * scale})`,
+        transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+        objectFit: 'contain',
+        maxWidth: 'none',
+        maxHeight: 'none',
+        display: 'block'
+      }
+    } else {
+      imgStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: `${W_layout}px`,
+        height: `${H_layout}px`,
+        transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
+        transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+        objectFit: 'contain',
+        maxWidth: 'none',
+        maxHeight: 'none',
+        display: 'block'
+      }
     }
   } else {
     // Before image loaded
@@ -267,7 +186,8 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
       maxWidth: '90vw',
       maxHeight: '80vh',
       opacity: 0,
-      objectFit: 'contain'
+      objectFit: 'contain',
+      display: 'block'
     }
   }
 

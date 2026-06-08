@@ -3,12 +3,16 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { getSignedImageUrl } from '@/app/actions/storage'
 import TransactionDetailView from './TransactionDetailView'
+import { unstable_noStore as noStore } from 'next/cache'
+
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: Promise<{ id: string }>
 }
 
 export default async function ParticipantTransactionDetailPage({ params }: PageProps) {
+  noStore()
   const { id } = await params
   const supabase = await createClient()
   const adminClient = createAdminClient()
