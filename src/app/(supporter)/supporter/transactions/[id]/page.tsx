@@ -5,6 +5,7 @@ import TransactionDetailClient from "./TransactionDetailClient";
 import { extractStoragePath } from "@/utils/supabase/storage";
 import { isStaffRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,7 @@ interface PageProps {
 }
 
 export default async function TransactionDetailPage({ params }: PageProps) {
+  noStore();
   const { id } = await params;
   const supabase = await createClient();
   const adminClient = createAdminClient();
