@@ -7,6 +7,9 @@ import TransactionTableClient from "@/components/transactions/TransactionTableCl
 import { isStaffRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
 import { getSignedImageUrls } from "@/app/actions/storage";
+import { unstable_noStore as noStore } from "next/cache";
+
+export const dynamic = 'force-dynamic';
 
 export default async function TransactionsPage({
   searchParams,
@@ -23,6 +26,7 @@ export default async function TransactionsPage({
     keyword?: string;
   }>;
 }) {
+  noStore();
   const params = await searchParams;
   const supabase = await createClient();
   const adminClient = createAdminClient();
@@ -90,21 +94,24 @@ export default async function TransactionsPage({
   const { data: rawTransactions } = await txQuery;
 
   // signed URL 일괄 변환
-  const signedUrls = await getSignedImageUrls(
-    (rawTransactions || []).map((t: any) => {
-      const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
-        ? t.receipt_image_urls[0]
-        : (t.receipt_image_url ?? null);
-      const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
-        ? t.activity_image_urls[0]
-        : (t.activity_image_url ?? null);
-      return {
-        id: t.id,
-        receiptUrl,
-        activityUrl,
-      };
-    }),
-  );
+  const payload = (rawTransactions || []).map((t: any) => {
+    const receiptUrl = (t.receipt_image_urls && t.receipt_image_urls.length > 0)
+      ? t.receipt_image_urls[0]
+      : (t.receipt_image_url ?? null);
+    const activityUrl = (t.activity_image_urls && t.activity_image_urls.length > 0)
+      ? t.activity_image_urls[0]
+      : (t.activity_image_url ?? null);
+    return {
+      id: t.id,
+      receiptUrl,
+      activityUrl,
+    };
+  });
+
+  const [signedUrls, originalUrls] = await Promise.all([
+    getSignedImageUrls(payload, true),
+    getSignedImageUrls(payload, false)
+  ]);
 
   const transactions = (rawTransactions || [])
     .map((t: any) => {
@@ -118,7 +125,9 @@ export default async function TransactionsPage({
         ...t,
         payment_method: t.payment_method === "계좌이체" ? "계좌이체" : "카드",
         receipt_image_url: signedUrls[t.id]?.receipt ?? receipt,
+        receipt_original_url: originalUrls[t.id]?.receipt ?? receipt,
         activity_image_url: signedUrls[t.id]?.activity ?? activity,
+        activity_original_url: originalUrls[t.id]?.activity ?? activity,
       };
     })
     .filter((t: any) => !params.paymentMethod || t.payment_method === params.paymentMethod);

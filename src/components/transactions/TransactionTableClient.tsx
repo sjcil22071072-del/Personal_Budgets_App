@@ -18,7 +18,9 @@ interface Transaction {
   memo?: string
   participant?: { name?: string }
   receipt_image_url?: string | null
+  receipt_original_url?: string | null
   activity_image_url?: string | null
+  activity_original_url?: string | null
 }
 
 interface Participant { id: string; name: string }
@@ -501,7 +503,7 @@ export default function TransactionTableClient({
                                   className="object-cover w-full h-full"
                                 />
                                 <a
-                                  href={tx.receipt_image_url || tx.activity_image_url}
+                                  href={tx.receipt_original_url || tx.activity_original_url || tx.receipt_image_url || tx.activity_image_url || '#'}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center text-white text-[10px] font-bold transition-all"
