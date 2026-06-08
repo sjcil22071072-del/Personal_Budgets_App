@@ -18,6 +18,27 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   const [rotation, setRotation] = useState(initialRotation)
   const [isDragging, setIsDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0 })
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+
+  const updateDimensions = () => {
+    if (imgRef.current) {
+      setDimensions({
+        width: imgRef.current.offsetWidth,
+        height: imgRef.current.offsetHeight
+      })
+    }
+  }
+
+  const handleImageLoad = () => {
+    updateDimensions()
+  }
+
+  useEffect(() => {
+    updateDimensions()
+    window.addEventListener('resize', updateDimensions)
+    return () => window.removeEventListener('resize', updateDimensions)
+  }, [src])
 
   const handleWheel = (e: React.WheelEvent) => {
     const zoomFactor = 0.1
@@ -100,8 +121,19 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
 
+  let rotateScale = 1
+  if ((rotation === 90 || rotation === 270) && dimensions.width > 0 && dimensions.height > 0) {
+    if (typeof window !== 'undefined') {
+      const maxW = window.innerWidth * 0.9 // max-w-[90vw]
+      const maxH = window.innerHeight * 0.8 // max-h-[80dvh]
+      const scaleX = maxW / dimensions.height
+      const scaleY = maxH / dimensions.width
+      rotateScale = Math.min(scaleX, scaleY, 1)
+    }
+  }
+
   const transformStyle = {
-    transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
+    transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom * rotateScale})`,
     transition: isDragging ? 'none' : 'transform 0.15s ease-out',
   }
 
@@ -123,9 +155,11 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
       {/* 이미지 컨테이너 */}
       <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
         <img
+          ref={imgRef}
           src={src}
           alt={alt ?? '사진'}
           style={transformStyle}
+          onLoad={handleImageLoad}
           className={`max-w-[90vw] max-h-[80dvh] object-contain rounded-xl shadow-2xl pointer-events-auto transition-transform ${
             zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
           }`}
