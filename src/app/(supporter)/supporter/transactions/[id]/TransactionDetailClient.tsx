@@ -99,6 +99,42 @@ function RotatableImage({ src, alt, rotation, onClick, onDelete, deleting }: Rot
 
   const isRotated = rotation === 90 || rotation === 270
 
+  if (!isRotated) {
+    return (
+      <div className="relative w-full flex items-center justify-center">
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt}
+          onLoad={handleLoad}
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transition: 'transform 0.2s ease-in-out',
+            maxWidth: '100%',
+            maxHeight: '500px',
+            objectFit: 'contain',
+            width: 'auto',
+            height: 'auto',
+            display: 'block'
+          }}
+          className="rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={onClick}
+        />
+        {onDelete && (
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={onDelete}
+            className="absolute top-2 right-2 px-2 py-1 text-xs font-bold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 z-10"
+          >
+            {deleting ? '삭제 중...' : '🗑️ 삭제'}
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  // If rotated (90 or 270 deg)
   let imgStyle: React.CSSProperties = {}
   let containerStyle: React.CSSProperties = {}
 
@@ -110,40 +146,24 @@ function RotatableImage({ src, alt, rotation, onClick, onDelete, deleting }: Rot
     const W_layout = naturalSize.width * scale_normal
     const H_layout = naturalSize.height * scale_normal
 
-    if (isRotated) {
-      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x 500)
-      const scaleX = parentWidth / H_layout
-      const scaleY = 500 / W_layout
-      const scale = Math.min(scaleX, scaleY, 1)
+    // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x 500)
+    const scaleX = parentWidth / H_layout
+    const scaleY = 500 / W_layout
+    const scale = Math.min(scaleX, scaleY, 1)
 
-      imgStyle = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: `${W_layout}px`,
-        height: `${H_layout}px`,
-        transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
-        transition: 'transform 0.2s ease-in-out',
-        objectFit: 'contain',
-        maxWidth: '100%',
-        maxHeight: '100%'
-      }
-      containerStyle.height = `${W_layout * scale}px`
-    } else {
-      imgStyle = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: `${W_layout}px`,
-        height: `${H_layout}px`,
-        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-        transition: 'transform 0.2s ease-in-out',
-        objectFit: 'contain',
-        maxWidth: '100%',
-        maxHeight: '100%'
-      }
-      containerStyle.height = `${H_layout}px`
+    imgStyle = {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      width: `${W_layout}px`,
+      height: `${H_layout}px`,
+      transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
+      transition: 'transform 0.2s ease-in-out',
+      objectFit: 'contain',
+      maxWidth: '100%',
+      maxHeight: '100%'
     }
+    containerStyle.height = `${W_layout * scale}px`
   } else {
     // Before image loaded
     imgStyle = {
