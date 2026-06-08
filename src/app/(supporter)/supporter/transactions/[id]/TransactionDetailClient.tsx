@@ -663,7 +663,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                       })}
                     </div>
                   )}
-                  <p className="text-center text-xs text-zinc-400">{receiptIdx + 1} / {receiptUrls.length}장</p>
+                  <p className="text-center text-xs text-zinc-400">{receiptIdx + 1} / {receiptUrls.length}장 (v2)</p>
                 </div>
               ) : (
                 <div className="text-zinc-400 flex flex-col items-center gap-3">
@@ -710,7 +710,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                       })}
                     </div>
                   )}
-                  <p className="text-center text-xs text-zinc-400">{activityIdx + 1} / {activityUrls.length}장</p>
+                  <p className="text-center text-xs text-zinc-400">{activityIdx + 1} / {activityUrls.length}장 (v2)</p>
                 </div>
               ) : (
                 <div className="text-zinc-400 flex flex-col items-center gap-3">
@@ -758,7 +758,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                       })}
                     </div>
                   )}
-                  <p className="text-center text-xs text-zinc-400">{evidenceIdx + 1} / {evidenceUrls.length}장</p>
+                  <p className="text-center text-xs text-zinc-400">{evidenceIdx + 1} / {evidenceUrls.length}장 (v2)</p>
                 </div>
               ) : (
                 <div className="text-zinc-400 flex flex-col items-center gap-3">

@@ -196,7 +196,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
             ➖
           </button>
           <span className="text-xs font-bold text-zinc-400 min-w-[45px] text-center">
-            {Math.round(zoom * 100)}%
+            {Math.round(zoom * 100)}% (v2)
           </span>
           <button
             onClick={handleZoomIn}
@@ -322,7 +322,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
           ➖
         </button>
         <span className="text-xs font-bold text-zinc-400 min-w-[45px] text-center">
-          {Math.round(zoom * 100)}%
+          {Math.round(zoom * 100)}% (v2)
         </span>
         <button
           onClick={handleZoomIn}
