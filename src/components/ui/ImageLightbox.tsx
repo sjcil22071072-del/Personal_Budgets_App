@@ -155,7 +155,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
 
   if (naturalSize.width > 0 && naturalSize.height > 0 && viewportSize.width > 0 && viewportSize.height > 0) {
     const maxW = viewportSize.width * 0.9
-    const maxH = viewportSize.height * 0.8
+    const maxH = viewportSize.height * 0.7
 
     // Calculate unrotated layout box size
     const scale_normal = Math.min(maxW / naturalSize.width, maxH / naturalSize.height, 1)
@@ -200,7 +200,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
     // Before image loaded
     imgStyle = {
       maxWidth: '90vw',
-      maxHeight: '80vh',
+      maxHeight: '70vh',
       opacity: 0,
       objectFit: 'contain',
       display: 'block'
@@ -209,7 +209,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9000] bg-black/90 flex flex-col items-center justify-center p-4 select-none touch-none overflow-hidden"
+      className="fixed inset-0 z-[9000] bg-black/90 flex flex-col items-center justify-center select-none touch-none overflow-hidden"
       onClick={onClose}
       onWheel={handleWheel}
     >
@@ -223,7 +223,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
       </button>
 
       {/* 이미지 컨테이너 */}
-      <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <img
           ref={imgRef}
           src={src}
