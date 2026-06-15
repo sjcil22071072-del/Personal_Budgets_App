@@ -137,8 +137,13 @@ export default function TransactionForm({
     activityFiles.forEach((file, i) => formData.set(`activity_${i}`, file))
 
     try {
-      await createTransaction(formData)
-      router.push(`/supporter/${participantId}/transactions`)
+      const result = await createTransaction(formData)
+      if (result.success) {
+        router.push(`/supporter/${participantId}/transactions`)
+      } else {
+        setError(result.error || '저장 중 오류가 발생했습니다.')
+        setLoading(false)
+      }
     } catch (err: any) {
       setError(err.message || '저장 중 오류가 발생했습니다.')
       setLoading(false)

@@ -185,6 +185,11 @@ export default function ReceiptUploadForm({
       const result = await createTransaction(formData);
       if (result.success) {
         setShowFeedback(true);
+      } else {
+        setToast({
+          type: "error",
+          message: result.error || "저장이 안 됐어요. 다시 눌러주세요.",
+        });
       }
     } catch (error) {
       console.error(error);
