@@ -112,8 +112,8 @@ export default function CardRegistrationForm({
       } else {
         setMessage({ type: 'error', text: result.error || '카드 등록에 실패했습니다. 다시 시도해주세요.' })
       }
-    } catch {
-      setMessage({ type: 'error', text: '카드 등록에 실패했습니다. 다시 시도해주세요.' })
+    } catch (err: any) {
+      setMessage({ type: 'error', text: `카드 등록에 실패했습니다. 다시 시도해주세요. (${err?.message || '알 수 없는 오류'})` })
     } finally {
       setSubmitting(false)
     }

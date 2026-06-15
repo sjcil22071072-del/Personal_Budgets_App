@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/utils/budget-visuals";
+import { compressImage } from "@/utils/image-compression";
 import { createTransaction } from "@/app/actions/transaction";
 import { createCardRegistration } from "@/app/actions/cardRegistration";
 import { EasyTerm } from "@/components/ui/EasyTerm";
@@ -559,52 +560,7 @@ export default function BalanceVisualWidget({
     e.target.value = "";
   };
 
-  function compressImage(file: File, maxPx = 1000): Promise<File> {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve(file);
-      };
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        try {
-          const longest = Math.max(img.width, img.height);
-          if (longest === 0) {
-            resolve(file);
-            return;
-          }
-          const scale = Math.min(1, maxPx / longest);
-          const canvas = document.createElement("canvas");
-          canvas.width = Math.max(1, Math.round(img.width * scale));
-          canvas.height = Math.max(1, Math.round(img.height * scale));
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            resolve(file);
-            return;
-          }
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                resolve(file);
-                return;
-              }
-              const name =
-                (file.name || "image").replace(/\.[^.]+$/, "") + ".jpg";
-              resolve(new File([blob], name, { type: "image/jpeg" }));
-            },
-            "image/jpeg",
-            0.82,
-          );
-        } catch {
-          resolve(file);
-        }
-      };
-      img.src = url;
-    });
-  }
+
 
   const handleInlineSubmit = async () => {
     if (!participantId || !uploadFile) return;
@@ -674,13 +630,13 @@ export default function BalanceVisualWidget({
       } else {
         if (amountNum > 0)
           setPendingDeduction((prev) => Math.max(0, prev - amountNum));
-        setUploadToast("기록이 안 되었어요. 다시 눌러 주세요.");
+        setUploadToast(`기록이 안 되었어요. 다시 눌러 주세요. (${result.error || "서버 오류"})`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("handleInlineSubmit 오류:", err);
       if (amountNum > 0)
         setPendingDeduction((prev) => Math.max(0, prev - amountNum));
-      setUploadToast("기록이 안 되었어요. 다시 눌러 주세요.");
+      setUploadToast(`기록이 안 되었어요. 다시 눌러 주세요. (${err?.message || "알 수 없는 오류"})`);
     } finally {
       setUploadSubmitting(false);
     }

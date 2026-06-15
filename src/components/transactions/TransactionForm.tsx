@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createTransaction } from '@/app/actions/transaction'
+import { compressImage } from '@/utils/image-compression'
 
 export default function TransactionForm({
   participantId,
@@ -131,12 +132,18 @@ export default function TransactionForm({
     const formData = new FormData(e.currentTarget)
     formData.append('participant_id', participantId)
     
-    // 파일 첨부
-    receiptFiles.forEach((file, i) => formData.set(`receipt_${i}`, file))
-    evidenceFiles.forEach((file, i) => formData.set(`evidence_${i}`, file))
-    activityFiles.forEach((file, i) => formData.set(`activity_${i}`, file))
-
     try {
+      // 로컬 파일 압축 후 주입
+      const [compressedReceipts, compressedEvidences, compressedActivities] = await Promise.all([
+        Promise.all(receiptFiles.map(file => compressImage(file))),
+        Promise.all(evidenceFiles.map(file => compressImage(file))),
+        Promise.all(activityFiles.map(file => compressImage(file)))
+      ])
+
+      compressedReceipts.forEach((file, i) => formData.set(`receipt_${i}`, file))
+      compressedEvidences.forEach((file, i) => formData.set(`evidence_${i}`, file))
+      compressedActivities.forEach((file, i) => formData.set(`activity_${i}`, file))
+
       const result = await createTransaction(formData)
       if (result.success) {
         router.push(`/supporter/${participantId}/transactions`)
