@@ -193,9 +193,10 @@ export default function ReceiptUploadForm({
       }
     } catch (error) {
       console.error(error);
+      const detail = error instanceof Error ? error.message : String(error);
       setToast({
         type: "error",
-        message: "저장이 안 됐어요. 다시 눌러주세요.",
+        message: `저장이 안 됐어요. 다시 눌러주세요. (${detail})`,
       });
     } finally {
       setLoading(false);

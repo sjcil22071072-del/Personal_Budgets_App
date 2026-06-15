@@ -110,6 +110,13 @@ export async function createTransaction(formData: FormData) {
       funding_source_id = activeFundingSource?.id ?? defaultFundingSources?.[0]?.id ?? null
     }
 
+    if (!funding_source_id) {
+      return {
+        success: false,
+        error: '사용 가능한 지원금(재원)이 없습니다. 관리자 페이지에서 지원금이 올바르게 배정되었는지, 혹은 등록하려는 일자가 지원금 기간(시작일/종료일) 내에 포함되는지 확인해 주세요.'
+      }
+    }
+
     const receipt_image_urls: string[] = []
     const activity_image_urls: string[] = []
     const evidence_image_urls: string[] = []

@@ -6,8 +6,12 @@ import { EasyTerm } from "@/components/ui/EasyTerm";
 import HelpButton from "@/components/help/HelpButton";
 import HelpAutoTrigger from "@/components/help/HelpAutoTrigger";
 import NavDropdown from "@/components/layout/NavDropdown";
+import { unstable_noStore as noStore } from "next/cache";
+
+export const dynamic = "force-dynamic";
 
 export default async function ReceiptPage() {
+  noStore();
   const supabase = await createClient();
   const adminClient = createAdminClient();
   const {
