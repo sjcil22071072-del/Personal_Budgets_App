@@ -108,37 +108,27 @@ export default function RotatableImage({
     if (naturalSize.width > 0 && naturalSize.height > 0 && containerWidth > 0) {
       const parentWidth = containerWidth
       
-      // 회전된 상태의 겉보기 종횡비 (H / W)
-      const aspect = naturalSize.height / naturalSize.width
-      // 컨테이너 제한 종횡비
-      const R = maxHeight / parentWidth
+      // Calculate unrotated layout box size (constrained by maxWidth/maxHeight)
+      const scale_normal = Math.min(parentWidth / naturalSize.width, maxHeight / naturalSize.height, 1)
+      const W_layout = Math.max(naturalSize.width * scale_normal, 1)
+      const H_layout = Math.max(naturalSize.height * scale_normal, 1)
 
-      let W_target = 0
-      let H_target = 0
+      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x maxHeight)
+      const scaleX = parentWidth / H_layout
+      const scaleY = maxHeight / W_layout
+      const rawScale = Math.min(scaleX, scaleY, 1)
+      const scale = isNaN(rawScale) ? 1 : rawScale
 
-      if (aspect >= R) {
-        // 세로가 꽉 차는 레이아웃
-        H_target = maxHeight
-        W_target = maxHeight / aspect
-      } else {
-        // 가로가 꽉 차는 레이아웃
-        W_target = parentWidth
-        H_target = parentWidth * aspect
-      }
-
-      // 90/270도 회전되어 출력되므로, 실제 img 태그의 가로세로(회전 전 크기)는 겉보기 가로세로를 뒤집어 적용
       imgStyle = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: `${H_target}px`,
-        height: `${W_target}px`,
-        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        position: 'relative',
+        width: `${W_layout}px`,
+        height: `${H_layout}px`,
+        transform: `rotate(${rotation}deg) scale(${scale})`,
         objectFit: 'contain',
         maxWidth: 'none',
         maxHeight: 'none'
       }
-      containerStyle.height = `${H_target}px`
+      containerStyle.height = `${W_layout * scale}px`
     } else {
       // Before image loaded / measuring container size
       imgStyle = {
@@ -165,7 +155,7 @@ export default function RotatableImage({
   return (
     <div
       ref={containerRef}
-      className="relative w-full flex items-center justify-center overflow-hidden"
+      className="relative w-full flex items-center justify-center"
       style={containerStyle}
     >
       <img
