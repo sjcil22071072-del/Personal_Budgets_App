@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 
 interface Props {
@@ -122,11 +122,17 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
     })
   }
 
+  const handleClose = useCallback(() => {
+    if (onRotateChange) {
+      onRotateChange(rotation)
+    }
+    onClose()
+  }, [onClose, onRotateChange, rotation])
+
   const handleReset = () => {
     setZoom(1)
     setPan({ x: 0, y: 0 })
     setRotation(0)
-    if (onRotateChange) onRotateChange(0)
   }
 
   const handleZoomIn = () => {
@@ -142,20 +148,17 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   }
 
   const handleRotate = () => {
-    setRotation(prev => {
-      const next = (prev + 90) % 360
-      if (onRotateChange) onRotateChange(next)
-      return next
-    })
+    setIsInitial(false)
+    setRotation(prev => (prev + 90) % 360)
   }
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') handleClose()
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [onClose])
+  }, [handleClose])
 
   const isRotated = rotation === 90 || rotation === 270
   
@@ -218,12 +221,12 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   return createPortal(
     <div
       className="fixed inset-0 z-[9000] bg-black/90 flex flex-col items-center justify-center select-none touch-none overflow-hidden"
-      onClick={onClose}
+      onClick={handleClose}
       onWheel={handleWheel}
     >
       {/* 닫기 버튼 */}
       <button
-        onClick={onClose}
+        onClick={handleClose}
         className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xl font-bold transition-colors z-[9010] shadow-lg border border-white/10"
         aria-label="닫기"
       >
