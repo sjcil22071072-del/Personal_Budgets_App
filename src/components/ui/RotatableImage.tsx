@@ -29,16 +29,17 @@ export default function RotatableImage({ src, alt, rotation, onClick, onDelete, 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+    const parent = container.parentElement || container
 
     const updateWidth = () => {
-      setContainerWidth(container.offsetWidth)
+      setContainerWidth(parent.offsetWidth)
     }
 
     updateWidth()
     const observer = new ResizeObserver(() => {
       updateWidth()
     })
-    observer.observe(container)
+    observer.observe(parent)
 
     if (imgRef.current?.complete) {
       handleLoad()
