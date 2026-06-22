@@ -89,8 +89,11 @@ export default function RotatableImage({
   }, [])
 
   // 이미지 로딩 및 naturalWidth가 0보다 커질 때까지 50ms 주기로 재시도하며 관찰하여 naturalSize를 확실하게 세팅합니다.
+  // 무한 루프 크래시(예: 로딩 실패 시 CPU 100% 점유로 브라우저가 하얗게 굳어버리는 현상)를 방지하기 위해 최대 100회(5초)로 제한합니다.
   useEffect(() => {
     let checkTimeout: any
+    let attempts = 0
+    const maxAttempts = 100
 
     const checkSize = () => {
       if (imgRef.current) {
@@ -99,7 +102,8 @@ export default function RotatableImage({
             width: imgRef.current.naturalWidth,
             height: imgRef.current.naturalHeight
           })
-        } else {
+        } else if (attempts < maxAttempts) {
+          attempts++
           checkTimeout = setTimeout(checkSize, 50)
         }
       }
