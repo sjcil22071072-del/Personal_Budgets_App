@@ -86,12 +86,10 @@ export default function RotatableImage({
       const scale = Math.min(scaleX, scaleY, 1)
 
       imgStyle = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
+        position: 'relative',
         width: `${W_layout}px`,
         height: `${H_layout}px`,
-        transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
+        transform: `rotate(${rotation}deg) scale(${scale})`,
         objectFit: 'contain',
         maxWidth: 'none',
         maxHeight: 'none'
