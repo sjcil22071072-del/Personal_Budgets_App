@@ -17,6 +17,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [rotation, setRotation] = useState(initialRotation)
   const [isDragging, setIsDragging] = useState(false)
+  const [isInitial, setIsInitial] = useState(true)
   const dragStart = useRef({ x: 0, y: 0 })
   const imgRef = useRef<HTMLImageElement>(null)
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
@@ -66,6 +67,13 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitial(false)
+    }, 100)
+    return () => clearTimeout(timer)
   }, [])
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -175,7 +183,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
         width: `${W_layout}px`,
         height: `${H_layout}px`,
         transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom * scale})`,
-        transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+        transition: (isDragging || isInitial) ? 'none' : 'transform 0.15s ease-out',
         objectFit: 'contain',
         maxWidth: 'none',
         maxHeight: 'none',
@@ -189,7 +197,7 @@ export default function ImageLightbox({ src, alt, onClose, showRotate = true, in
         width: `${W_layout}px`,
         height: `${H_layout}px`,
         transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
-        transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+        transition: (isDragging || isInitial) ? 'none' : 'transform 0.15s ease-out',
         objectFit: 'contain',
         maxWidth: 'none',
         maxHeight: 'none',
