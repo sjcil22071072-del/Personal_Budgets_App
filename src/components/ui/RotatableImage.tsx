@@ -83,19 +83,32 @@ export default function RotatableImage({
     })
     observer.observe(parent)
 
-    if (imgRef.current?.complete) {
-      handleLoad()
-    }
-
     return () => {
       observer.disconnect()
     }
   }, [])
 
-  // In case the image was already cached and onLoad doesn't fire
+  // 이미지 로딩 및 naturalWidth가 0보다 커질 때까지 50ms 주기로 재시도하며 관찰하여 naturalSize를 확실하게 세팅합니다.
   useEffect(() => {
-    if (imgRef.current?.complete) {
-      handleLoad()
+    let checkTimeout: any
+
+    const checkSize = () => {
+      if (imgRef.current) {
+        if (imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+          setNaturalSize({
+            width: imgRef.current.naturalWidth,
+            height: imgRef.current.naturalHeight
+          })
+        } else {
+          checkTimeout = setTimeout(checkSize, 50)
+        }
+      }
+    }
+
+    checkSize()
+
+    return () => {
+      if (checkTimeout) clearTimeout(checkTimeout)
     }
   }, [displayedSrc])
 
