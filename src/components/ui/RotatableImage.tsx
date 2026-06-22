@@ -92,18 +92,18 @@ export default function RotatableImage({
         width: `${W_layout}px`,
         height: `${H_layout}px`,
         transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
-        transition: 'transform 0.2s ease-in-out',
         objectFit: 'contain',
         maxWidth: 'none',
         maxHeight: 'none'
       }
       containerStyle.height = `${W_layout * scale}px`
     } else {
-      // Before image loaded
+      // Before image loaded / measuring container size
+      // 로딩 및 측정 전에도 사진을 투명화(opacity: 0)하지 않고 즉시 회전시켜 렌더링함으로써 하얀 화면 및 휙 도는 모션 원천 차단
       imgStyle = {
+        transform: `rotate(${rotation}deg)`,
         maxWidth: '100%',
         maxHeight: `${maxHeight}px`,
-        opacity: 0,
         objectFit: 'contain'
       }
       containerStyle.height = `${maxHeight}px`
@@ -112,7 +112,6 @@ export default function RotatableImage({
     // Not rotated (0 or 180 deg)
     imgStyle = {
       transform: `rotate(${rotation}deg)`,
-      transition: 'transform 0.2s ease-in-out',
       maxWidth: '100%',
       maxHeight: `${maxHeight}px`,
       objectFit: 'contain',
