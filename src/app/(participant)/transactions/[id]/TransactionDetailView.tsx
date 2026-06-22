@@ -329,6 +329,7 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
                           src={currentUrls[imgIdx]}
                           alt={`사진 ${imgIdx + 1}`}
                           rotation={mainRotation}
+                          bucket={bucket}
                           onClick={() => setZoomTargetUrl(currentUrls[imgIdx])}
                         />
                         {currentUrls.length > 1 && (

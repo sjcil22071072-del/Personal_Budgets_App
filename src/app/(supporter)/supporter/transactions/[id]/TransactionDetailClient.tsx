@@ -479,6 +479,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     src={receiptUrls[receiptIdx]}
                     alt={`영수증 ${receiptIdx + 1}`}
                     rotation={imageRotations[extractStoragePath(receiptUrls[receiptIdx], 'receipts') || receiptUrls[receiptIdx]] ?? 0}
+                    bucket="receipts"
                     onClick={() => setZoomImageUrl(receiptUrls[receiptIdx])}
                     onDelete={() => handleReceiptDelete(receiptUrls[receiptIdx])}
                     deleting={deletingReceiptUrl === receiptUrls[receiptIdx]}
@@ -526,6 +527,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     src={activityUrls[activityIdx]}
                     alt={`활동사진 ${activityIdx + 1}`}
                     rotation={imageRotations[extractStoragePath(activityUrls[activityIdx], 'activity-photos') || activityUrls[activityIdx]] ?? 0}
+                    bucket="activity-photos"
                     onClick={() => setZoomImageUrl(activityUrls[activityIdx])}
                     onDelete={() => handleActivityDelete(activityUrls[activityIdx])}
                     deleting={deletingActivityUrl === activityUrls[activityIdx]}
@@ -574,6 +576,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     src={evidenceUrls[evidenceIdx]}
                     alt={`증빙서류 ${evidenceIdx + 1}`}
                     rotation={imageRotations[extractStoragePath(evidenceUrls[evidenceIdx], 'evidence-documents') || evidenceUrls[evidenceIdx]] ?? 0}
+                    bucket="evidence-documents"
                     onClick={() => setZoomImageUrl(evidenceUrls[evidenceIdx])}
                     onDelete={() => handleEvidenceDelete(evidenceUrls[evidenceIdx])}
                     deleting={deletingEvidenceUrl === evidenceUrls[evidenceIdx]}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createCardRegistration, updateCardRotation } from '@/app/actions/cardRegistration'
 import { compressImage } from '@/utils/image-compression'
 import ImageLightbox from '@/components/ui/ImageLightbox'
+import RotatableImage from '@/components/ui/RotatableImage'
 import { extractStoragePath } from '@/utils/supabase/storage'
 
 type CardSide = 'front' | 'back'
@@ -182,23 +183,23 @@ export default function CardRegistrationForm({
                     const path = extractStoragePath(url, 'card-photos') || ''
                     const rotation = cardRotationsMap[item.id]?.[path] ?? 0
                     return (
-                      <button
-                        key={`${item.id}-${index}`}
-                        type="button"
-                        onClick={() => {
-                          setZoomImageUrl(url)
-                          setZoomInitialRotation(rotation)
-                          setZoomCardId(item.id)
-                        }}
-                        className="block aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200 text-left transition-transform active:scale-[0.98]"
-                      >
-                        <img
+                      <div key={`${item.id}-${index}`} className="group relative cursor-zoom-in">
+                        <RotatableImage
                           src={url}
                           alt={`등록한 카드 ${index === 0 ? '앞면' : index === 1 ? '뒷면' : `${index + 1}번째 사진`}`}
-                          style={{ transform: `rotate(${rotation}deg) scale(${rotation === 90 || rotation === 270 ? 0.75 : 1})` }}
-                          className="h-full w-full object-contain bg-zinc-50"
+                          rotation={rotation}
+                          maxHeight={128}
+                          bucket="card-photos"
+                          onClick={() => {
+                            setZoomImageUrl(url)
+                            setZoomInitialRotation(rotation)
+                            setZoomCardId(item.id)
+                          }}
                         />
-                      </button>
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-black gap-0.5 pointer-events-none rounded-2xl z-10">
+                          <span>🔍</span> {index === 0 ? '앞면' : '뒷면'}
+                        </div>
+                      </div>
                     )
                   })}
                 </div>

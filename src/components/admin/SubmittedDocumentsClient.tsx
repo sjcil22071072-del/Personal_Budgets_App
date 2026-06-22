@@ -359,6 +359,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                             alt={`${p.name} 가족관계증명서`}
                             rotation={familyRotationsMap[p.id] ?? 0}
                             maxHeight={160}
+                            bucket="family-relation-photos"
                             onClick={() => setZoomTarget({
                               type: 'family',
                               id: p.id,
@@ -433,6 +434,7 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                                       alt={`${p.name} 카드 #${cardIdx + 1} ${imgIdx === 0 ? '앞면' : '뒷면'}`}
                                       rotation={rotation}
                                       maxHeight={128}
+                                      bucket="card-photos"
                                       onClick={() => setZoomTarget({
                                         type: 'card',
                                         id: card.id,
