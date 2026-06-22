@@ -11,6 +11,7 @@ import ActivityCategoryPicker, {
 import { updateTransaction, deleteTransaction } from '@/app/actions/transaction'
 import { extractStoragePath } from '@/utils/supabase/storage'
 import ImageLightbox from '@/components/ui/ImageLightbox'
+import RotatableImage from '@/components/ui/RotatableImage'
 
 interface Tx {
   id: string
@@ -324,19 +325,12 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
                     const mainRotation = (tx.image_rotations as any)?.[mainPath] ?? 0
                     return (
                       <>
-                        <div
-                          className="relative w-full rounded-xl overflow-hidden bg-zinc-100 cursor-zoom-in"
-                          style={{ minHeight: 240 }}
+                        <RotatableImage
+                          src={currentUrls[imgIdx]}
+                          alt={`사진 ${imgIdx + 1}`}
+                          rotation={mainRotation}
                           onClick={() => setZoomTargetUrl(currentUrls[imgIdx])}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={currentUrls[imgIdx]}
-                            alt={`사진 ${imgIdx + 1}`}
-                            style={{ transform: `rotate(${mainRotation}deg)` }}
-                            className="w-full max-h-[400px] object-contain mx-auto block transition-transform duration-300"
-                          />
-                        </div>
+                        />
                         {currentUrls.length > 1 && (
                           <div className="flex gap-2 overflow-x-auto pb-1 w-full justify-center">
                             {currentUrls.map((url, i) => {
