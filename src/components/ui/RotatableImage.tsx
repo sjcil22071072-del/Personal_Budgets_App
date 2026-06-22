@@ -116,48 +116,55 @@ export default function RotatableImage({
     }
   }, [displayedSrc])
 
+  const isLoaded = naturalSize.width > 0 && naturalSize.height > 0
   const isRotated = rotation === 90 || rotation === 270
 
   let imgStyle: React.CSSProperties = {}
   let containerStyle: React.CSSProperties = {}
 
-  if (isRotated) {
-    if (naturalSize.width > 0 && naturalSize.height > 0 && containerWidth > 0) {
-      const parentWidth = containerWidth
-      
-      // Calculate unrotated layout box size (constrained by maxWidth/maxHeight)
-      const scale_normal = Math.min(parentWidth / naturalSize.width, maxHeight / naturalSize.height, 1)
-      const W_layout = Math.max(naturalSize.width * scale_normal, 1)
-      const H_layout = Math.max(naturalSize.height * scale_normal, 1)
+  if (!isLoaded) {
+    // 로딩 및 측정 전에는 투명화 및 높이 0px 처리하여 하얀 빈 사각형 여백이 화면에 노출되는 것을 완벽히 방지합니다.
+    imgStyle = {
+      opacity: 0
+    }
+    containerStyle = {
+      height: '0px',
+      opacity: 0,
+      overflow: 'hidden'
+    }
+  } else if (isRotated) {
+    // 로딩이 완료된 회전 이미지
+    const parentWidth = containerWidth || 320
+    
+    // Calculate unrotated layout box size (constrained by maxWidth/maxHeight)
+    const scale_normal = Math.min(parentWidth / naturalSize.width, maxHeight / naturalSize.height, 1)
+    const W_layout = Math.max(naturalSize.width * scale_normal, 1)
+    const H_layout = Math.max(naturalSize.height * scale_normal, 1)
 
-      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x maxHeight)
-      const scaleX = parentWidth / H_layout
-      const scaleY = maxHeight / W_layout
-      const rawScale = Math.min(scaleX, scaleY, 1)
-      const scale = isNaN(rawScale) ? 1 : rawScale
+    // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x maxHeight)
+    const scaleX = parentWidth / H_layout
+    const scaleY = maxHeight / W_layout
+    const rawScale = Math.min(scaleX, scaleY, 1)
+    const scale = isNaN(rawScale) ? 1 : rawScale
 
-      imgStyle = {
-        position: 'relative',
-        width: `${W_layout}px`,
-        height: `${H_layout}px`,
-        transform: `rotate(${rotation}deg) scale(${scale})`,
-        objectFit: 'contain',
-        maxWidth: 'none',
-        maxHeight: 'none'
-      }
-      containerStyle.height = `${W_layout * scale}px`
-    } else {
-      // Before image loaded / measuring container size
-      imgStyle = {
-        transform: `rotate(${rotation}deg)`,
-        maxWidth: '100%',
-        maxHeight: `${maxHeight}px`,
-        objectFit: 'contain'
-      }
-      containerStyle.height = `${maxHeight}px`
+    imgStyle = {
+      position: 'relative',
+      width: `${W_layout}px`,
+      height: `${H_layout}px`,
+      transform: `rotate(${rotation}deg) scale(${scale})`,
+      objectFit: 'contain',
+      maxWidth: 'none',
+      maxHeight: 'none',
+      opacity: 1,
+      transition: 'opacity 0.15s ease-out'
+    }
+    containerStyle = {
+      height: `${W_layout * scale}px`,
+      opacity: 1,
+      transition: 'opacity 0.15s ease-out'
     }
   } else {
-    // Not rotated (0 or 180 deg)
+    // 로딩이 완료된 일반 이미지 (0도, 180도)
     imgStyle = {
       transform: `rotate(${rotation}deg)`,
       maxWidth: '100%',
@@ -165,7 +172,13 @@ export default function RotatableImage({
       objectFit: 'contain',
       width: 'auto',
       height: 'auto',
-      display: 'block'
+      display: 'block',
+      opacity: 1,
+      transition: 'opacity 0.15s ease-out'
+    }
+    containerStyle = {
+      opacity: 1,
+      transition: 'opacity 0.15s ease-out'
     }
   }
 
