@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteCardRegistration, createCardRegistration, updateCardRotation } from '@/app/actions/cardRegistration'
 import ImageLightbox from '@/components/ui/ImageLightbox'
+import RotatableImage from '@/components/ui/RotatableImage'
 import { deleteFamilyRegistration, saveFamilyRegistration, updateFamilyRotation } from '@/app/actions/familyRegistration'
 import { compressImage } from '@/utils/image-compression'
 import { extractStoragePath } from '@/utils/supabase/storage'
@@ -352,22 +353,20 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
 
                     {hasFamily ? (
                       <div className="space-y-3">
-                        <div
-                          className="group relative w-full max-w-xs h-40 rounded-2xl overflow-hidden border border-zinc-200/80 bg-white cursor-zoom-in shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
-                          onClick={() => setZoomTarget({
-                            type: 'family',
-                            id: p.id,
-                            url: p.familyRelation.imageUrl!,
-                            initialRotation: familyRotationsMap[p.id] ?? 0
-                          })}
-                        >
-                          <img
+                        <div className="group relative w-full max-w-xs cursor-zoom-in">
+                          <RotatableImage
                             src={p.familyRelation.imageUrl!}
                             alt={`${p.name} 가족관계증명서`}
-                            style={{ transform: `rotate(${familyRotationsMap[p.id] ?? 0}deg) scale(${(familyRotationsMap[p.id] === 90 || familyRotationsMap[p.id] === 270) ? 0.5 : 1})` }}
-                            className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
+                            rotation={familyRotationsMap[p.id] ?? 0}
+                            maxHeight={160}
+                            onClick={() => setZoomTarget({
+                              type: 'family',
+                              id: p.id,
+                              url: p.familyRelation.imageUrl!,
+                              initialRotation: familyRotationsMap[p.id] ?? 0
+                            })}
                           />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-black gap-1">
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-black gap-1 pointer-events-none rounded-2xl z-10">
                             <span>🔍</span> 크게 보기
                           </div>
                         </div>
@@ -428,24 +427,21 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
                                 const storagePath = extractStoragePath(url, 'card-photos') || url
                                 const rotation = cardRotationsMap[card.id]?.[storagePath] ?? 0
                                 return (
-                                  <div
-                                    key={imgIdx}
-                                    className="group relative h-32 rounded-2xl overflow-hidden border border-zinc-200/80 bg-white cursor-zoom-in shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
-                                    onClick={() => setZoomTarget({
-                                      type: 'card',
-                                      id: card.id,
-                                      url: url,
-                                      initialRotation: rotation,
-                                      rotations: cardRotationsMap[card.id] ?? {}
-                                    })}
-                                  >
-                                    <img
+                                  <div key={imgIdx} className="group relative cursor-zoom-in">
+                                    <RotatableImage
                                       src={url}
                                       alt={`${p.name} 카드 #${cardIdx + 1} ${imgIdx === 0 ? '앞면' : '뒷면'}`}
-                                      style={{ transform: `rotate(${rotation}deg) scale(${rotation === 90 || rotation === 270 ? 0.75 : 1})` }}
-                                      className="w-full h-full object-contain bg-zinc-50 group-hover:scale-105 transition-transform duration-300"
+                                      rotation={rotation}
+                                      maxHeight={128}
+                                      onClick={() => setZoomTarget({
+                                        type: 'card',
+                                        id: card.id,
+                                        url: url,
+                                        initialRotation: rotation,
+                                        rotations: cardRotationsMap[card.id] ?? {}
+                                      })}
                                     />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-black gap-0.5">
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-black gap-0.5 pointer-events-none rounded-2xl z-10">
                                       <span>🔍</span> {imgIdx === 0 ? '앞면' : '뒷면'}
                                     </div>
                                   </div>

@@ -6,12 +6,21 @@ interface RotatableImageProps {
   src: string
   alt?: string
   rotation: number
+  maxHeight?: number
   onClick?: () => void
   onDelete?: () => void
   deleting?: boolean
 }
 
-export default function RotatableImage({ src, alt, rotation, onClick, onDelete, deleting }: RotatableImageProps) {
+export default function RotatableImage({
+  src,
+  alt,
+  rotation,
+  maxHeight = 500,
+  onClick,
+  onDelete,
+  deleting
+}: RotatableImageProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
@@ -67,13 +76,13 @@ export default function RotatableImage({ src, alt, rotation, onClick, onDelete, 
       const parentWidth = containerWidth
       
       // Calculate unrotated layout box size (constrained by maxWidth/maxHeight)
-      const scale_normal = Math.min(parentWidth / naturalSize.width, 500 / naturalSize.height, 1)
+      const scale_normal = Math.min(parentWidth / naturalSize.width, maxHeight / naturalSize.height, 1)
       const W_layout = naturalSize.width * scale_normal
       const H_layout = naturalSize.height * scale_normal
 
-      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x 500)
+      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x maxHeight)
       const scaleX = parentWidth / H_layout
-      const scaleY = 500 / W_layout
+      const scaleY = maxHeight / W_layout
       const scale = Math.min(scaleX, scaleY, 1)
 
       imgStyle = {
@@ -93,11 +102,11 @@ export default function RotatableImage({ src, alt, rotation, onClick, onDelete, 
       // Before image loaded
       imgStyle = {
         maxWidth: '100%',
-        maxHeight: '500px',
+        maxHeight: `${maxHeight}px`,
         opacity: 0,
         objectFit: 'contain'
       }
-      containerStyle.height = '400px'
+      containerStyle.height = `${maxHeight}px`
     }
   } else {
     // Not rotated (0 or 180 deg)
@@ -105,7 +114,7 @@ export default function RotatableImage({ src, alt, rotation, onClick, onDelete, 
       transform: `rotate(${rotation}deg)`,
       transition: 'transform 0.2s ease-in-out',
       maxWidth: '100%',
-      maxHeight: '500px',
+      maxHeight: `${maxHeight}px`,
       objectFit: 'contain',
       width: 'auto',
       height: 'auto',
