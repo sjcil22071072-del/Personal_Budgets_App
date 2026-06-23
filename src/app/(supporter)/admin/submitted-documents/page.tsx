@@ -111,12 +111,16 @@ export default async function SubmittedDocumentsPage() {
         imageRotation: family?.imageRotation ?? 0,
         createdAt: family?.createdAt ?? null,
       },
-      cardRegistrations: cards.map(c => ({
-        id: c.id,
-        imageUrls: c.imageUrls,
-        imageRotations: c.imageRotations,
-        createdAt: c.createdAt,
-      })),
+      cardRegistrations: cards.map(c => {
+        const rots = c.imageRotations
+        const parsed = typeof rots === 'string' ? JSON.parse(rots) : (rots ?? {})
+        return {
+          id: c.id,
+          imageUrls: c.imageUrls,
+          imageRotations: parsed,
+          createdAt: c.createdAt,
+        }
+      }),
     }
   })
 

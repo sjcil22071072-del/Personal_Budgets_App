@@ -59,11 +59,13 @@ export default async function CardRegistrationPage() {
       return data?.signedUrl ?? null
     }))
 
+    const rots = item.image_rotations
+    const parsed = typeof rots === 'string' ? JSON.parse(rots) : (rots ?? {})
     return {
       id: item.id,
       created_at: item.created_at,
       image_urls: signedUrls.filter((url): url is string => Boolean(url)),
-      image_rotations: item.image_rotations,
+      image_rotations: parsed,
     }
   }))
 

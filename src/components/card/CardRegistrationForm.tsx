@@ -36,7 +36,8 @@ export default function CardRegistrationForm({
   const [cardRotationsMap, setCardRotationsMap] = useState<Record<string, Record<string, number>>>(() => {
     const map: Record<string, Record<string, number>> = {}
     registrations.forEach(r => {
-      map[r.id] = (r.image_rotations as any) ?? {}
+      const rots = r.image_rotations
+      map[r.id] = typeof rots === 'string' ? JSON.parse(rots) : (rots ?? {})
     })
     return map
   })
@@ -44,7 +45,8 @@ export default function CardRegistrationForm({
   useEffect(() => {
     const map: Record<string, Record<string, number>> = {}
     registrations.forEach(r => {
-      map[r.id] = (r.image_rotations as any) ?? {}
+      const rots = r.image_rotations
+      map[r.id] = typeof rots === 'string' ? JSON.parse(rots) : (rots ?? {})
     })
     setCardRotationsMap(map)
   }, [registrations])

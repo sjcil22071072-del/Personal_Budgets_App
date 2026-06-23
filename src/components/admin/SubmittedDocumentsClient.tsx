@@ -58,7 +58,8 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
     const map: Record<string, Record<string, number>> = {}
     initialData.forEach(p => {
       p.cardRegistrations.forEach(c => {
-        map[c.id] = (c.imageRotations as any) ?? {}
+        const rots = c.imageRotations
+        map[c.id] = typeof rots === 'string' ? JSON.parse(rots) : (rots ?? {})
       })
     })
     return map
@@ -78,7 +79,8 @@ export default function SubmittedDocumentsClient({ initialData }: SubmittedDocum
     initialData.forEach(p => {
       fMap[p.id] = p.familyRelation.imageRotation ?? 0
       p.cardRegistrations.forEach(c => {
-        cMap[c.id] = (c.imageRotations as any) ?? {}
+        const rots = c.imageRotations
+        cMap[c.id] = typeof rots === 'string' ? JSON.parse(rots) : (rots ?? {})
       })
     })
     setCardRotationsMap(cMap)

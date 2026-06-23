@@ -185,7 +185,7 @@ export default function RotatableImage({
   return (
     <div
       ref={containerRef}
-      className="relative w-full flex items-center justify-center"
+      className="relative w-full flex items-center justify-center overflow-hidden rounded-lg"
       style={containerStyle}
     >
       <img
