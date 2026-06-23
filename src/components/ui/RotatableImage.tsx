@@ -112,14 +112,21 @@ export default function RotatableImage({
 
   if (isRotated) {
     if (!isImgLoaded || naturalSize.width === 0) {
-      // 로딩 중인 회전 이미지: Layout Shift를 방지하기 위해 maxHeight를 차지하게 하고 숨깁니다.
+      // 로딩 중인 회전 이미지: Layout Shift를 방지하기 위해 maxHeight를 차지하고, 
+      // 이미지를 완전히 가리지 않고 연하게 보여주어(opacity: 0.6) 브라우저 점진적 로딩을 활용합니다.
       imgStyle = {
-        opacity: 0,
+        width: '100%',
+        height: '100%',
+        transform: `rotate(${rotation}deg)`,
+        objectFit: 'contain',
+        maxHeight: `${maxHeight}px`,
+        opacity: 0.6,
+        transition: 'opacity 0.2s ease-out',
         backgroundColor: 'transparent'
       }
       containerStyle = {
         height: `${maxHeight}px`,
-        opacity: 0,
+        opacity: 1,
         backgroundColor: 'transparent',
         overflow: 'hidden'
       }
@@ -158,7 +165,7 @@ export default function RotatableImage({
       }
     }
   } else {
-    // 일반 이미지 (0도, 180도 등) - 크기 측정 대기 없이 즉시 레이아웃을 잡아 카드로딩 속도 극대화
+    // 일반 이미지 (0도, 180도 등) - 크기 측정 대기 없이 즉시 투명도 1로 렌더링하여 로딩 지연 원천 배제
     imgStyle = {
       transform: `rotate(${rotation}deg)`,
       maxWidth: '100%',
@@ -167,7 +174,7 @@ export default function RotatableImage({
       width: 'auto',
       height: 'auto',
       display: 'block',
-      opacity: isImgLoaded ? 1 : 0,
+      opacity: 1,
       transition: 'opacity 0.2s ease-out',
       backgroundColor: 'transparent'
     }
