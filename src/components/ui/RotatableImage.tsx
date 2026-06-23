@@ -29,6 +29,7 @@ export default function RotatableImage({
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
   const [containerWidth, setContainerWidth] = useState(0)
   const [displayedSrc, setDisplayedSrc] = useState(src)
+  const [isImgLoaded, setIsImgLoaded] = useState(false)
 
   // src가 변경될 때, 동일한 파일(스토리지 경로가 같음)이면 기존 URL(displayedSrc)을 유지하여
   // Signed URL 토큰 변경으로 인한 하얀 화면 깜빡임 및 재다운로드를 원천 차단합니다.
@@ -48,12 +49,28 @@ export default function RotatableImage({
 
   const handleLoad = () => {
     if (imgRef.current) {
+      setIsImgLoaded(true)
       setNaturalSize({
         width: imgRef.current.naturalWidth,
         height: imgRef.current.naturalHeight
       })
     }
   }
+
+  // 컴포넌트 마운트 및 displayedSrc 변경 시점에 이미 캐싱된 이미지 상태 체크
+  useEffect(() => {
+    if (imgRef.current) {
+      if (imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+        setIsImgLoaded(true)
+        setNaturalSize({
+          width: imgRef.current.naturalWidth,
+          height: imgRef.current.naturalHeight
+        })
+      } else {
+        setIsImgLoaded(false)
+      }
+    }
+  }, [displayedSrc])
 
   useEffect(() => {
     const container = containerRef.current
@@ -88,83 +105,60 @@ export default function RotatableImage({
     }
   }, [])
 
-  // 이미지 로딩 및 naturalWidth가 0보다 커질 때까지 50ms 주기로 재시도하며 관찰하여 naturalSize를 확실하게 세팅합니다.
-  // 무한 루프 크래시(예: 로딩 실패 시 CPU 100% 점유로 브라우저가 하얗게 굳어버리는 현상)를 방지하기 위해 최대 100회(5초)로 제한합니다.
-  useEffect(() => {
-    let checkTimeout: any
-    let attempts = 0
-    const maxAttempts = 100
-
-    const checkSize = () => {
-      if (imgRef.current) {
-        if (imgRef.current.complete && imgRef.current.naturalWidth > 0) {
-          setNaturalSize({
-            width: imgRef.current.naturalWidth,
-            height: imgRef.current.naturalHeight
-          })
-        } else if (attempts < maxAttempts) {
-          attempts++
-          checkTimeout = setTimeout(checkSize, 50)
-        }
-      }
-    }
-
-    checkSize()
-
-    return () => {
-      if (checkTimeout) clearTimeout(checkTimeout)
-    }
-  }, [displayedSrc])
-
-  const isLoaded = naturalSize.width > 0 && naturalSize.height > 0
   const isRotated = rotation === 90 || rotation === 270
 
   let imgStyle: React.CSSProperties = {}
   let containerStyle: React.CSSProperties = {}
 
-  if (!isLoaded) {
-    // 로딩 및 측정 전에는 투명화 및 높이 0px 처리하여 하얀 빈 사각형 여백이 화면에 노출되는 것을 완벽히 방지합니다.
-    imgStyle = {
-      opacity: 0
-    }
-    containerStyle = {
-      height: '0px',
-      opacity: 0,
-      overflow: 'hidden'
-    }
-  } else if (isRotated) {
-    // 로딩이 완료된 회전 이미지
-    const parentWidth = containerWidth || 320
-    
-    // Calculate unrotated layout box size (constrained by maxWidth/maxHeight)
-    const scale_normal = Math.min(parentWidth / naturalSize.width, maxHeight / naturalSize.height, 1)
-    const W_layout = Math.max(naturalSize.width * scale_normal, 1)
-    const H_layout = Math.max(naturalSize.height * scale_normal, 1)
+  if (isRotated) {
+    if (!isImgLoaded || naturalSize.width === 0) {
+      // 로딩 중인 회전 이미지: Layout Shift를 방지하기 위해 maxHeight를 차지하게 하고 숨깁니다.
+      imgStyle = {
+        opacity: 0,
+        backgroundColor: 'transparent'
+      }
+      containerStyle = {
+        height: `${maxHeight}px`,
+        opacity: 0,
+        backgroundColor: 'transparent',
+        overflow: 'hidden'
+      }
+    } else {
+      // 로딩 완료된 회전 이미지
+      const parentWidth = containerWidth || 320
+      
+      // Calculate unrotated layout box size (constrained by maxWidth/maxHeight)
+      const scale_normal = Math.min(parentWidth / naturalSize.width, maxHeight / naturalSize.height, 1)
+      const W_layout = Math.max(naturalSize.width * scale_normal, 1)
+      const H_layout = Math.max(naturalSize.height * scale_normal, 1)
 
-    // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x maxHeight)
-    const scaleX = parentWidth / H_layout
-    const scaleY = maxHeight / W_layout
-    const rawScale = Math.min(scaleX, scaleY, 1)
-    const scale = isNaN(rawScale) ? 1 : rawScale
+      // Calculate rotation scale to fit rotated box (H_layout x W_layout) inside (parentWidth x maxHeight)
+      const scaleX = parentWidth / H_layout
+      const scaleY = maxHeight / W_layout
+      const rawScale = Math.min(scaleX, scaleY, 1)
+      const scale = isNaN(rawScale) ? 1 : rawScale
 
-    imgStyle = {
-      position: 'relative',
-      width: `${W_layout}px`,
-      height: `${H_layout}px`,
-      transform: `rotate(${rotation}deg) scale(${scale})`,
-      objectFit: 'contain',
-      maxWidth: 'none',
-      maxHeight: 'none',
-      opacity: 1,
-      transition: 'opacity 0.15s ease-out'
-    }
-    containerStyle = {
-      height: `${W_layout * scale}px`,
-      opacity: 1,
-      transition: 'opacity 0.15s ease-out'
+      imgStyle = {
+        position: 'relative',
+        width: `${W_layout}px`,
+        height: `${H_layout}px`,
+        transform: `rotate(${rotation}deg) scale(${scale})`,
+        objectFit: 'contain',
+        maxWidth: 'none',
+        maxHeight: 'none',
+        opacity: 1,
+        transition: 'opacity 0.2s ease-out',
+        backgroundColor: 'transparent'
+      }
+      containerStyle = {
+        height: `${W_layout * scale}px`,
+        opacity: 1,
+        transition: 'opacity 0.2s ease-out, height 0.2s ease-out',
+        backgroundColor: 'transparent'
+      }
     }
   } else {
-    // 로딩이 완료된 일반 이미지 (0도, 180도)
+    // 일반 이미지 (0도, 180도 등) - 크기 측정 대기 없이 즉시 레이아웃을 잡아 카드로딩 속도 극대화
     imgStyle = {
       transform: `rotate(${rotation}deg)`,
       maxWidth: '100%',
@@ -173,12 +167,15 @@ export default function RotatableImage({
       width: 'auto',
       height: 'auto',
       display: 'block',
-      opacity: 1,
-      transition: 'opacity 0.15s ease-out'
+      opacity: isImgLoaded ? 1 : 0,
+      transition: 'opacity 0.2s ease-out',
+      backgroundColor: 'transparent'
     }
     containerStyle = {
+      height: 'auto',
       opacity: 1,
-      transition: 'opacity 0.15s ease-out'
+      transition: 'opacity 0.2s ease-out',
+      backgroundColor: 'transparent'
     }
   }
 
@@ -186,7 +183,15 @@ export default function RotatableImage({
     <div
       ref={containerRef}
       className="relative w-full flex items-center justify-center overflow-hidden rounded-lg"
-      style={containerStyle}
+      style={{
+        ...containerStyle,
+        // Webkit/Safari 등에서 overflow: hidden + border-radius + transform 조합 시 모서리가 뚫리는 현상 방지
+        isolation: 'isolate',
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+        // 강제 마스킹을 적용해 둥근 모서리 바깥으로 삐져나온 흰색 귀퉁이를 완전히 잘라냅니다.
+        WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+      }}
     >
       <img
         ref={imgRef}
