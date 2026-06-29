@@ -22,6 +22,12 @@ import {
 } from '@/app/actions/transaction'
 import { extractStoragePath } from '@/utils/supabase/storage'
 
+const isPdfUrl = (url: string | null) => {
+  if (!url) return false
+  const cleanUrl = url.split('?')[0]
+  return cleanUrl.toLowerCase().endsWith('.pdf')
+}
+
 const PAYMENT_METHODS = ['카드', '계좌이체'] as const
 
 interface Tx {
@@ -479,16 +485,44 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
             {viewTab === 'receipt' ? (
               receiptUrls.length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
-                  <RotatableImage
-                    src={receiptUrls[receiptIdx]}
-                    alt={`영수증 ${receiptIdx + 1}`}
-                    rotation={imageRotations[extractStoragePath(receiptUrls[receiptIdx], 'receipts') || receiptUrls[receiptIdx]] ?? 0}
-                    bucket="receipts"
-                    onClick={() => setZoomImageUrl(receiptUrls[receiptIdx])}
-                    onDelete={() => handleReceiptDelete(receiptUrls[receiptIdx])}
-                    deleting={deletingReceiptUrl === receiptUrls[receiptIdx]}
-                    onError={() => handleImgError(receiptUrls[receiptIdx])}
-                  />
+                  {isPdfUrl(receiptUrls[receiptIdx]) ? (
+                    <div className="w-full min-h-[300px] flex flex-col items-center justify-center gap-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg p-6">
+                      <span className="text-6xl">📄</span>
+                      <div className="text-center">
+                        <p className="font-bold text-zinc-800 text-sm">영수증 PDF 파일</p>
+                        <p className="text-xs text-zinc-400 mt-1">PDF 파일은 이미지 미리보기를 지원하지 않습니다.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <a
+                          href={receiptUrls[receiptIdx]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-bold shadow-sm"
+                        >
+                          📄 새 창에서 열기 / 다운로드
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleReceiptDelete(receiptUrls[receiptIdx])}
+                          disabled={deletingReceiptUrl === receiptUrls[receiptIdx]}
+                          className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-sm font-bold disabled:opacity-50"
+                        >
+                          {deletingReceiptUrl === receiptUrls[receiptIdx] ? '삭제 중...' : '🗑️ 삭제'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <RotatableImage
+                      src={receiptUrls[receiptIdx]}
+                      alt={`영수증 ${receiptIdx + 1}`}
+                      rotation={imageRotations[extractStoragePath(receiptUrls[receiptIdx], 'receipts') || receiptUrls[receiptIdx]] ?? 0}
+                      bucket="receipts"
+                      onClick={() => setZoomImageUrl(receiptUrls[receiptIdx])}
+                      onDelete={() => handleReceiptDelete(receiptUrls[receiptIdx])}
+                      deleting={deletingReceiptUrl === receiptUrls[receiptIdx]}
+                      onError={() => handleImgError(receiptUrls[receiptIdx])}
+                    />
+                  )}
                   {brokenUrls[receiptUrls[receiptIdx]] && (
                     <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[10px] font-mono break-all border border-red-105 select-all">
                       ⚠️ 로드 실패 (영수증): {receiptUrls[receiptIdx]}
@@ -499,6 +533,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                       {receiptUrls.map((url, i) => {
                         const path = extractStoragePath(url, 'receipts') || url
                         const rotation = imageRotations[path] ?? 0
+                        const isPdf = isPdfUrl(url)
                         return (
                           <button
                             key={url}
@@ -512,7 +547,14 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                               i === receiptIdx ? 'ring-blue-500' : 'ring-zinc-200'
                             }`}
                           >
-                            <img src={url} alt={`썸네일 ${i + 1}`} onError={() => handleImgError(url)} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                            {isPdf ? (
+                              <div className="w-full h-full bg-zinc-100 flex flex-col items-center justify-center gap-0.5 text-zinc-500">
+                                <span className="text-xl">📄</span>
+                                <span className="text-[8px] font-black">PDF</span>
+                              </div>
+                            ) : (
+                              <img src={url} alt={`썸네일 ${i + 1}`} onError={() => handleImgError(url)} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                            )}
                           </button>
                         )
                       })}
@@ -533,16 +575,44 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
             ) : viewTab === 'activity' ? (
               activityUrls.length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
-                  <RotatableImage
-                    src={activityUrls[activityIdx]}
-                    alt={`활동사진 ${activityIdx + 1}`}
-                    rotation={imageRotations[extractStoragePath(activityUrls[activityIdx], 'activity-photos') || activityUrls[activityIdx]] ?? 0}
-                    bucket="activity-photos"
-                    onClick={() => setZoomImageUrl(activityUrls[activityIdx])}
-                    onDelete={() => handleActivityDelete(activityUrls[activityIdx])}
-                    deleting={deletingActivityUrl === activityUrls[activityIdx]}
-                    onError={() => handleImgError(activityUrls[activityIdx])}
-                  />
+                  {isPdfUrl(activityUrls[activityIdx]) ? (
+                    <div className="w-full min-h-[300px] flex flex-col items-center justify-center gap-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg p-6">
+                      <span className="text-6xl">📄</span>
+                      <div className="text-center">
+                        <p className="font-bold text-zinc-800 text-sm">활동사진 PDF 파일</p>
+                        <p className="text-xs text-zinc-400 mt-1">PDF 파일은 이미지 미리보기를 지원하지 않습니다.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <a
+                          href={activityUrls[activityIdx]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-bold shadow-sm"
+                        >
+                          📄 새 창에서 열기 / 다운로드
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleActivityDelete(activityUrls[activityIdx])}
+                          disabled={deletingActivityUrl === activityUrls[activityIdx]}
+                          className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-sm font-bold disabled:opacity-50"
+                        >
+                          {deletingActivityUrl === activityUrls[activityIdx] ? '삭제 중...' : '🗑️ 삭제'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <RotatableImage
+                      src={activityUrls[activityIdx]}
+                      alt={`활동사진 ${activityIdx + 1}`}
+                      rotation={imageRotations[extractStoragePath(activityUrls[activityIdx], 'activity-photos') || activityUrls[activityIdx]] ?? 0}
+                      bucket="activity-photos"
+                      onClick={() => setZoomImageUrl(activityUrls[activityIdx])}
+                      onDelete={() => handleActivityDelete(activityUrls[activityIdx])}
+                      deleting={deletingActivityUrl === activityUrls[activityIdx]}
+                      onError={() => handleImgError(activityUrls[activityIdx])}
+                    />
+                  )}
                   {brokenUrls[activityUrls[activityIdx]] && (
                     <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[10px] font-mono break-all border border-red-105 select-all">
                       ⚠️ 로드 실패 (활동사진): {activityUrls[activityIdx]}
@@ -553,6 +623,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                       {activityUrls.map((url, i) => {
                         const path = extractStoragePath(url, 'activity-photos') || url
                         const rotation = imageRotations[path] ?? 0
+                        const isPdf = isPdfUrl(url)
                         return (
                           <button
                             key={url}
@@ -566,7 +637,14 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                               i === activityIdx ? 'ring-blue-500' : 'ring-zinc-200'
                             }`}
                           >
-                            <img src={url} alt={`썸네일 ${i + 1}`} onError={() => handleImgError(url)} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                            {isPdf ? (
+                              <div className="w-full h-full bg-zinc-100 flex flex-col items-center justify-center gap-0.5 text-zinc-500">
+                                <span className="text-xl">📄</span>
+                                <span className="text-[8px] font-black">PDF</span>
+                              </div>
+                            ) : (
+                              <img src={url} alt={`썸네일 ${i + 1}`} onError={() => handleImgError(url)} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                            )}
                           </button>
                         )
                       })}
@@ -588,16 +666,44 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
               /* 증빙서류 탭 */
               evidenceUrls.length > 0 ? (
                 <div className="w-full flex flex-col gap-4">
-                  <RotatableImage
-                    src={evidenceUrls[evidenceIdx]}
-                    alt={`증빙서류 ${evidenceIdx + 1}`}
-                    rotation={imageRotations[extractStoragePath(evidenceUrls[evidenceIdx], 'evidence-documents') || evidenceUrls[evidenceIdx]] ?? 0}
-                    bucket="evidence-documents"
-                    onClick={() => setZoomImageUrl(evidenceUrls[evidenceIdx])}
-                    onDelete={() => handleEvidenceDelete(evidenceUrls[evidenceIdx])}
-                    deleting={deletingEvidenceUrl === evidenceUrls[evidenceIdx]}
-                    onError={() => handleImgError(evidenceUrls[evidenceIdx])}
-                  />
+                  {isPdfUrl(evidenceUrls[evidenceIdx]) ? (
+                    <div className="w-full min-h-[300px] flex flex-col items-center justify-center gap-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg p-6">
+                      <span className="text-6xl">📄</span>
+                      <div className="text-center">
+                        <p className="font-bold text-zinc-800 text-sm">증빙서류 PDF 파일</p>
+                        <p className="text-xs text-zinc-400 mt-1">PDF 파일은 이미지 미리보기를 지원하지 않습니다.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <a
+                          href={evidenceUrls[evidenceIdx]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-bold shadow-sm"
+                        >
+                          📄 새 창에서 열기 / 다운로드
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleEvidenceDelete(evidenceUrls[evidenceIdx])}
+                          disabled={deletingEvidenceUrl === evidenceUrls[evidenceIdx]}
+                          className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-sm font-bold disabled:opacity-50"
+                        >
+                          {deletingEvidenceUrl === evidenceUrls[evidenceIdx] ? '삭제 중...' : '🗑️ 삭제'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <RotatableImage
+                      src={evidenceUrls[evidenceIdx]}
+                      alt={`증빙서류 ${evidenceIdx + 1}`}
+                      rotation={imageRotations[extractStoragePath(evidenceUrls[evidenceIdx], 'evidence-documents') || evidenceUrls[evidenceIdx]] ?? 0}
+                      bucket="evidence-documents"
+                      onClick={() => setZoomImageUrl(evidenceUrls[evidenceIdx])}
+                      onDelete={() => handleEvidenceDelete(evidenceUrls[evidenceIdx])}
+                      deleting={deletingEvidenceUrl === evidenceUrls[evidenceIdx]}
+                      onError={() => handleImgError(evidenceUrls[evidenceIdx])}
+                    />
+                  )}
                   {brokenUrls[evidenceUrls[evidenceIdx]] && (
                     <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[10px] font-mono break-all border border-red-105 select-all">
                       ⚠️ 로드 실패 (증빙서류): {evidenceUrls[evidenceIdx]}
@@ -608,6 +714,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                       {evidenceUrls.map((url, i) => {
                         const path = extractStoragePath(url, 'evidence-documents') || url
                         const rotation = imageRotations[path] ?? 0
+                        const isPdf = isPdfUrl(url)
                         return (
                           <button
                             key={url}

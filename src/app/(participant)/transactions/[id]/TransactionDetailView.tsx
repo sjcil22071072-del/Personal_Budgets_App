@@ -13,6 +13,12 @@ import { extractStoragePath } from '@/utils/supabase/storage'
 import ImageLightbox from '@/components/ui/ImageLightbox'
 import RotatableImage from '@/components/ui/RotatableImage'
 
+const isPdfUrl = (url: string | null) => {
+  if (!url) return false
+  const cleanUrl = url.split('?')[0]
+  return cleanUrl.toLowerCase().endsWith('.pdf')
+}
+
 interface Tx {
   id: string
   activity_name: string
@@ -323,20 +329,40 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
                     const bucket = viewTab === 'receipt' ? 'receipts' : viewTab === 'activity' ? 'activity-photos' : 'evidence-documents'
                     const mainPath = extractStoragePath(currentUrls[imgIdx], bucket) || currentUrls[imgIdx]
                     const mainRotation = (tx.image_rotations as any)?.[mainPath] ?? 0
+                    const isPdf = isPdfUrl(currentUrls[imgIdx])
                     return (
                       <>
-                        <RotatableImage
-                          src={currentUrls[imgIdx]}
-                          alt={`사진 ${imgIdx + 1}`}
-                          rotation={mainRotation}
-                          bucket={bucket}
-                          onClick={() => setZoomTargetUrl(currentUrls[imgIdx])}
-                        />
+                        {isPdf ? (
+                          <div className="w-full min-h-[250px] flex flex-col items-center justify-center gap-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg p-6">
+                            <span className="text-6xl">📄</span>
+                            <div className="text-center">
+                              <p className="font-bold text-zinc-800 text-sm">PDF 문서 파일</p>
+                              <p className="text-xs text-zinc-400 mt-1">PDF 파일은 이미지 미리보기를 지원하지 않습니다.</p>
+                            </div>
+                            <a
+                              href={currentUrls[imgIdx]}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-bold shadow-sm"
+                            >
+                              📄 새 창에서 열기 / 다운로드
+                            </a>
+                          </div>
+                        ) : (
+                          <RotatableImage
+                            src={currentUrls[imgIdx]}
+                            alt={`사진 ${imgIdx + 1}`}
+                            rotation={mainRotation}
+                            bucket={bucket}
+                            onClick={() => setZoomTargetUrl(currentUrls[imgIdx])}
+                          />
+                        )}
                         {currentUrls.length > 1 && (
                           <div className="flex gap-2 overflow-x-auto pb-1 w-full justify-center">
                             {currentUrls.map((url, i) => {
                               const path = extractStoragePath(url, bucket) || url
                               const rotation = (tx.image_rotations as any)?.[path] ?? 0
+                              const isThumbPdf = isPdfUrl(url)
                               return (
                                 <button
                                   key={`${url}-${i}`}
@@ -345,13 +371,19 @@ export default function TransactionDetailView({ tx }: { tx: Tx }) {
                                     i === imgIdx ? 'ring-blue-500 scale-105' : 'ring-zinc-200 hover:ring-zinc-400'
                                   }`}
                                 >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={url}
-                                    alt={`썸네일 ${i + 1}`}
-                                    style={{ transform: `rotate(${rotation}deg)` }}
-                                    className="w-full h-full object-contain bg-zinc-50"
-                                  />
+                                  {isThumbPdf ? (
+                                    <div className="w-full h-full bg-zinc-100 flex flex-col items-center justify-center gap-0.5 text-zinc-500">
+                                      <span className="text-xl">📄</span>
+                                      <span className="text-[8px] font-black">PDF</span>
+                                    </div>
+                                  ) : (
+                                    <img
+                                      src={url}
+                                      alt={`썸네일 ${i + 1}`}
+                                      style={{ transform: `rotate(${rotation}deg)` }}
+                                      className="w-full h-full object-contain bg-zinc-50"
+                                    />
+                                  )}
                                 </button>
                               )
                             })}
