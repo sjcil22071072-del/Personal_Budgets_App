@@ -105,6 +105,10 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   const [imageRotations, setImageRotations] = useState<Record<string, number>>(
     (tx.image_rotations as Record<string, number>) || {}
   )
+  const [brokenUrls, setBrokenUrls] = useState<Record<string, boolean>>({})
+  const handleImgError = (url: string) => {
+    setBrokenUrls(prev => ({ ...prev, [url]: true }))
+  }
 
   const getCurrentImagePath = () => {
     if (!zoomImageUrl) return null
@@ -483,7 +487,13 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     onClick={() => setZoomImageUrl(receiptUrls[receiptIdx])}
                     onDelete={() => handleReceiptDelete(receiptUrls[receiptIdx])}
                     deleting={deletingReceiptUrl === receiptUrls[receiptIdx]}
+                    onError={() => handleImgError(receiptUrls[receiptIdx])}
                   />
+                  {brokenUrls[receiptUrls[receiptIdx]] && (
+                    <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[10px] font-mono break-all border border-red-105 select-all">
+                      ⚠️ 로드 실패 (영수증): {receiptUrls[receiptIdx]}
+                    </div>
+                  )}
                   {receiptUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {receiptUrls.map((url, i) => {
@@ -502,7 +512,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                               i === receiptIdx ? 'ring-blue-500' : 'ring-zinc-200'
                             }`}
                           >
-                            <img src={url} alt={`썸네일 ${i + 1}`} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                            <img src={url} alt={`썸네일 ${i + 1}`} onError={() => handleImgError(url)} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
                           </button>
                         )
                       })}
@@ -531,7 +541,13 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     onClick={() => setZoomImageUrl(activityUrls[activityIdx])}
                     onDelete={() => handleActivityDelete(activityUrls[activityIdx])}
                     deleting={deletingActivityUrl === activityUrls[activityIdx]}
+                    onError={() => handleImgError(activityUrls[activityIdx])}
                   />
+                  {brokenUrls[activityUrls[activityIdx]] && (
+                    <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[10px] font-mono break-all border border-red-105 select-all">
+                      ⚠️ 로드 실패 (활동사진): {activityUrls[activityIdx]}
+                    </div>
+                  )}
                   {activityUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {activityUrls.map((url, i) => {
@@ -550,7 +566,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                               i === activityIdx ? 'ring-blue-500' : 'ring-zinc-200'
                             }`}
                           >
-                            <img src={url} alt={`썸네일 ${i + 1}`} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                            <img src={url} alt={`썸네일 ${i + 1}`} onError={() => handleImgError(url)} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
                           </button>
                         )
                       })}
@@ -580,7 +596,13 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                     onClick={() => setZoomImageUrl(evidenceUrls[evidenceIdx])}
                     onDelete={() => handleEvidenceDelete(evidenceUrls[evidenceIdx])}
                     deleting={deletingEvidenceUrl === evidenceUrls[evidenceIdx]}
+                    onError={() => handleImgError(evidenceUrls[evidenceIdx])}
                   />
+                  {brokenUrls[evidenceUrls[evidenceIdx]] && (
+                    <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[10px] font-mono break-all border border-red-105 select-all">
+                      ⚠️ 로드 실패 (증빙서류): {evidenceUrls[evidenceIdx]}
+                    </div>
+                  )}
                   {evidenceUrls.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {evidenceUrls.map((url, i) => {
@@ -599,7 +621,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
                               i === evidenceIdx ? 'ring-blue-500' : 'ring-zinc-200'
                             }`}
                           >
-                            <img src={url} alt={`썸네일 ${i + 1}`} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
+                            <img src={url} alt={`썸네일 ${i + 1}`} onError={() => handleImgError(url)} style={{ transform: `rotate(${rotation}deg)` }} className="w-full h-full object-contain bg-zinc-50" />
                           </button>
                         )
                       })}

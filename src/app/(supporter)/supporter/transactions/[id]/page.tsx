@@ -44,11 +44,17 @@ export default async function TransactionDetailPage({ params }: PageProps) {
   const getSignedUrlLocal = async (url: string | null, bucket: string) => {
     if (!url) return null;
     const path = extractStoragePath(url, bucket);
-    if (!path) return null;
+    if (!path) {
+      console.error(`[getSignedUrlLocal] Failed to extract storage path from URL: "${url}" for bucket: "${bucket}"`);
+      return null;
+    }
     const options = undefined;
-    const { data } = await adminClient.storage
+    const { data, error } = await adminClient.storage
       .from(bucket)
       .createSignedUrl(path, 3600, options);
+    if (error) {
+      console.error(`[getSignedUrlLocal] Supabase createSignedUrl error for path: "${path}" (bucket: "${bucket}"):`, error);
+    }
     return data?.signedUrl ?? null;
   };
 

@@ -12,6 +12,7 @@ interface RotatableImageProps {
   onDelete?: () => void
   deleting?: boolean
   bucket?: string
+  onError?: () => void
 }
 
 export default function RotatableImage({
@@ -22,7 +23,8 @@ export default function RotatableImage({
   onClick,
   onDelete,
   deleting,
-  bucket
+  bucket,
+  onError
 }: RotatableImageProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
@@ -205,6 +207,7 @@ export default function RotatableImage({
         src={displayedSrc}
         alt={alt}
         onLoad={handleLoad}
+        onError={onError}
         style={imgStyle}
         className="rounded-lg mx-auto block cursor-pointer hover:opacity-90 transition-opacity"
         onClick={onClick}
