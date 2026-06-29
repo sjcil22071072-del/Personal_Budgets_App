@@ -5,7 +5,7 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getSignedImageUrl } from './storage'
 import { ensureMonthlyBudgetRollover } from './budgetRollover'
-import { extractStoragePath } from '@/utils/supabase/storage'
+import { extractStoragePath, cleanStorageUrl } from '@/utils/supabase/storage'
 
 export interface ParticipantWithFundingSources {
   id: string
@@ -382,6 +382,22 @@ export async function updateTransactionDetail(
     .single()
   const participant_id = tx?.participant_id
 
+  if (updates.receipt_image_urls) {
+    updates.receipt_image_urls = updates.receipt_image_urls.map(url =>
+      cleanStorageUrl(url, 'receipts')
+    )
+  }
+  if (updates.activity_image_urls) {
+    updates.activity_image_urls = updates.activity_image_urls.map(url =>
+      cleanStorageUrl(url, 'activity-photos')
+    )
+  }
+  if (updates.evidence_image_urls) {
+    updates.evidence_image_urls = updates.evidence_image_urls.map(url =>
+      cleanStorageUrl(url, 'evidence-documents')
+    )
+  }
+
   // undefined 필드를 제거하여 PostgREST 쿼리 오류 방지
   const cleanUpdates = Object.fromEntries(
     Object.entries(updates).filter(([_, v]) => v !== undefined)
@@ -598,7 +614,8 @@ export async function addEvidenceImage(
   if (uploadError) return { error: `업로드 실패: ${uploadError.message}` }
 
   const { data: { publicUrl } } = admin.storage.from('evidence-documents').getPublicUrl(fileName)
-  const newUrls = [...currentUrls, publicUrl]
+  const cleanedCurrentUrls = currentUrls.map(url => cleanStorageUrl(url, 'evidence-documents'))
+  const newUrls = [...cleanedCurrentUrls, publicUrl]
 
   const { error: dbError } = await admin
     .from('transactions')
@@ -686,7 +703,8 @@ export async function addReceiptImage(
   if (uploadError) return { error: `업로드 실패: ${uploadError.message}` }
 
   const { data: { publicUrl } } = admin.storage.from('receipts').getPublicUrl(fileName)
-  const newUrls = [...currentUrls, publicUrl]
+  const cleanedCurrentUrls = currentUrls.map(url => cleanStorageUrl(url, 'receipts'))
+  const newUrls = [...cleanedCurrentUrls, publicUrl]
 
   const { error: dbError } = await admin
     .from('transactions')
@@ -774,7 +792,8 @@ export async function addActivityImage(
   if (uploadError) return { error: `업로드 실패: ${uploadError.message}` }
 
   const { data: { publicUrl } } = admin.storage.from('activity-photos').getPublicUrl(fileName)
-  const newUrls = [...currentUrls, publicUrl]
+  const cleanedCurrentUrls = currentUrls.map(url => cleanStorageUrl(url, 'activity-photos'))
+  const newUrls = [...cleanedCurrentUrls, publicUrl]
 
   const { error: dbError } = await admin
     .from('transactions')

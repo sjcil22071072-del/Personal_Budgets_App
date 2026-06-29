@@ -41,3 +41,25 @@ export function extractStoragePath(publicUrl: string, bucket: string): string | 
 
   return null
 }
+
+/**
+ * 임의의 storage URL(signed URL 또는 public URL 등)을 토큰이 없는 깨끗한 public URL 형태로 정제합니다.
+ * DB 저장 전에 사용합니다.
+ */
+export function cleanStorageUrl(url: string, bucket: string): string {
+  if (!url) return url
+  const path = extractStoragePath(url, bucket)
+  if (!path) return url
+
+  const matchDomain = url.match(/^(https?:\/\/[^\/]+)/i)
+  if (matchDomain) {
+    const domain = matchDomain[1]
+    const encodedPath = path
+      .split('/')
+      .map(segment => encodeURIComponent(segment))
+      .join('/')
+    return `${domain}/storage/v1/object/public/${bucket}/${encodedPath}`
+  }
+  return url
+}
+
