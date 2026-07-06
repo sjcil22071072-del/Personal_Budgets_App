@@ -110,7 +110,17 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
         if (fundingSource.end_date && tx.date > fundingSource.end_date) return false
         if (tx.date >= limitMonthEndStr) return false
 
-        const txFundingSourceId = tx.funding_source_id || null
+        let txFundingSourceId = tx.funding_source_id || null
+        if (txFundingSourceId) {
+          const originalFs = sortedFundingSources.find((fs) => fs.id === txFundingSourceId)
+          if (originalFs) {
+            const fsStart = originalFs.start_date || startDate
+            if (tx.date < fsStart || (originalFs.end_date && tx.date > originalFs.end_date)) {
+              txFundingSourceId = null
+            }
+          }
+        }
+
         if (txFundingSourceId === fundingSource.id) return true
         if (!txFundingSourceId || !fundingSourceIds.has(txFundingSourceId)) {
           return getFallbackFundingSourceIdForDate(tx.date, sortedFundingSources) === fundingSource.id
