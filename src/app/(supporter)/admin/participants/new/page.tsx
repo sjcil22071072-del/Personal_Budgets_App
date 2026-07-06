@@ -23,6 +23,8 @@ export default function NewParticipantPage() {
   const [monthlyBudget, setMonthlyBudget] = useState('150000')
   const [yearlyBudget, setYearlyBudget] = useState('1500000')
   const [alertThreshold, setAlertThreshold] = useState('15000')
+  const [startDate, setStartDate] = useState(OPERATION_START_DATE)
+  const [endDate, setEndDate] = useState(OPERATION_END_DATE)
   const [fundingSourceCount, setFundingSourceCount] = useState(1)
   const [fundingSources, setFundingSources] = useState<FundingSourceInput[]>([
     { name: '주 자원', monthly_budget: '150000', yearly_budget: '1500000', start_date: '', end_date: '' },
@@ -66,8 +68,8 @@ export default function NewParticipantPage() {
         email: email.trim(),
         monthlyBudget: Number(monthlyBudget),
         yearlyBudget: Number(yearlyBudget),
-        startDate: OPERATION_START_DATE,
-        endDate: OPERATION_END_DATE,
+        startDate: startDate,
+        endDate: endDate,
         alertThreshold: Number(alertThreshold),
         supporterId: null,
         fundingSources: fundingSources.map((fs) => ({
@@ -172,9 +174,9 @@ export default function NewParticipantPage() {
                 <label className="text-xs font-bold text-zinc-400 block mb-1">운영 시작일</label>
                 <input 
                   type="date" 
-                  value={OPERATION_START_DATE} 
-                  readOnly
-                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-100 text-sm text-zinc-500 transition-all" 
+                  value={startDate} 
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all" 
                   required 
                 />
               </div>
@@ -182,9 +184,9 @@ export default function NewParticipantPage() {
                 <label className="text-xs font-bold text-zinc-400 block mb-1">운영 종료일</label>
                 <input 
                   type="date" 
-                  value={OPERATION_END_DATE} 
-                  readOnly
-                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-100 text-sm text-zinc-500 transition-all" 
+                  value={endDate} 
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-3.5 py-3 border border-zinc-200 rounded-2xl bg-zinc-50/50 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:bg-white text-sm font-semibold transition-all" 
                   required 
                 />
               </div>

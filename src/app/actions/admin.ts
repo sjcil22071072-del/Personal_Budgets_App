@@ -158,8 +158,8 @@ export async function createParticipant(formData: {
       email: formData.email,
       monthlyBudget: formData.monthlyBudget,
       yearlyBudget: formData.yearlyBudget,
-      startDate: OPERATION_START_DATE,
-      endDate: OPERATION_END_DATE,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
       alertThreshold: formData.alertThreshold,
       supporterId: formData.supporterId,
       fundingSourceCount: formData.fundingSources?.length ?? 0,
@@ -186,8 +186,8 @@ export async function createParticipant(formData: {
         email: normalizedEmail,
         monthly_budget_default: formData.monthlyBudget,
         yearly_budget_default: formData.yearlyBudget,
-        budget_start_date: OPERATION_START_DATE,
-        budget_end_date: OPERATION_END_DATE,
+        budget_start_date: formData.startDate || OPERATION_START_DATE,
+        budget_end_date: formData.endDate || OPERATION_END_DATE,
         funding_source_count: formData.fundingSources.length,
         alert_threshold: formData.alertThreshold,
         assigned_supporter_id: formData.supporterId || null,
@@ -329,8 +329,8 @@ export async function updateParticipant(participantId: string, formData: {
      }
     if (formData.monthlyBudget !== undefined) updateData.monthly_budget_default = formData.monthlyBudget
     if (formData.yearlyBudget !== undefined) updateData.yearly_budget_default = formData.yearlyBudget
-    updateData.budget_start_date = OPERATION_START_DATE
-    updateData.budget_end_date = OPERATION_END_DATE
+    if (formData.startDate !== undefined) updateData.budget_start_date = formData.startDate
+    if (formData.endDate !== undefined) updateData.budget_end_date = formData.endDate
     if (formData.alertThreshold !== undefined) updateData.alert_threshold = formData.alertThreshold
     if (formData.supporterId !== undefined) updateData.assigned_supporter_id = formData.supporterId
 
