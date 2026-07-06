@@ -220,6 +220,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   }
 
   async function handleReceiptDelete(url: string) {
+    if (!confirm('정말로 이 영수증 이미지를 삭제하시겠습니까?')) return
     setDeletingReceiptUrl(url)
     setUploadError('')
     try {
@@ -264,6 +265,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   }
 
   async function handleActivityDelete(url: string) {
+    if (!confirm('정말로 이 활동사진 이미지를 삭제하시겠습니까?')) return
     setDeletingActivityUrl(url)
     setUploadError('')
     try {
@@ -308,6 +310,7 @@ export default function TransactionDetailClient({ tx }: { tx: Tx }) {
   }
 
   async function handleEvidenceDelete(url: string) {
+    if (!confirm('정말로 이 증빙서류 파일을 삭제하시겠습니까?')) return
     setDeletingEvidenceUrl(url)
     setUploadError('')
     try {
