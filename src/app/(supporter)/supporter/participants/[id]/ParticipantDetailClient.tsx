@@ -47,8 +47,8 @@ export default function ParticipantDetailClient({
     email: participant.email || '',
     monthlyBudget: participant.monthly_budget_default || 0,
     yearlyBudget: participant.yearly_budget_default || 0,
-    startDate: OPERATION_START_DATE,
-    endDate: OPERATION_END_DATE,
+    startDate: participant.budget_start_date || OPERATION_START_DATE,
+    endDate: participant.budget_end_date || OPERATION_END_DATE,
     alertThreshold: participant.alert_threshold || 0,
   })
   const [isSavingInfo, setIsSavingInfo] = useState(false)
@@ -93,8 +93,8 @@ export default function ParticipantDetailClient({
         email: formData.email,
         monthlyBudget: formData.monthlyBudget,
         yearlyBudget: formData.yearlyBudget,
-        startDate: OPERATION_START_DATE,
-        endDate: OPERATION_END_DATE,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         alertThreshold: formData.alertThreshold,
         supporterId: null,
       })
@@ -275,13 +275,13 @@ export default function ParticipantDetailClient({
 
                 <div>
                   <label className="text-zinc-400 text-xs font-medium block mb-1">운영 시작일</label>
-                  <input type="date" value={OPERATION_START_DATE} readOnly
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg bg-zinc-100 text-zinc-500 text-sm" />
+                  <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                 </div>
                 <div>
                   <label className="text-zinc-400 text-xs font-medium block mb-1">운영 종료일</label>
-                  <input type="date" value={OPERATION_END_DATE} readOnly
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg bg-zinc-100 text-zinc-500 text-sm" />
+                  <input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                 </div>
                 <div>
                   <label className="text-zinc-400 text-xs font-medium block mb-1">월 기본 예산 (원)</label>
@@ -300,7 +300,7 @@ export default function ParticipantDetailClient({
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-zinc-400 text-xs font-medium">운영 기간</span>
-                  <p className="font-bold text-zinc-800">{OPERATION_START_DATE} ~ {OPERATION_END_DATE}</p>
+                  <p className="font-bold text-zinc-800">{participant.budget_start_date || OPERATION_START_DATE} ~ {participant.budget_end_date || OPERATION_END_DATE}</p>
                 </div>
 
                 <div>
