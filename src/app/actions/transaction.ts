@@ -27,11 +27,22 @@ async function verifyAuth(supabase: any) {
   const role = String(profile?.role ?? '').trim().toLowerCase()
   const isAdminOrStaff = ['admin', 'superadmin', 'super_admin', 'staff', 'supporter'].includes(role)
 
-  return { user, role, isAdminOrStaff }
+  // 일반 당사자인 경우, 해당 유저의 email과 연결된 participants 레코드의 ID를 찾아 매핑
+  let participantId: string | null = null
+  if (!isAdminOrStaff) {
+    const { data: pt } = await admin
+      .from('participants')
+      .select('id')
+      .eq('email', user.email || '')
+      .maybeSingle()
+    participantId = pt?.id ?? null
+  }
+
+  return { user, role, isAdminOrStaff, participantId }
 }
 
 async function verifyTransactionAccess(supabase: any, transactionId: string, actionName: string) {
-  const { user, role, isAdminOrStaff } = await verifyAuth(supabase)
+  const { user, role, isAdminOrStaff, participantId } = await verifyAuth(supabase)
   
   const admin = createAdminClient()
   const { data: tx } = await admin
@@ -42,17 +53,18 @@ async function verifyTransactionAccess(supabase: any, transactionId: string, act
 
   if (!tx) throw new Error('존재하지 않는 거래 내역입니다.')
 
-  if (!isAdminOrStaff && tx.participant_id !== user.id) {
+  if (!isAdminOrStaff && tx.participant_id !== participantId) {
     console.error(`[Security Alert] Unauthorized access attempt to ${actionName}:`, {
       attemptedUserId: user.id,
       userRole: role,
       targetTransactionId: transactionId,
-      txOwnerId: tx.participant_id
+      txOwnerId: tx.participant_id,
+      resolvedParticipantId: participantId
     })
     throw new Error('권한이 없습니다. 본인의 지출 내역만 수정 및 삭제할 수 있습니다.')
   }
 
-  return { user, role, isAdminOrStaff, tx }
+  return { user, role, isAdminOrStaff, participantId, tx }
 }
 
 export async function getParticipantsWithFundingSources(): Promise<ParticipantWithFundingSources[]> {
@@ -78,15 +90,18 @@ export async function createTransaction(formData: FormData) {
     const supabase = await createClient()
     const adminClient = createAdminClient()
 
-    const { user, isAdminOrStaff } = await verifyAuth(supabase)
+    const { user, isAdminOrStaff, participantId } = await verifyAuth(supabase)
     const creator_id = user.id
 
     let participant_id = formData.get('participant_id') as string
     let status = (formData.get('status') as 'pending' | 'confirmed') || 'pending'
 
-    // 일반 당사자인 경우, participant_id를 본인 ID로 강제하고 상태는 무조건 pending으로 고정
+    // 일반 당사자인 경우, participant_id를 이메일 매칭된 본인 실제 참가자 ID로 강제하고 상태는 무조건 pending으로 고정
     if (!isAdminOrStaff) {
-      participant_id = user.id
+      if (!participantId) {
+        throw new Error('해당 사용자 계정에 연결된 등록 당사자가 없습니다. 관리자에게 문의해 주세요.')
+      }
+      participant_id = participantId
       status = 'pending'
     }
 
