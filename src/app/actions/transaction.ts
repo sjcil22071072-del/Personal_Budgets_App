@@ -508,8 +508,10 @@ export async function updateTransactionImages(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string; receipt_image_url?: string; activity_image_url?: string }> {
   const supabase = await createClient()
+  let user: any
   try {
-    await verifyTransactionAccess(supabase, transactionId, 'updateTransactionImages')
+    const res = await verifyTransactionAccess(supabase, transactionId, 'updateTransactionImages')
+    user = res.user
   } catch (err: any) {
     return { error: err.message || '권한이 없습니다.' }
   }
@@ -684,8 +686,10 @@ export async function addReceiptImage(
   file: File
 ): Promise<{ success?: boolean; error?: string; url?: string }> {
   const supabase = await createClient()
+  let user: any
   try {
-    await verifyTransactionAccess(supabase, transactionId, 'addReceiptImage')
+    const res = await verifyTransactionAccess(supabase, transactionId, 'addReceiptImage')
+    user = res.user
   } catch (err: any) {
     return { error: err.message || '권한이 없습니다.' }
   }
