@@ -13,12 +13,54 @@ export interface ParticipantWithFundingSources {
   funding_sources: { id: string; name: string }[]
 }
 
+async function verifyAuth(supabase: any) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('로그인이 필요합니다.')
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const role = String(profile?.role ?? '').trim().toLowerCase()
+  const isAdminOrStaff = ['admin', 'superadmin', 'super_admin', 'staff', 'supporter'].includes(role)
+
+  return { user, role, isAdminOrStaff }
+}
+
+async function verifyTransactionAccess(supabase: any, transactionId: string, actionName: string) {
+  const { user, role, isAdminOrStaff } = await verifyAuth(supabase)
+  
+  const admin = createAdminClient()
+  const { data: tx } = await admin
+    .from('transactions')
+    .select('*')
+    .eq('id', transactionId)
+    .single()
+
+  if (!tx) throw new Error('존재하지 않는 거래 내역입니다.')
+
+  if (!isAdminOrStaff && tx.participant_id !== user.id) {
+    console.error(`[Security Alert] Unauthorized access attempt to ${actionName}:`, {
+      attemptedUserId: user.id,
+      userRole: role,
+      targetTransactionId: transactionId,
+      txOwnerId: tx.participant_id
+    })
+    throw new Error('권한이 없습니다. 본인의 지출 내역만 수정 및 삭제할 수 있습니다.')
+  }
+
+  return { user, role, isAdminOrStaff, tx }
+}
+
 export async function getParticipantsWithFundingSources(): Promise<ParticipantWithFundingSources[]> {
   const supabase = await createClient()
-  const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
+  const { isAdminOrStaff } = await verifyAuth(supabase)
+  if (!isAdminOrStaff) return []
 
+  const adminClient = createAdminClient()
   const query = adminClient
     .from('participants')
     .select('id, name, funding_sources ( id, name )')
@@ -36,24 +78,24 @@ export async function createTransaction(formData: FormData) {
     const supabase = await createClient()
     const adminClient = createAdminClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
+    const { user, isAdminOrStaff } = await verifyAuth(supabase)
+    const creator_id = user.id
 
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
-      .maybeSingle()
-    const creator_id = profile ? user.id : null
+    let participant_id = formData.get('participant_id') as string
+    let status = (formData.get('status') as 'pending' | 'confirmed') || 'pending'
 
-    const participant_id = formData.get('participant_id') as string
+    // 일반 당사자인 경우, participant_id를 본인 ID로 강제하고 상태는 무조건 pending으로 고정
+    if (!isAdminOrStaff) {
+      participant_id = user.id
+      status = 'pending'
+    }
+
     let funding_source_id = (formData.get('funding_source_id') as string | null) || null
     const rawAmount = Number(formData.get('amount'))
     const date = (formData.get('date') as string) || new Date().toISOString().split('T')[0]
     const description = formData.get('description') as string
     const category = (formData.get('category') as string) || '기타'
     const memo = formData.get('memo') as string
-    const status = (formData.get('status') as 'pending' | 'confirmed') || 'pending'
     const is_expense = formData.get('is_expense') !== 'false'
     const rawPaymentMethod = formData.get('payment_method') as string | null
     const payment_method = rawPaymentMethod === '계좌이체' ? '계좌이체' : '카드'
@@ -211,8 +253,8 @@ export async function updateTransactionStatus(transactionId: string, newStatus: 
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const { isAdminOrStaff } = await verifyAuth(supabase)
+  if (!isAdminOrStaff) throw new Error('권한이 없습니다. 관리자나 스태프만 승인 처리할 수 있습니다.')
 
   const { data: tx } = await adminClient
     .from('transactions')
@@ -274,46 +316,10 @@ export async function deleteTransaction(transactionId: string) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  const { data: tx } = await adminClient
-    .from('transactions')
-    .select('participant_id, status, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, evidence_image_urls')
-    .eq('id', transactionId)
-    .single()
-
-  if (!tx) throw new Error('Transaction not found')
+  const { isAdminOrStaff, tx } = await verifyTransactionAccess(supabase, transactionId, 'deleteTransaction')
   const participant_id = tx.participant_id
 
-  // 권한 확인 (관리자이거나 당사자 본인인 경우)
-  const { data: profile } = await adminClient
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  const role = String(profile?.role ?? '').trim().toLowerCase()
-  const isAdminOrStaff = role === 'admin' || role === 'superadmin' || role === 'super_admin'
-
   if (!isAdminOrStaff) {
-    // 본인 거래 내역인지 검증
-    let isOwner = participant_id === user.id
-    if (!isOwner) {
-      const { data: participant } = await adminClient
-        .from('participants')
-        .select('id')
-        .eq('email', user.email || '')
-        .maybeSingle()
-      if (participant && participant.id === participant_id) {
-        isOwner = true
-      }
-    }
-
-    if (!isOwner) {
-      throw new Error('Permission denied')
-    }
-
     // 당사자일 때는 오직 'pending' 상태만 삭제 가능
     if (tx.status !== 'pending') {
       throw new Error('임시대기 상태인 영수증 내역만 삭제할 수 있습니다.')
@@ -367,20 +373,19 @@ export async function updateTransactionDetail(
 ) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+
+  const { isAdminOrStaff, tx } = await verifyTransactionAccess(supabase, transactionId, 'updateTransactionDetail')
+  const participant_id = tx?.participant_id
+
+  // 일반 당사자가 지출 내역을 강제 승인(confirmed/rejected)하려고 시도할 시 강제로 pending 고정
+  if (!isAdminOrStaff) {
+    updates.status = 'pending'
+  }
 
   // 승인(confirmed) 또는 거절(rejected) 상태일 때는 검토 완료 표시를 제거(false)
   if (updates.status === 'confirmed' || updates.status === 'rejected') {
     updates.receipt_reviewed = false
   }
-
-  const { data: tx } = await adminClient
-    .from('transactions')
-    .select('participant_id')
-    .eq('id', transactionId)
-    .single()
-  const participant_id = tx?.participant_id
 
   if (updates.receipt_image_urls) {
     updates.receipt_image_urls = updates.receipt_image_urls.map(url =>
@@ -425,14 +430,8 @@ export async function updateTransactionDetail(
 export async function deleteTransactionWithBalance(transactionId: string) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
 
-  const { data: tx } = await adminClient
-    .from('transactions')
-    .select('participant_id, receipt_image_url, activity_image_url, receipt_image_urls, activity_image_urls, evidence_image_urls')
-    .eq('id', transactionId)
-    .single()
+  const { tx } = await verifyTransactionAccess(supabase, transactionId, 'deleteTransactionWithBalance')
   const participant_id = tx?.participant_id
 
   // 1. Storage에서 이미지 삭제
@@ -471,15 +470,13 @@ export async function updateTransaction(
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  const { data: tx } = await adminClient
-    .from('transactions')
-    .select('participant_id')
-    .eq('id', transactionId)
-    .single()
+  const { isAdminOrStaff, tx } = await verifyTransactionAccess(supabase, transactionId, 'updateTransaction')
   const participant_id = tx?.participant_id
+
+  // 일반 당사자가 지출 내역을 강제 승인(confirmed/rejected)하려고 시도할 시 강제로 pending 고정
+  if (!isAdminOrStaff && updates.status !== undefined) {
+    updates.status = 'pending'
+  }
 
   // undefined 필드를 제거하여 PostgREST 쿼리 오류 방지
   const cleanUpdates = Object.fromEntries(
@@ -511,8 +508,11 @@ export async function updateTransactionImages(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string; receipt_image_url?: string; activity_image_url?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  try {
+    await verifyTransactionAccess(supabase, transactionId, 'updateTransactionImages')
+  } catch (err: any) {
+    return { error: err.message || '권한이 없습니다.' }
+  }
 
   const admin = createAdminClient()
 
@@ -588,8 +588,11 @@ export async function addEvidenceImage(
   file: File
 ): Promise<{ success?: boolean; error?: string; url?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  try {
+    await verifyTransactionAccess(supabase, transactionId, 'addEvidenceImage')
+  } catch (err: any) {
+    return { error: err.message || '권한이 없습니다.' }
+  }
 
   const admin = createAdminClient()
 
@@ -637,8 +640,11 @@ export async function removeEvidenceImage(
   imageUrl: string
 ): Promise<{ success?: boolean; error?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  try {
+    await verifyTransactionAccess(supabase, transactionId, 'removeEvidenceImage')
+  } catch (err: any) {
+    return { error: err.message || '권한이 없습니다.' }
+  }
 
   const admin = createAdminClient()
 
@@ -678,8 +684,11 @@ export async function addReceiptImage(
   file: File
 ): Promise<{ success?: boolean; error?: string; url?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  try {
+    await verifyTransactionAccess(supabase, transactionId, 'addReceiptImage')
+  } catch (err: any) {
+    return { error: err.message || '권한이 없습니다.' }
+  }
 
   const admin = createAdminClient()
 
@@ -726,8 +735,11 @@ export async function removeReceiptImage(
   imageUrl: string
 ): Promise<{ success?: boolean; error?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  try {
+    await verifyTransactionAccess(supabase, transactionId, 'removeReceiptImage')
+  } catch (err: any) {
+    return { error: err.message || '권한이 없습니다.' }
+  }
 
   const admin = createAdminClient()
 
@@ -767,8 +779,11 @@ export async function addActivityImage(
   file: File
 ): Promise<{ success?: boolean; error?: string; url?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  try {
+    await verifyTransactionAccess(supabase, transactionId, 'addActivityImage')
+  } catch (err: any) {
+    return { error: err.message || '권한이 없습니다.' }
+  }
 
   const admin = createAdminClient()
 
@@ -815,8 +830,11 @@ export async function removeActivityImage(
   imageUrl: string
 ): Promise<{ success?: boolean; error?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  try {
+    await verifyTransactionAccess(supabase, transactionId, 'removeActivityImage')
+  } catch (err: any) {
+    return { error: err.message || '권한이 없습니다.' }
+  }
 
   const admin = createAdminClient()
 
