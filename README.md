@@ -109,3 +109,5 @@ npx tsc --noEmit
 ## 배포
 
 Vercel 배포를 기준으로 구성되어 있습니다. 배포 환경에도 로컬과 동일한 Supabase 환경 변수를 등록해야 하며, Storage 버킷과 RLS 정책이 마이그레이션과 일치해야 합니다.
+
+<!-- Trigger redeploy -->
