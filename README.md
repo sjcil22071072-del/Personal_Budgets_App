@@ -99,15 +99,30 @@ npx tsc --noEmit
 
 현재 운영 기간은 `2026-05-01`부터 `2026-10-31`까지입니다. 기간 값은 [src/constants/operation-period.ts](src/constants/operation-period.ts)에서 관리합니다.
 
+## Supabase 데이터베이스 설정 (Fork 시 셋업 가이드)
+
+본 프로젝트를 포크(Fork)하여 자신만의 Supabase 대시보드에 데이터베이스를 구축하는 방법입니다.
+
+### 방법 1: Supabase 대시보드 (SQL Editor) 사용 (추천 - 1분 소요)
+
+1. [Supabase Dashboard](https://supabase.com/dashboard) 로그인 후 프로젝트를 생성합니다.
+2. 왼쪽 메뉴의 **SQL Editor**로 이동합니다.
+3. [supabase/schema.sql](supabase/schema.sql) 파일의 전체 내용을 복사하여 SQL Editor 창에 붙여넣습니다.
+4. **Run** 버튼을 클릭하여 모든 테이블, RLS 보안 정책, 스토리지 버킷 및 자동화 트리거를 한 번에 생성합니다.
+
+### 방법 2: Supabase CLI 사용
+
+```bash
+npx supabase db push
+```
+
 ## 데이터와 권한
 
 - 인증과 사용자 관리는 Supabase Auth를 사용합니다.
 - 당사자, 지원자, 관리자 역할은 `profiles`와 관련 정책을 기준으로 분리됩니다.
 - 영수증, 활동 사진, 카드 이미지, 제출 서류는 Supabase Storage에 저장됩니다.
-- 주요 보안 정책과 스키마 변경은 `supabase/migrations`에 기록됩니다.
+- 주요 보안 정책과 데이터베이스 스키마는 [supabase/schema.sql](supabase/schema.sql) 및 [supabase/migrations/01_initial_schema.sql](supabase/migrations/01_initial_schema.sql)에 깔끔하게 정리되어 있습니다.
 
 ## 배포
 
 Vercel 배포를 기준으로 구성되어 있습니다. 배포 환경에도 로컬과 동일한 Supabase 환경 변수를 등록해야 하며, Storage 버킷과 RLS 정책이 마이그레이션과 일치해야 합니다.
-
-<!-- Trigger redeploy -->
