@@ -4,8 +4,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import AlertPanel from "@/components/admin/AlertPanel";
 import AdminParticipantBoard from "@/components/admin/AdminParticipantBoard";
+import AdminMemoWidget from "@/components/admin/AdminMemoWidget";
 import { isAdminRole, isSupporterRole } from "@/utils/user-role";
 import { getAuthenticatedUserProfileRole } from "@/utils/supabase/profile-gate";
+import { getAdminMemo } from "@/app/actions/admin-memo";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -24,6 +26,8 @@ export default async function AdminDashboardPage() {
 
     redirect("/");
   }
+
+  const initialMemo = await getAdminMemo();
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground pb-20">
@@ -48,6 +52,8 @@ export default async function AdminDashboardPage() {
             현재 화면은 관리자 화면입니다. 당사자 등록, 예산 현황, 검토 대기 항목을 관리합니다.
           </span>
         </div>
+
+        <AdminMemoWidget initialMemo={initialMemo} />
 
         <section className="p-6 rounded-3xl bg-white border border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
           <div className="flex items-center gap-3 mb-1.5">
