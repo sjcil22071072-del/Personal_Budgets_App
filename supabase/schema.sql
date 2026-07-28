@@ -450,3 +450,34 @@ CREATE POLICY "storage_authenticated_update" ON storage.objects
 CREATE POLICY "storage_authenticated_delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id IN ('receipts', 'activity-photos', 'card-photos', 'family-documents', 'evidence-documents'));
+
+-- ----------------------------------------------------------------------------
+-- 시스템 설정 테이블 (관리자 공유 메모 등)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.system_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
+
+-- 관리자만 읽기 가능
+CREATE POLICY "system_settings_admin_read" ON public.system_settings
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role IN ('admin', 'superadmin', 'super_admin')
+    )
+  );
+
+-- 관리자만 쓰기 가능 (service_role은 항상 허용)
+CREATE POLICY "system_settings_admin_write" ON public.system_settings
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role IN ('admin', 'superadmin', 'super_admin')
+    )
+  );
