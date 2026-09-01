@@ -149,8 +149,9 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       const monthlyBudget = Number(fundingSource.monthly_budget || 0)
       const remainingBalance = monthsActiveClamped === 0 ? 0 : (monthlyBudget * monthsActiveClamped) - totalSpent
 
-      // 이월 금액 합산
-      const targetBalance = remainingBalance + carryoverAmount
+      // 기간이 명시된 재원(start_date 있음)은 독립 예산이므로 이월 금액을 받지 않음
+      const hasExplicitStartDate = !!fundingSource.start_date
+      const targetBalance = hasExplicitStartDate ? remainingBalance : remainingBalance + carryoverAmount
 
       // 연도별 예산 계산
       const startYear = fsResolvedStartMonth.getFullYear()
@@ -162,12 +163,15 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       const yearsActiveClamped = yearsActive < 0 ? 0 : yearsActive
       const yearlyBudget = Number(fundingSource.yearly_budget || 0)
       const remainingYearBalance = yearsActiveClamped === 0 ? 0 : (yearlyBudget * yearsActiveClamped) - totalSpent
-      const targetYearBalance = remainingYearBalance + carryoverYearAmount
+      const targetYearBalance = hasExplicitStartDate ? remainingYearBalance : remainingYearBalance + carryoverYearAmount
 
       // 종료된 재원이면 잔액을 이월 변수에 저장하고 다음 루프로 전달, 활성 재원이면 이월을 흡수하고 이월변수 초기화
       if (isEnded) {
-        carryoverAmount = targetBalance
-        carryoverYearAmount = targetYearBalance
+        // 기간 지정 재원이 종료된 경우에도 이월 안 함 (독립 예산)
+        if (!hasExplicitStartDate) {
+          carryoverAmount = targetBalance
+          carryoverYearAmount = targetYearBalance
+        }
       } else {
         carryoverAmount = 0
         carryoverYearAmount = 0
