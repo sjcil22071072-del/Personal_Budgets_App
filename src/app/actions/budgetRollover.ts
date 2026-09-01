@@ -99,6 +99,13 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
       const fsResolvedEndMonth = fsEnd && !Number.isNaN(fsEnd.getTime())
         ? new Date(fsEnd.getFullYear(), fsEnd.getMonth(), 1)
         : null
+      // 재원의 시작일이 현재보다 미래면 아직 활성화되지 않은 재원 → 건너뜀
+      if (fsResolvedStartMonth > currentMonth) {
+        // 미래 재원에는 이월 전달 안 함
+        continue
+      }
+
+      // 활성 월 한계 계산: 종료일이 있고 현재보다 이전이면 종료일 기준, 그 외엔 현재 달 기준
       const limitMonth = fsResolvedEndMonth && fsResolvedEndMonth < currentMonth ? fsResolvedEndMonth : currentMonth
 
       const nextMonthOfLimit = new Date(limitMonth.getFullYear(), limitMonth.getMonth() + 1, 1)
@@ -130,7 +137,7 @@ export async function ensureMonthlyBudgetRollover(participantId?: string, force 
 
       const totalSpent = fsTransactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
 
-      // 이번 달 기준 종료 여부 판단
+      // 이번 달 기준 종료 여부 판단 (종료일의 달이 현재 달보다 이전이어야 종료)
       const isEnded = fsResolvedEndMonth && fsResolvedEndMonth < currentMonth
 
       // 활성 개월 수 계산

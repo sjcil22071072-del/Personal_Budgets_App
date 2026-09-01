@@ -507,6 +507,10 @@ export async function createFundingSource(participantId: string, formData: {
       return { error: `재원 추가 실패: ${error.message}` }
     }
 
+    // 새 재원 추가 후 즉시 롤오버 재계산 (초기 잔액이 올바르게 반영되도록)
+    const { ensureMonthlyBudgetRollover } = await import('./budgetRollover')
+    await ensureMonthlyBudgetRollover(participantId, true)
+
     revalidatePath('/admin/participants')
     revalidatePath(`/admin/participants/${participantId}`)
     return { success: true }
