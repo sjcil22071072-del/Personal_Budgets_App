@@ -20,12 +20,13 @@
 - 제출된 영수증과 활동 사진 검토 및 승인/보류/반려 처리
 - 카드 등록 자료, 가족관계증명서, 기타 증빙 서류 확인
 - 거래 목록 필터링, 정렬, 엑셀 내보내기
+- 관리자 대시보드에서 공유 메모 작성 및 확인
 
 ### 예산 관리
 
 - 2026년 5월부터 10월까지의 운영 기간 기준 예산 흐름 관리
 - 재원별 월 예산과 잔액 계산
-- 월별 이월 처리 로직
+- 월별 이월 처리 및 시작일/종료일이 지정된 독립 재원 관리
 - 지출/수입 거래 구분
 - 반려 거래 및 검토 대기 거래 상태 관리
 
@@ -73,6 +74,8 @@ NEXT_PUBLIC_SITE_URL=
 SUPER_ADMIN_EMAIL=
 ```
 
+`NEXT_PUBLIC_SUPABASE_URL`과 `NEXT_PUBLIC_SUPABASE_ANON_KEY`는 Supabase 프로젝트의 API 설정에서 확인할 수 있습니다. `SUPABASE_SERVICE_ROLE_KEY`는 서버에서만 사용하므로 공개 저장소나 클라이언트 코드에 넣지 마세요. `NEXT_PUBLIC_SITE_URL`에는 개발 중 `http://localhost:3000`, 배포 시 실제 사이트 주소를 설정합니다. `SUPER_ADMIN_EMAIL`은 최고 관리자 계정으로 사용할 이메일 주소입니다.
+
 ### 3. 개발 서버 실행
 
 ```bash
@@ -108,20 +111,26 @@ npx tsc --noEmit
 1. [Supabase Dashboard](https://supabase.com/dashboard) 로그인 후 프로젝트를 생성합니다.
 2. 왼쪽 메뉴의 **SQL Editor**로 이동합니다.
 3. [supabase/schema.sql](supabase/schema.sql) 파일의 전체 내용을 복사하여 SQL Editor 창에 붙여넣습니다.
-4. **Run** 버튼을 클릭하여 모든 테이블, RLS 보안 정책, 스토리지 버킷 및 자동화 트리거를 한 번에 생성합니다.
+4. **Run** 버튼을 클릭하여 테이블, RLS 정책, 스토리지 버킷 및 트리거를 생성합니다.
 
 ### 방법 2: Supabase CLI 사용
 
+Supabase CLI로 로그인하고 프로젝트를 연결한 뒤 마이그레이션을 적용합니다. `YOUR_PROJECT_REF`에는 Supabase 프로젝트의 참조 ID를 입력합니다.
+
 ```bash
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 ```
+
+SQL Editor와 CLI는 같은 초기 스키마를 적용하는 대안입니다. 새 프로젝트에서는 한 가지 방법을 선택하세요.
 
 ## 데이터와 권한
 
 - 인증과 사용자 관리는 Supabase Auth를 사용합니다.
 - 당사자, 지원자, 관리자 역할은 `profiles`와 관련 정책을 기준으로 분리됩니다.
 - 영수증, 활동 사진, 카드 이미지, 제출 서류는 Supabase Storage에 저장됩니다.
-- 주요 보안 정책과 데이터베이스 스키마는 [supabase/schema.sql](supabase/schema.sql) 및 [supabase/migrations/01_initial_schema.sql](supabase/migrations/01_initial_schema.sql)에 깔끔하게 정리되어 있습니다.
+- 주요 보안 정책과 데이터베이스 스키마는 [supabase/schema.sql](supabase/schema.sql) 및 [supabase/migrations/01_initial_schema.sql](supabase/migrations/01_initial_schema.sql)에 정리되어 있습니다.
 
 ## 배포
 
